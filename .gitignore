@@ -1,0 +1,86 @@
+# ==============================================================================
+# Laravel & PHP
+# ==============================================================================
+/vendor/
+/node_modules/
+/public/build
+/public/hot
+/public/storage
+/public/fonts-manifest.dev.json
+
+# Caches & Storage
+/bootstrap/cache/
+/storage/*.key
+/storage/framework/cache/data/
+/storage/framework/sessions/
+/storage/framework/testing/
+/storage/framework/views/
+/storage/logs/
+/storage/pail/
+*.log
+
+# ==============================================================================
+# Environment & Sensitive Files
+# ==============================================================================
+# Ignore semua variasi .env file kecuali file example
+.env
+.env.*
+!.env.example
+!.env.prod.docker.example
+.env.backup
+.env.production
+
+# Auth & Credentials
+/auth.json
+
+# ==============================================================================
+# Database
+# ==============================================================================
+*.sqlite
+*.sqlite3
+*.db
+*.sq3
+
+# ==============================================================================
+# Deployment & Custom Scripts
+# ==============================================================================
+# Folder backups yang digunakan oleh skrip deploy-production.sh
+/backups/
+docker-compose.override.yml
+
+# ==============================================================================
+# Testing & Coverage
+# ==============================================================================
+/.phpunit.cache
+.phpunit.result.cache
+/coverage/
+
+# ==============================================================================
+# IDE configurations & Helpers
+# ==============================================================================
+/.idea/
+/.vscode/
+/.zed/
+/.cursor/
+/.nova/
+/.codex/
+.phpactor.json
+_ide_helper.php
+_ide_helper_models.php
+.phpstorm.meta.php
+Homestead.json
+Homestead.yaml
+
+# ==============================================================================
+# OS Generated Files
+# ==============================================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+npm-debug.log
+yarn-error.log
+pnpm-debug.log

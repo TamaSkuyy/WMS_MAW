@@ -1,0 +1,42 @@
+services:
+    mysql:
+        image: "mysql/mysql-server:8.0"
+        command: --max_allowed_packet=512M --wait_timeout=28800 --interactive_timeout=28800 --connect_timeout=120
+        ports:
+            - "${FORWARD_DB_PORT:-3306}:3306"
+        environment:
+            MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
+            MYSQL_ROOT_HOST: "%"
+            MYSQL_DATABASE: "${DB_DATABASE}"
+            MYSQL_USER: "${DB_USERNAME}"
+            MYSQL_PASSWORD: "${DB_PASSWORD}"
+            MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+        volumes:
+            - "sail-mysql:/var/lib/mysql"
+        healthcheck:
+            test: ["CMD", "mysqladmin", "ping", "-p${DB_PASSWORD}"]
+            retries: 3
+            timeout: 5s
+
+    redis:
+        image: "redis:alpine"
+        ports:
+            - "${FORWARD_REDIS_PORT:-6379}:6379"
+        volumes:
+            - "sail-redis:/data"
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            retries: 3
+            timeout: 5s
+
+    mailpit:
+        image: "axllent/mailpit:latest"
+        ports:
+            - "${FORWARD_MAILPIT_PORT:-1025}:1025"
+            - "${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}:8025"
+
+volumes:
+    sail-mysql:
+        driver: local
+    sail-redis:
+        driver: local
