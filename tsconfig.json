@@ -1,8 +1,13 @@
 {
     "compilerOptions": {
+        "target": "ES2022",
+        "lib": ["DOM", "DOM.Iterable", "ES2022"],
+        "module": "ESNext",
+        "moduleResolution": "bundler",
         "baseUrl": ".",
         "jsx": "react-jsx",
         "strict": false,
+        "esModuleInterop": true,
         "paths": {
             "@/*": ["resources/js/*"],
             "ziggy-js": ["./vendor/tightenco/ziggy"]

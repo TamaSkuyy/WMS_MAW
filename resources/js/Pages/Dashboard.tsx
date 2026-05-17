@@ -13,7 +13,7 @@ export default function Dashboard() {
             <Head title="Dashboard" />
             
             <div className="grid grid-cols-12 gap-4 md:gap-6">
-                <div className="col-span-12 space-y-6 xl:col-span-7">
+                {/* <div className="col-span-12 space-y-6 xl:col-span-7">
                     <EcommerceMetrics />
                     <MonthlySalesChart />
                 </div>
@@ -32,7 +32,7 @@ export default function Dashboard() {
 
                 <div className="col-span-12 xl:col-span-7">
                     <RecentOrders />
-                </div>
+                </div> */}
             </div>
         </AppLayout>
     );

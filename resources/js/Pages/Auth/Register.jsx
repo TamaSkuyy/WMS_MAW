@@ -1,11 +1,15 @@
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
-import GuestLayout from '@/Layouts/GuestLayout';
+import React, { useState } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
+import AuthLayout from '../../Tailadmin/pages/AuthPages/AuthPageLayout';
+import Label from '../../Tailadmin/components/form/Label';
+import Input from '../../Tailadmin/components/form/input/InputField';
+import Button from '../../Tailadmin/components/ui/button/Button';
+import { EyeCloseIcon, EyeIcon, BoxCubeIcon } from '../../Tailadmin/icons';
 
 export default function Register() {
+    const [showPassword, setShowPassword] = useState(false);
+    const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
+
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         email: '',
@@ -15,106 +19,156 @@ export default function Register() {
 
     const submit = (e) => {
         e.preventDefault();
-
         post(route('register'), {
             onFinish: () => reset('password', 'password_confirmation'),
         });
     };
 
     return (
-        <GuestLayout>
-            <Head title="Register" />
+        <>
+            <Head title="Register — MAW Warehouse" />
+            <AuthLayout>
+                <div className="flex flex-col flex-1">
+                    {/* <div className="w-full max-w-md pt-10 mx-auto">
+                        <Link
+                            href="/"
+                            className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                        >
+                            <svg width="20" height="20" className="mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                            Back to website
+                        </Link>
+                    </div> */}
+                    <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
+                        <div>
+                            <div className="mb-5 sm:mb-8">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-brand-50 dark:bg-brand-900/20">
+                                        <BoxCubeIcon className="size-5 text-brand-500" />
+                                    </div>
+                                    <span className="text-sm font-medium text-brand-600 dark:text-brand-400">
+                                        PT. MITRA ADHI WASANA
+                                    </span>
+                                </div>
+                                <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
+                                    Create Account
+                                </h1>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    Register to start managing your warehouse operations.
+                                </p>
+                            </div>
 
-            <form onSubmit={submit}>
-                <div>
-                    <InputLabel htmlFor="name" value="Name" />
-
-                    <TextInput
-                        id="name"
-                        name="name"
-                        value={data.name}
-                        className="mt-1 block w-full"
-                        autoComplete="name"
-                        isFocused={true}
-                        onChange={(e) => setData('name', e.target.value)}
-                        required
-                    />
-
-                    <InputError message={errors.name} className="mt-2" />
+                            <div>
+                                <form onSubmit={submit}>
+                                    <div className="space-y-5">
+                                        <div>
+                                            <Label>
+                                                Full Name <span className="text-error-500">*</span>{" "}
+                                            </Label>
+                                            <Input
+                                                id="name"
+                                                type="text"
+                                                name="name"
+                                                value={data.name}
+                                                onChange={(e) => setData('name', e.target.value)}
+                                                placeholder="John Doe"
+                                                error={!!errors.name}
+                                                hint={errors.name}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label>
+                                                Email <span className="text-error-500">*</span>{" "}
+                                            </Label>
+                                            <Input
+                                                id="email"
+                                                type="email"
+                                                name="email"
+                                                value={data.email}
+                                                onChange={(e) => setData('email', e.target.value)}
+                                                placeholder="info@gmail.com"
+                                                error={!!errors.email}
+                                                hint={errors.email}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label>
+                                                Password <span className="text-error-500">*</span>{" "}
+                                            </Label>
+                                            <div className="relative">
+                                                <Input
+                                                    id="password"
+                                                    type={showPassword ? "text" : "password"}
+                                                    name="password"
+                                                    value={data.password}
+                                                    onChange={(e) => setData('password', e.target.value)}
+                                                    placeholder="Enter your password"
+                                                    error={!!errors.password}
+                                                    hint={errors.password}
+                                                />
+                                                <span
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                    className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
+                                                >
+                                                    {showPassword ? (
+                                                        <EyeIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
+                                                    ) : (
+                                                        <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
+                                                    )}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <Label>
+                                                Confirm Password <span className="text-error-500">*</span>{" "}
+                                            </Label>
+                                            <div className="relative">
+                                                <Input
+                                                    id="password_confirmation"
+                                                    type={showPasswordConfirmation ? "text" : "password"}
+                                                    name="password_confirmation"
+                                                    value={data.password_confirmation}
+                                                    onChange={(e) => setData('password_confirmation', e.target.value)}
+                                                    placeholder="Confirm your password"
+                                                    error={!!errors.password_confirmation}
+                                                    hint={errors.password_confirmation}
+                                                />
+                                                <span
+                                                    onClick={() => setShowPasswordConfirmation(!showPasswordConfirmation)}
+                                                    className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
+                                                >
+                                                    {showPasswordConfirmation ? (
+                                                        <EyeIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
+                                                    ) : (
+                                                        <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
+                                                    )}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <Button className="w-full" size="sm" disabled={processing}>
+                                                Create Account
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </form>
+                                <div className="mt-5">
+                                    <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
+                                        Already have an account? {""}
+                                        <Link
+                                            href={route('login')}
+                                            className="text-brand-500 hover:text-brand-600 dark:text-brand-400"
+                                        >
+                                            Sign In
+                                        </Link>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-
-                <div className="mt-4">
-                    <InputLabel htmlFor="email" value="Email" />
-
-                    <TextInput
-                        id="email"
-                        type="email"
-                        name="email"
-                        value={data.email}
-                        className="mt-1 block w-full"
-                        autoComplete="username"
-                        onChange={(e) => setData('email', e.target.value)}
-                        required
-                    />
-
-                    <InputError message={errors.email} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
-
-                    <TextInput
-                        id="password"
-                        type="password"
-                        name="password"
-                        value={data.password}
-                        className="mt-1 block w-full"
-                        autoComplete="new-password"
-                        onChange={(e) => setData('password', e.target.value)}
-                        required
-                    />
-
-                    <InputError message={errors.password} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel
-                        htmlFor="password_confirmation"
-                        value="Confirm Password"
-                    />
-
-                    <TextInput
-                        id="password_confirmation"
-                        type="password"
-                        name="password_confirmation"
-                        value={data.password_confirmation}
-                        className="mt-1 block w-full"
-                        autoComplete="new-password"
-                        onChange={(e) =>
-                            setData('password_confirmation', e.target.value)
-                        }
-                        required
-                    />
-
-                    <InputError
-                        message={errors.password_confirmation}
-                        className="mt-2"
-                    />
-                </div>
-
-                <div className="mt-4 flex items-center justify-end">
-                    <Link
-                        href={route('login')}
-                        className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:text-gray-400 dark:hover:text-gray-100 dark:focus:ring-offset-gray-800"
-                    >
-                        Already registered?
-                    </Link>
-
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Register
-                    </PrimaryButton>
-                </div>
-            </form>
-        </GuestLayout>
+            </AuthLayout>
+        </>
     );
 }

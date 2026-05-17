@@ -5,11 +5,11 @@ import Label from '../../Tailadmin/components/form/Label';
 import Input from '../../Tailadmin/components/form/input/InputField';
 import Checkbox from '../../Tailadmin/components/form/input/Checkbox';
 import Button from '../../Tailadmin/components/ui/button/Button';
-import { EyeCloseIcon, EyeIcon } from '../../Tailadmin/icons';
+import { EyeCloseIcon, EyeIcon, BoxCubeIcon } from '../../Tailadmin/icons';
 
 export default function Login({ status, canResetPassword }) {
     const [showPassword, setShowPassword] = useState(false);
-    
+
     const { data, setData, post, processing, errors, reset } = useForm({
         email: '',
         password: '',
@@ -25,10 +25,10 @@ export default function Login({ status, canResetPassword }) {
 
     return (
         <>
-            <Head title="Sign In" />
+            <Head title="Sign In — MAW Warehouse" />
             <AuthLayout>
                 <div className="flex flex-col flex-1">
-                    <div className="w-full max-w-md pt-10 mx-auto">
+                    {/* <div className="w-full max-w-md pt-10 mx-auto">
                         <Link
                             href="/"
                             className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
@@ -38,18 +38,26 @@ export default function Login({ status, canResetPassword }) {
                             </svg>
                             Back to website
                         </Link>
-                    </div>
+                    </div> */}
                     <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
                         <div>
                             <div className="mb-5 sm:mb-8">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-brand-50 dark:bg-brand-900/20">
+                                        <BoxCubeIcon className="size-5 text-brand-500" />
+                                    </div>
+                                    <span className="text-sm font-medium text-brand-600 dark:text-brand-400">
+                                        PT. MITRA ADHI WASANA
+                                    </span>
+                                </div>
                                 <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
                                     Sign In
                                 </h1>
                                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                                    Enter your email and password to sign in!
+                                    Welcome back! Enter your credentials to access the warehouse dashboard.
                                 </p>
                             </div>
-                            
+
                             {status && (
                                 <div className="mb-4 text-sm font-medium text-green-600">
                                     {status}
@@ -111,14 +119,14 @@ export default function Login({ status, canResetPassword }) {
                                                     Keep me logged in
                                                 </span>
                                             </div>
-                                            {canResetPassword && (
+                                            {/* {canResetPassword && (
                                                 <Link
                                                     href={route('password.request')}
                                                     className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400"
                                                 >
                                                     Forgot password?
                                                 </Link>
-                                            )}
+                                            )} */}
                                         </div>
                                         <div>
                                             <Button className="w-full" size="sm" disabled={processing}>
@@ -128,7 +136,7 @@ export default function Login({ status, canResetPassword }) {
                                     </div>
                                 </form>
                                 <div className="mt-5">
-                                    <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
+                                    {/* <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
                                         Don't have an account? {""}
                                         <Link
                                             href={route('register')}
@@ -136,7 +144,7 @@ export default function Login({ status, canResetPassword }) {
                                         >
                                             Sign Up
                                         </Link>
-                                    </p>
+                                    </p> */}
                                 </div>
                             </div>
                         </div>

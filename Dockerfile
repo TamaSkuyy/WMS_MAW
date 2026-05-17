@@ -33,13 +33,13 @@ COPY . .
 # Set permissions
 RUN chown -R sail:sail /var/www/html
 
-# Copy RoadRunner
-COPY --from=ghcr.io/roadrunner-server/roadrunner:2023.3 /usr/bin/rr /usr/local/bin/rr
-
 USER sail
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
+# Install FrankenPHP Binary via Octane
+RUN php artisan octane:install --server=frankenphp
+
 EXPOSE 8080
 
-CMD ["php", "artisan", "octane:start", "--server=roadrunner", "--host=0.0.0.0", "--port=8080", "--rpc-port=6001"]
+CMD ["php", "artisan", "octane:start", "--server=frankenphp", "--host=0.0.0.0", "--port=8080"]

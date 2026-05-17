@@ -252,17 +252,12 @@ quick_update() {
     # Restart queue workers (pick up new code)
     dc exec -T app php artisan queue:restart 2>/dev/null || true
 
-    # 7. Graceful reload Octane workers (RoadRunner)
+    # 7. Graceful reload Octane workers (FrankenPHP)
     log "7/7 Graceful reload Octane workers..."
-    # Hapus state file stale agar octane:reload tidak salah baca "workers: 0"
-    dc exec -T app rm -f /var/www/html/storage/logs/octane-server-state.json 2>/dev/null || true
-    # SIGUSR1 → RoadRunner graceful reload workers tanpa downtime (lebih reliable dari RPC)
-    if dc exec -T app bash -c "pkill -USR1 -x rr 2>/dev/null"; then
-        log "  Workers di-reload via SIGUSR1 ✓"
+    if dc exec -T app php artisan octane:reload 2>/dev/null; then
+        log "  Workers di-reload via octane:reload ✓"
     else
-        warn "  SIGUSR1 gagal, coba restart via octane:reload..."
-        dc exec -T app php artisan octane:reload 2>/dev/null || \
-            warn "  octane:reload juga gagal — workers tetap berjalan dengan kode lama sampai request berikutnya"
+        warn "  octane:reload gagal — workers mungkin baru akan direfresh setelah container direstart"
     fi
 
     # Maintenance mode OFF — juga ditangani oleh trap EXIT di atas

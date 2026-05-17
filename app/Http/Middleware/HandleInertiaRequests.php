@@ -29,11 +29,40 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
+        // Fetch menus and filter by user's permissions
+        $menus = [];
+        if ($user) {
+            $allMenus = \App\Models\Menu::with('subMenus')->whereNull('parent_id')->orderBy('sort_order')->get();
+            $menus = $allMenus->filter(function ($menu) use ($user) {
+                // If it has a permission name, check if user has it
+                if ($menu->permission_name && !$user->can($menu->permission_name)) {
+                    return false;
+                }
+                return true;
+            })->map(function ($menu) use ($user) {
+                // Filter submenus
+                $menu->subMenus = $menu->subMenus->filter(function ($subMenu) use ($user) {
+                    if ($subMenu->permission_name && !$user->can($subMenu->permission_name)) {
+                        return false;
+                    }
+                    return true;
+                })->values();
+                return $menu;
+            })->values();
+        }
+
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user ? array_merge($user->toArray(), [
+                    'roles' => $user->getRoleNames(),
+                    'permissions' => $user->getAllPermissions()->pluck('name'),
+                    'unreadNotifications' => $user->unreadNotifications()->take(10)->get(),
+                ]) : null,
             ],
+            'menus' => $menus,
         ];
     }
 }

@@ -194,9 +194,9 @@ if [ "$STOP_ONLY" = true ]; then
   log "Stopping infra containers..."
   dc stop mysql redis mailpit || true
   dc down --remove-orphans || true
-  if pgrep -f "artisan serve --host=0.0.0.0" >/dev/null 2>&1; then
-    warn "Stopping running php artisan serve process(es)..."
-    pkill -f "artisan serve --host=0.0.0.0" || true
+  if pgrep -f "artisan octane:start" >/dev/null 2>&1; then
+    warn "Stopping running php artisan octane process(es)..."
+    pkill -f "artisan octane:start" || true
   fi
   if pgrep -f "npm run dev -- --host 0.0.0.0" >/dev/null 2>&1; then
     warn "Stopping running vite process(es)..."
@@ -304,8 +304,8 @@ cleanup() {
 
 trap cleanup INT TERM EXIT
 
-log "Starting Laravel on http://localhost:${APP_PORT} ..."
-"${PHP_CMD}" artisan serve --host=0.0.0.0 --port="${APP_PORT}" &
+log "Starting Laravel (Octane/FrankenPHP) on http://localhost:${APP_PORT} ..."
+"${PHP_CMD}" artisan octane:start --server=frankenphp --host=0.0.0.0 --port="${APP_PORT}" --watch &
 ARTISAN_PID=$!
 
 log "Starting Vite on http://localhost:${VITE_PORT} ..."
