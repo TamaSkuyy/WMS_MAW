@@ -6,10 +6,13 @@ import ComponentCard from '../../Tailadmin/components/common/ComponentCard';
 import Button from '../../Tailadmin/components/ui/button/Button';
 import Input from '../../Tailadmin/components/form/input/InputField';
 import Label from '../../Tailadmin/components/form/Label';
+import ImportExportToolbar from '../../Components/ImportExport/ImportExportToolbar';
+import ImportModal from '../../Components/ImportExport/ImportModal';
 
 export default function Index({ users, roles }: any) {
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState<number | null>(null);
+    const [importModalOpen, setImportModalOpen] = useState(false);
 
     const { data, setData, post, put, delete: destroy, reset, errors } = useForm({
         name: '',
@@ -62,6 +65,25 @@ export default function Index({ users, roles }: any) {
         <AppLayout>
             <Head title="User Management" />
             <PageBreadcrumb pageTitle="User Management" />
+
+            <div className="mb-4">
+                <ImportExportToolbar
+                    importUrl={route('users.import')}
+                    previewUrl={route('users.import.preview')}
+                    exportUrl={route('users.export')}
+                    onImportClick={() => setImportModalOpen(true)}
+                />
+            </div>
+
+            <ImportModal
+                isOpen={importModalOpen}
+                onClose={() => setImportModalOpen(false)}
+                onComplete={() => {
+                    window.location.reload();
+                }}
+                importUrl={route('users.import')}
+                previewUrl={route('users.import.preview')}
+            />
 
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
                 <div className="xl:col-span-1">

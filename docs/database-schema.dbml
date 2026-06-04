@@ -1,0 +1,283 @@
+// ============================================================
+// WMS MAW — Warehouse Management System
+// Database Schema (DBML)
+// ============================================================
+// Generated: 2026-06-04 | dbdiagram.io compatible
+// ============================================================
+//
+// ═══ PENJELASAN SINGKAT ═══
+//
+// Sistem Warehouse Management System (WMS) untuk mengelola
+// gudang suku cadang otomotif. Terdiri dari 3 alur bisnis:
+//
+// 1. INBOUND  — Supplier kirim barang → Cycle (dokumen) →
+//              Verifikasi qty diterima → Disimpan ke Rak → Stok++
+//
+// 2. STORAGE  — Stok tersimpan per produk per rak.
+//              Bisa dicek real-time.
+//
+// 3. OUTBOUND — Buat Shipment ke Mitra → Pilih produk dari Rak
+//              → Validasi stok cukup → Ship (Stok--)
+//
+// ════════════════════════════════════════════════════════════
+
+// ─── 📦 MASTER DATA ────────────────────────────────────────
+
+Table suppliers {
+  id bigint [pk, increment]
+  name varchar(255) [unique, not null, note: 'Nama perusahaan supplier']
+  contact_person varchar(255) [note: 'Nama kontak person']
+  email varchar(255) [unique, not null]
+  phone varchar(20) [note: 'Nomor telepon']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  indexes {
+    email [name: 'idx_suppliers_email']
+    name [name: 'idx_suppliers_name']
+  }
+}
+
+Table supplier_addresses {
+  id bigint [pk, increment]
+  supplier_id bigint [ref: > suppliers.id, not null, note: 'FK — CASCADE delete']
+  street varchar(255) [not null, note: 'Alamat jalan']
+  city varchar(100) [not null, note: 'Kota']
+  state varchar(100) [not null, note: 'Provinsi']
+  postal_code varchar(20) [not null, note: 'Kode pos']
+  country varchar(100) [default: 'Indonesia', not null]
+  address_type enum('primary','shipping','billing') [default: 'primary', note: 'primary / shipping / billing']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  indexes {
+    supplier_id [name: 'idx_saddr_supplier_id']
+    (supplier_id, address_type) [unique, name: 'uq_supplier_address_type']
+  }
+}
+
+Table vehicle_models {
+  id bigint [pk, increment]
+  name varchar(100) [not null, note: 'Nama model, e.g. Fortuner VRZ']
+  brand varchar(100) [not null, note: 'Merek, e.g. Toyota']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  indexes {
+    (name, brand) [unique, name: 'uq_vehicle_model']
+  }
+}
+
+Table product_categories {
+  id bigint [pk, increment]
+  name varchar(100) [unique, not null, note: 'Nama kategori, e.g. Body Parts, Engine']
+  description text [note: 'Deskripsi opsional']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+Table products {
+  id bigint [pk, increment]
+  part_number varchar(50) [unique, not null, note: 'SKU / Kode part dari supplier']
+  name varchar(255) [not null, note: 'Nama part / suku cadang']
+  vehicle_model_id bigint [ref: > vehicle_models.id, not null, note: 'FK — RESTRICT']
+  supplier_id bigint [ref: > suppliers.id, not null, note: 'FK — RESTRICT']
+  category_id bigint [ref: > product_categories.id, not null, note: 'FK — RESTRICT']
+  unit varchar(20) [default: 'pcs', note: 'Satuan: pcs, set, box, unit']
+  description text [note: 'Keterangan tambahan']
+  base_price decimal(12,2) [note: 'Harga beli standar (IDR)']
+  is_active boolean [default: true, note: 'Status aktif / nonaktif']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  indexes {
+    part_number [name: 'idx_products_part_number']
+    supplier_id [name: 'idx_products_supplier_id']
+    category_id [name: 'idx_products_category_id']
+    vehicle_model_id [name: 'idx_products_vehicle_model_id']
+  }
+}
+
+Table racks {
+  id bigint [pk, increment]
+  code varchar(20) [unique, not null, note: 'Kode rak, e.g. A-01, B-03']
+  zone varchar(50) [not null, note: 'Zona, e.g. Zona A, Zona B']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+// ─── 📥 INBOUND — Barang Masuk ─────────────────────────────
+
+Table cycles {
+  id bigint [pk, increment]
+  supplier_id bigint [ref: > suppliers.id, not null, note: 'FK — RESTRICT']
+  cycle_number int [not null, note: 'Nomor cycle per supplier (1, 2, 3...)']
+  status enum('draft','receiving','completed') [default: 'draft', note: 'draft → receiving → completed']
+  received_at timestamp [note: 'Waktu selesai penerimaan']
+  notes text [note: 'Catatan']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  indexes {
+    (supplier_id, cycle_number) [unique, name: 'uq_supplier_cycle']
+    supplier_id [name: 'idx_cycles_supplier_id']
+    status [name: 'idx_cycles_status']
+  }
+}
+
+Table cycle_items {
+  id bigint [pk, increment]
+  cycle_id bigint [ref: > cycles.id, not null, note: 'FK — CASCADE delete']
+  product_id bigint [ref: > products.id, not null, note: 'FK — RESTRICT']
+  quantity int [default: 0, note: 'Qty dari dokumen pengiriman']
+  received_quantity int [default: 0, note: 'Qty aktual diterima (setelah verifikasi)']
+  notes text [note: 'e.g. "2 pcs rusak"']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  indexes {
+    (cycle_id, product_id) [unique, name: 'uq_cycle_product']
+    cycle_id [name: 'idx_ci_cycle_id']
+    product_id [name: 'idx_ci_product_id']
+  }
+}
+
+// ─── 📊 INVENTORY — Stok Gudang ────────────────────────────
+
+Table stocks {
+  id bigint [pk, increment]
+  product_id bigint [ref: > products.id, not null, note: 'FK — RESTRICT']
+  rack_id bigint [ref: > racks.id, not null, note: 'FK — RESTRICT']
+  quantity int [default: 0, note: 'Stok saat ini']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  indexes {
+    (product_id, rack_id) [unique, name: 'uq_product_rack']
+    product_id [name: 'idx_stocks_product_id']
+    rack_id [name: 'idx_stocks_rack_id']
+  }
+}
+
+// ─── 📤 OUTBOUND — Barang Keluar ───────────────────────────
+
+Table shipments {
+  id bigint [pk, increment]
+  partner_name varchar(255) [not null, note: 'Nama mitra / client, e.g. PT Maju Jaya']
+  shipment_date date [not null, note: 'Tanggal pengiriman']
+  status enum('draft','shipped','completed') [default: 'draft', note: 'draft → shipped → completed']
+  notes text [note: 'Catatan']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  indexes {
+    status [name: 'idx_shipments_status']
+  }
+}
+
+Table shipment_items {
+  id bigint [pk, increment]
+  shipment_id bigint [ref: > shipments.id, not null, note: 'FK — CASCADE delete']
+  product_id bigint [ref: > products.id, not null, note: 'FK — RESTRICT']
+  rack_id bigint [ref: > racks.id, not null, note: 'FK — RESTRICT']
+  quantity int [default: 0, note: 'Qty yang dikirim']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  indexes {
+    shipment_id [name: 'idx_si_shipment_id']
+    product_id [name: 'idx_si_product_id']
+  }
+}
+
+// ─── 🔧 SYSTEM ─────────────────────────────────────────────
+
+Table users {
+  id bigint [pk, increment]
+  name varchar(255) [not null]
+  email varchar(255) [unique, not null]
+  email_verified_at timestamp
+  password varchar(255) [not null]
+  remember_token varchar(100)
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+Table import_logs {
+  id bigint [pk, increment]
+  user_id bigint [ref: > users.id, not null, note: 'FK — CASCADE delete']
+  model_type varchar(255) [not null, note: 'Model target import']
+  file_name varchar(255) [not null]
+  file_format varchar(255) [not null]
+  status varchar(255) [default: 'pending', note: 'pending / processing / completed / failed']
+  column_mapping json [note: 'Mapping kolom Excel ke field DB']
+  total_rows int [default: 0]
+  processed_rows int [default: 0]
+  skipped_rows int [default: 0]
+  errors json [note: 'Detail error jika gagal']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+Table menus {
+  id bigint [pk, increment]
+  name varchar(255) [not null, note: 'Nama menu']
+  icon varchar(255) [note: 'Nama komponen icon']
+  path varchar(255) [note: 'URL path']
+  parent_id bigint [ref: > menus.id, note: 'FK self-reference untuk sub-menu (CASCADE delete)']
+  sort_order int [default: 0]
+  permission_name varchar(255) [note: 'Spatie permission yang dibutuhkan']
+  group varchar(255) [default: 'main', note: 'main / others']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+// ════════════════════════════════════════════════════════════
+// TABLE GROUPING (TableGroup hanya di dbdiagram.io versi PRO)
+// Kalau pakai PRO, uncomment block di bawah ini.
+// ════════════════════════════════════════════════════════════
+
+// TableGroup "📦 Master Data" {
+//   suppliers
+//   supplier_addresses
+//   vehicle_models
+//   product_categories
+//   products
+//   racks
+// }
+//
+// TableGroup "📥 Inbound — Barang Masuk" {
+//   cycles
+//   cycle_items
+// }
+//
+// TableGroup "📊 Inventory — Stok Gudang" {
+//   stocks
+// }
+//
+// TableGroup "📤 Outbound — Barang Keluar" {
+//   shipments
+//   shipment_items
+// }
+//
+// TableGroup "🔧 System" {
+//   users
+//   import_logs
+//   menus
+// }
+
+// ════════════════════════════════════════════════════════════
+// FLOW BISNIS
+// ════════════════════════════════════════════════════════════
+//
+// INBOUND:  suppliers → cycles → cycle_items → stocks (qty++)
+// OUTBOUND: shipments → shipment_items → stocks (qty-- validated)
+//
+// LIFECYCLE:
+//   Cycle:    draft → receiving → completed
+//   Shipment: draft → shipped → completed
+//
+// DELETE RULES:
+//   CASCADE:  supplier_addresses, cycle_items, shipment_items
+//   RESTRICT: products, cycles (supplier_id), stocks
+// ════════════════════════════════════════════════════════════

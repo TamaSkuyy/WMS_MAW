@@ -15,13 +15,13 @@ err() { echo -e "${RED}[error]${NC} $*"; }
 usage() {
   cat <<'EOF'
 Usage:
-  ./scripts/dev-local.sh [--init] [--no-infra] [--with-reverb] [--with-queue]
-  ./scripts/dev-local.sh --stop
-  ./scripts/dev-local.sh artisan [args...]
-  ./scripts/dev-local.sh php [args...]
-  ./scripts/dev-local.sh mysql [args...]
-  ./scripts/dev-local.sh composer [args...]
-  ./scripts/dev-local.sh npm [args...]
+  ./dev-local.sh [--init] [--no-infra] [--with-reverb] [--with-queue]
+  ./dev-local.sh --stop
+  ./dev-local.sh artisan [args...]
+  ./dev-local.sh php [args...]
+  ./dev-local.sh mysql [args...]
+  ./dev-local.sh composer [args...]
+  ./dev-local.sh npm [args...]
 
 Options:
   --init      Install deps & run initial Laravel setup (composer, npm, key, migrate, storage:link)
@@ -108,7 +108,7 @@ resolve_php_bin() {
 
 if ! PHP_CMD="$(resolve_php_bin)"; then
   err "PHP binary tidak ditemukan di shell non-interaktif."
-  err "Set PATH global atau jalankan: PHP_BIN=php84 ./scripts/dev-local.sh"
+  err "Set PATH global atau jalankan: PHP_BIN=php84 ./dev-local.sh"
   exit 1
 fi
 

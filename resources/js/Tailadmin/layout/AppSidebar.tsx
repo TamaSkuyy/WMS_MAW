@@ -67,8 +67,6 @@ const AppSidebar: React.FC = () => {
     if (!submenuMatched) {
       setOpenSubmenu(null);
     }
-    // We only want this to run when the URL changes (page navigation) 
-    // or when the menus are first loaded from the database.
   }, [url, dbMenus]);
 
   useEffect(() => {

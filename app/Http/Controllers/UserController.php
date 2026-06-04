@@ -3,6 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\ImportExport\DTOs\ExportConfig;
+use App\Services\ImportExport\Enums\ExportFormat;
+use App\Services\ImportExport\Exports\UserExporter;
+use App\Services\ImportExport\Imports\UserImporter;
+use App\Services\ImportExport\Managers\ExportManager;
+use App\Services\ImportExport\Managers\ImportManager;
+use App\Services\ImportExport\Models\ImportLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -81,5 +88,76 @@ class UserController extends Controller
         $user->delete();
 
         return redirect()->route('users.index')->with('success', 'User deleted successfully.');
+    }
+
+    public function importPreview(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+        ]);
+
+        $manager = app(ImportManager::class);
+        $result = $manager->preview(new UserImporter(), $request->file('file'));
+
+        return response()->json($result);
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+            'column_mapping' => 'required|array',
+        ]);
+
+        $manager = app(ImportManager::class);
+        $importLog = $manager->start(
+            new UserImporter(),
+            $request->file('file'),
+            $request->input('column_mapping'),
+            Auth::id(),
+        );
+
+        return response()->json([
+            'import_log_id' => $importLog->id,
+            'status' => $importLog->status,
+        ]);
+    }
+
+    public function export(Request $request)
+    {
+        if (!Auth::user()?->hasRole('admin')) {
+            abort(403, 'Only administrators can export user data.');
+        }
+
+        $format = ExportFormat::from($request->query('format', 'xlsx'));
+
+        $exporter = new UserExporter();
+
+        $config = new ExportConfig(
+            format: $format,
+            fileName: 'users-export-' . now()->format('Y-m-d-His'),
+            headings: $exporter->headings(),
+            columns: ['name', 'email', 'role', 'created_at'],
+            exportableClass: UserExporter::class,
+        );
+
+        $manager = app(ExportManager::class);
+        return $manager->download($exporter, $config);
+    }
+
+    public function importStatus(ImportLog $importLog)
+    {
+        if ($importLog->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        return response()->json([
+            'id' => $importLog->id,
+            'status' => $importLog->status,
+            'total_rows' => $importLog->total_rows,
+            'processed_rows' => $importLog->processed_rows,
+            'skipped_rows' => $importLog->skipped_rows,
+            'errors' => $importLog->errors,
+        ]);
     }
 }

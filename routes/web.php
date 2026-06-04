@@ -1,11 +1,17 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\MenuController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\RoleController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PermissionController;
-use Illuminate\Foundation\Application;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\CycleController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\RackController;
+use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\ShipmentController;
+use App\Http\Controllers\UserController;
+use App\Notifications\TestRealtimeNotification;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -24,18 +30,34 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('menus', MenuController::class);
     Route::resource('users', UserController::class);
+    Route::post('users/import/preview', [UserController::class, 'importPreview'])->name('users.import.preview');
+    Route::post('users/import', [UserController::class, 'import'])->name('users.import');
+    Route::get('users/export', [UserController::class, 'export'])->name('users.export');
+    Route::get('import-status/{importLog}', [UserController::class, 'importStatus'])->name('import.status');
+
     Route::resource('roles', RoleController::class);
     Route::resource('permissions', PermissionController::class);
+    Route::resource('suppliers', SupplierController::class);
+    Route::resource('products', ProductController::class);
 
-    Route::post('/notifications/mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.markAllRead');
-    Route::post('/notifications/{id}/mark-read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.markRead');
+    // Transaction routes
+    Route::resource('racks', RackController::class);
+    Route::resource('cycles', CycleController::class);
+    Route::post('cycles/{cycle}/receive', [CycleController::class, 'receive'])->name('cycles.receive');
+
+    Route::resource('shipments', ShipmentController::class);
+    Route::post('shipments/{shipment}/ship', [ShipmentController::class, 'ship'])->name('shipments.ship');
+
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAllRead');
+    Route::post('/notifications/{id}/mark-read', [NotificationController::class, 'markAsRead'])->name('notifications.markRead');
 
     Route::get('/test-broadcast', function () {
         $user = auth()->user();
-        if (!$user) {
+        if (! $user) {
             return 'Anda harus login dulu untuk mencoba test ini!';
         }
-        $user->notify(new \App\Notifications\TestRealtimeNotification());
+        $user->notify(new TestRealtimeNotification);
+
         return 'Notifikasi realtime telah dikirim!';
     });
 });

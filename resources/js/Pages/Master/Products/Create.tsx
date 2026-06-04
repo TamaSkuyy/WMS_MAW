@@ -1,0 +1,120 @@
+import React from 'react';
+import AppLayout from '../../../Tailadmin/layout/AppLayout';
+import { Head, useForm } from '@inertiajs/react';
+import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
+import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
+import Button from '../../../Tailadmin/components/ui/button/Button';
+import Input from '../../../Tailadmin/components/form/input/InputField';
+import Label from '../../../Tailadmin/components/form/Label';
+import SearchableSelect from '../../../Tailadmin/components/form/select/SearchableSelect';
+
+export default function Create({ vehicleModels, categories, suppliers }: any) {
+    const { data, setData, post, errors } = useForm({
+        part_number: '',
+        name: '',
+        vehicle_model_id: '',
+        supplier_id: '',
+        category_id: '',
+        unit: 'pcs',
+        description: '',
+        base_price: '',
+        is_active: true,
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        post(route('products.store'));
+    };
+
+    return (
+        <AppLayout>
+            <Head title="Add Product" />
+            <PageBreadcrumb pageTitle="Add Product" />
+
+            <ComponentCard title="New Product">
+                <form onSubmit={handleSubmit} className="space-y-4 max-w-2xl">
+                    <div>
+                        <Label>Part Number *</Label>
+                        <Input type="text" value={data.part_number} onChange={(e) => setData('part_number', e.target.value)} placeholder="e.g. P5188-0KA03" />
+                        {errors.part_number && <p className="mt-1 text-sm text-red-500">{errors.part_number}</p>}
+                    </div>
+                    <div>
+                        <Label>Part Name *</Label>
+                        <Input type="text" value={data.name} onChange={(e) => setData('name', e.target.value)} placeholder="e.g. Grade Emblem (VRZ)" />
+                        {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <Label>Vehicle Model *</Label>
+                            <SearchableSelect
+                                options={vehicleModels.map((m: any) => ({ value: m.id, label: `${m.name} (${m.brand})` }))}
+                                value={data.vehicle_model_id}
+                                onChange={(value) => setData('vehicle_model_id', value as string)}
+                            />
+                            {errors.vehicle_model_id && <p className="mt-1 text-sm text-red-500">{errors.vehicle_model_id}</p>}
+                        </div>
+                        <div>
+                            <Label>Supplier *</Label>
+                            <SearchableSelect
+                                options={suppliers.map((s: any) => ({ value: s.id, label: s.name }))}
+                                value={data.supplier_id}
+                                onChange={(value) => setData('supplier_id', value as string)}
+                            />
+                            {errors.supplier_id && <p className="mt-1 text-sm text-red-500">{errors.supplier_id}</p>}
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <Label>Category *</Label>
+                            <SearchableSelect
+                                options={categories.map((c: any) => ({ value: c.id, label: c.name }))}
+                                value={data.category_id}
+                                onChange={(value) => setData('category_id', value as string)}
+                            />
+                            {errors.category_id && <p className="mt-1 text-sm text-red-500">{errors.category_id}</p>}
+                        </div>
+                        <div>
+                            <Label>Unit *</Label>
+                            <SearchableSelect
+                                options={[
+                                    { value: 'pcs', label: 'Pcs' },
+                                    { value: 'set', label: 'Set' },
+                                    { value: 'box', label: 'Box' },
+                                    { value: 'unit', label: 'Unit' },
+                                ]}
+                                value={data.unit}
+                                onChange={(value) => setData('unit', value as string)}
+                            />
+                            {errors.unit && <p className="mt-1 text-sm text-red-500">{errors.unit}</p>}
+                        </div>
+                    </div>
+
+                    <div>
+                        <Label>Base Price (Rp)</Label>
+                        <Input type="number" value={data.base_price} onChange={(e) => setData('base_price', e.target.value)} placeholder="e.g. 150000" />
+                        {errors.base_price && <p className="mt-1 text-sm text-red-500">{errors.base_price}</p>}
+                    </div>
+
+                    <div>
+                        <Label>Description</Label>
+                        <textarea
+                            value={data.description}
+                            onChange={(e) => setData('description', e.target.value)}
+                            rows={3}
+                            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-gray-800 px-3 py-2 text-sm"
+                            placeholder="Additional notes..."
+                        />
+                        {errors.description && <p className="mt-1 text-sm text-red-500">{errors.description}</p>}
+                    </div>
+
+                    <div className="flex gap-2">
+                        <Button type="submit">Save Product</Button>
+                        <Button type="button" variant="outline" onClick={() => window.history.back()}>Cancel</Button>
+                    </div>
+                </form>
+            </ComponentCard>
+        </AppLayout>
+    );
+}

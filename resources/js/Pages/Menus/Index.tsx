@@ -109,8 +109,10 @@ export default function Index({ menuItems, permissions, parentMenus }: any) {
                                 <Label>Group</Label>
                                 <SearchableSelect
                                     options={[
-                                        { value: 'main', label: 'Main Menu' },
-                                        { value: 'others', label: 'Others' }
+                                        { value: 'main', label: 'Main Navigation' },
+                                        { value: 'master', label: 'Master Data' },
+                                        { value: 'transaction', label: 'Transactions' },
+                                        { value: 'settings', label: 'Settings' },
                                     ]}
                                     value={data.group}
                                     onChange={(value) => setData('group', value as string)}
