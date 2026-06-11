@@ -7,17 +7,17 @@ import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 export default function Index({ stocks }: any) {
     return (
         <AppLayout>
-            <Head title="Stock Inventory" />
-            <PageBreadcrumb pageTitle="Stock Inventory" />
-            <ComponentCard title="Current Stock">
+            <Head title="Inventori Stok" />
+            <PageBreadcrumb pageTitle="Inventori Stok" />
+            <ComponentCard title="Stok Saat Ini">
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead className="bg-gray-50 dark:bg-gray-800">
                             <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Part #</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rack</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Zone</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Produk</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Part Number</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rak</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Zona</th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Supplier</th>
                             </tr>
@@ -38,20 +38,20 @@ export default function Index({ stocks }: any) {
                                 </tr>
                             ))}
                             {stocks.data.length === 0 && (
-                                <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-500">No stock yet.</td></tr>
+                                <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-500">Belum ada stok.</td></tr>
                             )}
                         </tbody>
                     </table>
                 </div>
                 {stocks.total > stocks.per_page && (
                     <div className="mt-4 flex justify-between items-center">
-                        <div className="text-sm text-gray-500">Showing {stocks.from || 0} to {stocks.to || 0} of {stocks.total}</div>
+                        <div className="text-sm text-gray-500">Menampilkan {stocks.from || 0} sampai {stocks.to || 0} dari {stocks.total}</div>
                         <div className="flex gap-2">
-                            {stocks.prev_page_url ? <Link href={stocks.prev_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Prev</Link>
-                                : <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Prev</span>}
-                            <span className="px-3 py-1 text-sm">Page {stocks.current_page} of {stocks.last_page}</span>
-                            {stocks.next_page_url ? <Link href={stocks.next_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Next</Link>
-                                : <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Next</span>}
+                            {stocks.prev_page_url ? <Link href={stocks.prev_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Sebelumnya</Link>
+                                : <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Sebelumnya</span>}
+                            <span className="px-3 py-1 text-sm">Halaman {stocks.current_page} dari {stocks.last_page}</span>
+                            {stocks.next_page_url ? <Link href={stocks.next_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Berikutnya</Link>
+                                : <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Berikutnya</span>}
                         </div>
                     </div>
                 )}

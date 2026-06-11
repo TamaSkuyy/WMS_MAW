@@ -9,7 +9,7 @@ import SearchableSelect from '../../../Tailadmin/components/form/select/Searchab
 
 export default function Index({ shipments, filters }: any) {
     const handleDelete = (id: number) => {
-        if (confirm('Delete this shipment?')) {
+        if (confirm('Hapus shipment ini?')) {
             router.delete(route('shipments.destroy', id));
         }
     };
@@ -22,16 +22,16 @@ export default function Index({ shipments, filters }: any) {
 
     return (
         <AppLayout>
-            <Head title="Shipments" />
-            <PageBreadcrumb pageTitle="Shipments" />
-            <ComponentCard title="Shipment List">
+            <Head title="Shipment" />
+            <PageBreadcrumb pageTitle="Shipment" />
+            <ComponentCard title="Daftar Shipment">
                 <div className="mb-4 flex gap-3 flex-wrap items-end">
                     <div className="min-w-[200px]">
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Search Partner</label>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Cari Mitra</label>
                         <Input
                             type="text"
                             defaultValue={filters?.search || ''}
-                            placeholder="Partner name..."
+                            placeholder="Nama mitra..."
                             onChange={(e) => router.get(route('shipments.index'), { ...filters, search: e.target.value }, { preserveState: true, replace: true })}
                         />
                     </div>
@@ -39,9 +39,9 @@ export default function Index({ shipments, filters }: any) {
                         <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
                         <SearchableSelect
                             options={[
-                                { value: '', label: 'All' },
+                                { value: '', label: 'Semua' },
                                 { value: 'draft', label: 'Draft' },
-                                { value: 'shipped', label: 'Shipped' },
+                                { value: 'shipped', label: 'Dikirim' },
                                 { value: 'completed', label: 'Completed' },
                             ]}
                             value={filters?.status || ''}
@@ -50,17 +50,17 @@ export default function Index({ shipments, filters }: any) {
                     </div>
                 </div>
                 <div className="mb-3">
-                    <Link href={route('shipments.create')}><Button>New Shipment</Button></Link>
+                    <Link href={route('shipments.create')}><Button>Shipment Baru</Button></Link>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead className="bg-gray-50 dark:bg-gray-800">
                             <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Partner</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mitra / Nama Mitra</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal / Tanggal Kirim</th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Items</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
@@ -73,34 +73,34 @@ export default function Index({ shipments, filters }: any) {
                                     </td>
                                     <td className="px-4 py-3 whitespace-nowrap text-sm">{s.items_count}</td>
                                     <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
-                                        <Link href={route('shipments.show', s.id)} className="text-brand-500 hover:text-brand-700 mr-2">View</Link>
+                                        <Link href={route('shipments.show', s.id)} className="text-brand-500 hover:text-brand-700 mr-2">Lihat</Link>
                                         {s.status === 'draft' && (
                                             <><Link href={route('shipments.edit', s.id)} className="text-brand-500 hover:text-brand-700 mr-2">Edit</Link>
-                                            <button onClick={() => handleDelete(s.id)} className="text-red-500 hover:text-red-700">Delete</button></>
+                                            <button onClick={() => handleDelete(s.id)} className="text-red-500 hover:text-red-700">Hapus</button></>
                                         )}
                                     </td>
                                 </tr>
                             ))}
                             {shipments.data.length === 0 && (
-                                <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-500">No shipments.</td></tr>
+                                <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-500">Tidak ada shipment.</td></tr>
                             )}
                         </tbody>
                     </table>
                 </div>
                 {shipments.total > shipments.per_page && (
                     <div className="mt-4 flex justify-between items-center">
-                        <div className="text-sm text-gray-500">Showing {shipments.from || 0} to {shipments.to || 0} of {shipments.total}</div>
+                        <div className="text-sm text-gray-500">Menampilkan {shipments.from || 0} sampai {shipments.to || 0} dari {shipments.total}</div>
                         <div className="flex gap-2">
                             {shipments.prev_page_url ? (
-                                <Link href={shipments.prev_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Prev</Link>
+                                <Link href={shipments.prev_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Sebelumnya</Link>
                             ) : (
-                                <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Prev</span>
+                                <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Sebelumnya</span>
                             )}
-                            <span className="px-3 py-1 text-sm">Page {shipments.current_page} of {shipments.last_page}</span>
+                            <span className="px-3 py-1 text-sm">Halaman {shipments.current_page} dari {shipments.last_page}</span>
                             {shipments.next_page_url ? (
-                                <Link href={shipments.next_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Next</Link>
+                                <Link href={shipments.next_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Berikutnya</Link>
                             ) : (
-                                <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Next</span>
+                                <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Berikutnya</span>
                             )}
                         </div>
                     </div>

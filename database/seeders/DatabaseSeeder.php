@@ -16,16 +16,11 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            SupplierSeeder::class,
-            ProductSeeder::class,
-            RackSeeder::class,
-        ]);
-
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            RoleAndMenuSeeder::class,     // Roles, permissions, admin user
+            MenuSeeder::class,            // Sidebar navigation menus
+            SupplierSeeder::class,        // 10 sample suppliers
+            ProductSeeder::class,         // 5 models, 5 categories, 20 products
+            RackSeeder::class,            // 5 sample racks
         ]);
     }
 }

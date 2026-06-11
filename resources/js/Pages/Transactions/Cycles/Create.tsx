@@ -22,7 +22,7 @@ export default function Create({ suppliers, products }: any) {
     const addItem = () => {
         if (!selectedProduct || selectedQty < 1) return;
         if (data.items.find((i: any) => i.product_id === selectedProduct)) {
-            alert('Product already added.');
+            alert('Produk sudah ditambah.');
             return;
         }
         setData('items', [...data.items, { product_id: selectedProduct, quantity: selectedQty }]);
@@ -41,11 +41,11 @@ export default function Create({ suppliers, products }: any) {
 
     return (
         <AppLayout>
-            <Head title="New Cycle" />
-            <PageBreadcrumb pageTitle="New Cycle" />
+            <Head title="Cycle Baru" />
+            <PageBreadcrumb pageTitle="Cycle Baru" />
             <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-                    <ComponentCard title="Cycle Info">
+                    <ComponentCard title="Info Cycle">
                         <div className="space-y-4">
                             <div>
                                 <Label>Supplier *</Label>
@@ -54,20 +54,20 @@ export default function Create({ suppliers, products }: any) {
                             </div>
                             <div>
                                 <Label>Cycle Number *</Label>
-                                <Input type="number" value={data.cycle_number} onChange={(e) => setData('cycle_number', e.target.value)} placeholder="e.g. 1" />
+                                <Input type="number" value={data.cycle_number} onChange={(e) => setData('cycle_number', e.target.value)} placeholder="contoh: 1" />
                                 {errors.cycle_number && <p className="mt-1 text-sm text-red-500">{errors.cycle_number}</p>}
                             </div>
                             <div>
-                                <Label>Notes</Label>
+                                <Label>Catatan</Label>
                                 <textarea value={data.notes} onChange={(e) => setData('notes', e.target.value)} rows={2} className="w-full rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-gray-800 px-3 py-2 text-sm" />
                             </div>
                         </div>
                     </ComponentCard>
 
-                    <ComponentCard title="Add Items">
+                    <ComponentCard title="Tambah Item">
                         <div className="flex gap-2 items-end mb-4">
                             <div className="flex-1">
-                                <Label>Product</Label>
+                                <Label>Produk</Label>
                                 <SearchableSelect
                                     options={products.map((p: any) => ({ value: p.id, label: `${p.part_number} - ${p.name}` }))}
                                     value={selectedProduct}
@@ -78,7 +78,7 @@ export default function Create({ suppliers, products }: any) {
                                 <Label>Qty</Label>
                                 <Input type="number" value={selectedQty} onChange={(e) => setSelectedQty(parseInt(e.target.value) || 0)} min={1} />
                             </div>
-                            <Button type="button" onClick={addItem}>Add</Button>
+                            <Button type="button" onClick={addItem}>Tambah</Button>
                         </div>
                         {errors.items && <p className="mt-1 text-sm text-red-500">{errors.items}</p>}
 
@@ -86,8 +86,8 @@ export default function Create({ suppliers, products }: any) {
                             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 mt-3">
                                 <thead className="bg-gray-50 dark:bg-gray-800">
                                     <tr>
-                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Part Number</th>
-                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Part Number / Nama Part</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Nama Part</th>
                                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
                                         <th className="px-3 py-2"></th>
                                     </tr>
@@ -110,8 +110,8 @@ export default function Create({ suppliers, products }: any) {
                     </ComponentCard>
                 </div>
                 <div className="mt-4 flex gap-2">
-                    <Button type="submit" disabled={data.items.length === 0}>Save Cycle</Button>
-                    <Button type="button" variant="outline" onClick={() => window.history.back()}>Cancel</Button>
+                    <Button type="submit" disabled={data.items.length === 0}>Simpan Cycle</Button>
+                    <Button type="button" variant="outline" onClick={() => window.history.back()}>Batal</Button>
                 </div>
             </form>
         </AppLayout>

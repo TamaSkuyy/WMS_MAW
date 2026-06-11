@@ -1,45 +1,35 @@
-FROM php:8.2-cli
+FROM dunglas/frankenphp:8.2-php
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    zip \
-    unzip \
-    supervisor \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd sockets
-
-# Install Redis extension
-RUN pecl install redis && docker-php-ext-enable redis
+# Install additional PHP extensions
+RUN install-php-extensions \
+    pdo_mysql \
+    mbstring \
+    exif \
+    pcntl \
+    bcmath \
+    gd \
+    sockets \
+    redis \
+    intl \
+    zip
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# Create user sail (matches script)
-RUN groupadd -g 1000 sail && useradd -u 1000 -ms /bin/bash -g sail sail
 
 WORKDIR /var/www/html
 
 # Copy application files
 COPY . .
 
-# Set permissions
-RUN chown -R sail:sail /var/www/html
-
-USER sail
-
+# Install dependencies (no dev)
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Install FrankenPHP Binary via Octane
-RUN php artisan octane:install --server=frankenphp
+# Create storage symlink for public access
+RUN php artisan storage:link || true
+
+# Optimize Laravel
+RUN php artisan optimize || true
 
 EXPOSE 8080
 
-CMD ["php", "artisan", "octane:start", "--server=frankenphp", "--host=0.0.0.0", "--port=8080"]
+CMD ["php", "artisan", "octane:start", "--server=frankenphp", "--host=0.0.0.0", "--port=8080", "--workers=4", "--max-requests=500"]

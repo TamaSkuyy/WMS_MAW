@@ -28,25 +28,25 @@ export default function Create({ vehicleModels, categories, suppliers }: any) {
 
     return (
         <AppLayout>
-            <Head title="Add Product" />
-            <PageBreadcrumb pageTitle="Add Product" />
+            <Head title="Tambah Produk" />
+            <PageBreadcrumb pageTitle="Tambah Produk" />
 
-            <ComponentCard title="New Product">
+            <ComponentCard title="Produk Baru">
                 <form onSubmit={handleSubmit} className="space-y-4 max-w-2xl">
                     <div>
                         <Label>Part Number *</Label>
-                        <Input type="text" value={data.part_number} onChange={(e) => setData('part_number', e.target.value)} placeholder="e.g. P5188-0KA03" />
+                        <Input type="text" value={data.part_number} onChange={(e) => setData('part_number', e.target.value)} placeholder="contoh: P5188-0KA03" />
                         {errors.part_number && <p className="mt-1 text-sm text-red-500">{errors.part_number}</p>}
                     </div>
                     <div>
-                        <Label>Part Name *</Label>
-                        <Input type="text" value={data.name} onChange={(e) => setData('name', e.target.value)} placeholder="e.g. Grade Emblem (VRZ)" />
+                        <Label>Nama Part *</Label>
+                        <Input type="text" value={data.name} onChange={(e) => setData('name', e.target.value)} placeholder="contoh: Grade Emblem (VRZ)" />
                         {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <Label>Vehicle Model *</Label>
+                            <Label>Model Kendaraan *</Label>
                             <SearchableSelect
                                 options={vehicleModels.map((m: any) => ({ value: m.id, label: `${m.name} (${m.brand})` }))}
                                 value={data.vehicle_model_id}
@@ -67,7 +67,7 @@ export default function Create({ vehicleModels, categories, suppliers }: any) {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <Label>Category *</Label>
+                            <Label>Kategori *</Label>
                             <SearchableSelect
                                 options={categories.map((c: any) => ({ value: c.id, label: c.name }))}
                                 value={data.category_id}
@@ -76,7 +76,7 @@ export default function Create({ vehicleModels, categories, suppliers }: any) {
                             {errors.category_id && <p className="mt-1 text-sm text-red-500">{errors.category_id}</p>}
                         </div>
                         <div>
-                            <Label>Unit *</Label>
+                            <Label>Satuan *</Label>
                             <SearchableSelect
                                 options={[
                                     { value: 'pcs', label: 'Pcs' },
@@ -92,26 +92,26 @@ export default function Create({ vehicleModels, categories, suppliers }: any) {
                     </div>
 
                     <div>
-                        <Label>Base Price (Rp)</Label>
-                        <Input type="number" value={data.base_price} onChange={(e) => setData('base_price', e.target.value)} placeholder="e.g. 150000" />
+                        <Label>Harga Dasar (Rp)</Label>
+                        <Input type="number" value={data.base_price} onChange={(e) => setData('base_price', e.target.value)} placeholder="contoh: 150000" />
                         {errors.base_price && <p className="mt-1 text-sm text-red-500">{errors.base_price}</p>}
                     </div>
 
                     <div>
-                        <Label>Description</Label>
+                        <Label>Deskripsi</Label>
                         <textarea
                             value={data.description}
                             onChange={(e) => setData('description', e.target.value)}
                             rows={3}
                             className="w-full rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-gray-800 px-3 py-2 text-sm"
-                            placeholder="Additional notes..."
+                            placeholder="Catatan tambahan..."
                         />
                         {errors.description && <p className="mt-1 text-sm text-red-500">{errors.description}</p>}
                     </div>
 
                     <div className="flex gap-2">
-                        <Button type="submit">Save Product</Button>
-                        <Button type="button" variant="outline" onClick={() => window.history.back()}>Cancel</Button>
+                        <Button type="submit">Simpan Produk</Button>
+                        <Button type="button" variant="outline" onClick={() => window.history.back()}>Batal</Button>
                     </div>
                 </form>
             </ComponentCard>

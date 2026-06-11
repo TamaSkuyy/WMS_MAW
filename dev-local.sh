@@ -305,7 +305,7 @@ cleanup() {
 trap cleanup INT TERM EXIT
 
 log "Starting Laravel (Octane/FrankenPHP) on http://localhost:${APP_PORT} ..."
-"${PHP_CMD}" artisan octane:start --server=frankenphp --host=0.0.0.0 --port="${APP_PORT}" --watch &
+"${PHP_CMD}" artisan octane:start --server=frankenphp --host=0.0.0.0 --port="${APP_PORT}" --workers=2 --max-requests=500 --watch &
 ARTISAN_PID=$!
 
 log "Starting Vite on http://localhost:${VITE_PORT} ..."

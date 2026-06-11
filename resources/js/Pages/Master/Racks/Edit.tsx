@@ -17,23 +17,23 @@ export default function Edit({ rack }: any) {
 
     return (
         <AppLayout>
-            <Head title={`Edit Rack - ${rack.code}`} />
+            <Head title={`Edit Rak - ${rack.code}`} />
             <PageBreadcrumb pageTitle={`Edit: ${rack.code}`} />
-            <ComponentCard title="Edit Rack">
+            <ComponentCard title="Edit Rak">
                 <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
                     <div>
-                        <Label>Code *</Label>
+                        <Label>Kode *</Label>
                         <Input type="text" value={data.code} onChange={(e) => setData('code', e.target.value)} />
                         {errors.code && <p className="mt-1 text-sm text-red-500">{errors.code}</p>}
                     </div>
                     <div>
-                        <Label>Zone *</Label>
+                        <Label>Zona *</Label>
                         <Input type="text" value={data.zone} onChange={(e) => setData('zone', e.target.value)} />
                         {errors.zone && <p className="mt-1 text-sm text-red-500">{errors.zone}</p>}
                     </div>
                     <div className="flex gap-2">
                         <Button type="submit">Update</Button>
-                        <Button type="button" variant="outline" onClick={() => window.history.back()}>Cancel</Button>
+                        <Button type="button" variant="outline" onClick={() => window.history.back()}>Batal</Button>
                     </div>
                 </form>
             </ComponentCard>

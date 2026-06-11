@@ -28,10 +28,10 @@ export default function Edit({ product, vehicleModels, categories, suppliers }: 
 
     return (
         <AppLayout>
-            <Head title={`Edit Product - ${product.part_number}`} />
+            <Head title={`Edit Produk - ${product.part_number}`} />
             <PageBreadcrumb pageTitle={`Edit: ${product.part_number}`} />
 
-            <ComponentCard title="Edit Product">
+            <ComponentCard title="Edit Produk">
                 <form onSubmit={handleSubmit} className="space-y-4 max-w-2xl">
                     <div>
                         <Label>Part Number *</Label>
@@ -39,14 +39,14 @@ export default function Edit({ product, vehicleModels, categories, suppliers }: 
                         {errors.part_number && <p className="mt-1 text-sm text-red-500">{errors.part_number}</p>}
                     </div>
                     <div>
-                        <Label>Part Name *</Label>
+                        <Label>Nama Part *</Label>
                         <Input type="text" value={data.name} onChange={(e) => setData('name', e.target.value)} />
                         {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <Label>Vehicle Model *</Label>
+                            <Label>Model Kendaraan *</Label>
                             <SearchableSelect
                                 options={vehicleModels.map((m: any) => ({ value: m.id, label: `${m.name} (${m.brand})` }))}
                                 value={data.vehicle_model_id}
@@ -67,7 +67,7 @@ export default function Edit({ product, vehicleModels, categories, suppliers }: 
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <Label>Category *</Label>
+                            <Label>Kategori *</Label>
                             <SearchableSelect
                                 options={categories.map((c: any) => ({ value: c.id, label: c.name }))}
                                 value={data.category_id}
@@ -76,7 +76,7 @@ export default function Edit({ product, vehicleModels, categories, suppliers }: 
                             {errors.category_id && <p className="mt-1 text-sm text-red-500">{errors.category_id}</p>}
                         </div>
                         <div>
-                            <Label>Unit *</Label>
+                            <Label>Satuan *</Label>
                             <SearchableSelect
                                 options={[
                                     { value: 'pcs', label: 'Pcs' },
@@ -92,13 +92,13 @@ export default function Edit({ product, vehicleModels, categories, suppliers }: 
                     </div>
 
                     <div>
-                        <Label>Base Price (Rp)</Label>
+                        <Label>Harga Dasar (Rp)</Label>
                         <Input type="number" value={data.base_price} onChange={(e) => setData('base_price', e.target.value)} />
                         {errors.base_price && <p className="mt-1 text-sm text-red-500">{errors.base_price}</p>}
                     </div>
 
                     <div>
-                        <Label>Description</Label>
+                        <Label>Deskripsi</Label>
                         <textarea
                             value={data.description}
                             onChange={(e) => setData('description', e.target.value)}
@@ -109,8 +109,8 @@ export default function Edit({ product, vehicleModels, categories, suppliers }: 
                     </div>
 
                     <div className="flex gap-2">
-                        <Button type="submit">Update Product</Button>
-                        <Button type="button" variant="outline" onClick={() => window.history.back()}>Cancel</Button>
+                        <Button type="submit">Update Produk</Button>
+                        <Button type="button" variant="outline" onClick={() => window.history.back()}>Batal</Button>
                     </div>
                 </form>
             </ComponentCard>

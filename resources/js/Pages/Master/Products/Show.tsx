@@ -8,47 +8,47 @@ import Button from '../../../Tailadmin/components/ui/button/Button';
 export default function Show({ product }: any) {
     return (
         <AppLayout>
-            <Head title={`Product - ${product.part_number}`} />
+            <Head title={`Produk - ${product.part_number}`} />
             <PageBreadcrumb pageTitle={product.part_number} />
 
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-                <ComponentCard title="Product Information">
+                <ComponentCard title="Informasi Produk">
                     <dl className="space-y-3">
                         <div>
                             <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Part Number</dt>
                             <dd className="text-sm font-mono">{product.part_number}</dd>
                         </div>
                         <div>
-                            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Name</dt>
+                            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Nama</dt>
                             <dd className="text-sm">{product.name}</dd>
                         </div>
                         <div>
-                            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Vehicle Model</dt>
+                            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Model Kendaraan</dt>
                             <dd className="text-sm">{product.vehicle_model ? `${product.vehicle_model.name} (${product.vehicle_model.brand})` : '-'}</dd>
                         </div>
                         <div>
-                            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Category</dt>
+                            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Kategori</dt>
                             <dd className="text-sm">{product.category?.name || '-'}</dd>
                         </div>
                         <div>
-                            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Unit</dt>
+                            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Satuan</dt>
                             <dd className="text-sm">{product.unit}</dd>
                         </div>
                         <div>
-                            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Base Price</dt>
+                            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Harga Dasar</dt>
                             <dd className="text-sm">{product.base_price ? `Rp ${Number(product.base_price).toLocaleString('id-ID')}` : '-'}</dd>
                         </div>
                         <div>
                             <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Status</dt>
                             <dd className="text-sm">
                                 <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${product.is_active ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
-                                    {product.is_active ? 'Active' : 'Inactive'}
+                                    {product.is_active ? 'Aktif' : 'Nonaktif'}
                                 </span>
                             </dd>
                         </div>
                         {product.description && (
                             <div>
-                                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Description</dt>
+                                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Deskripsi</dt>
                                 <dd className="text-sm">{product.description}</dd>
                             </div>
                         )}
@@ -59,16 +59,16 @@ export default function Show({ product }: any) {
                             <Button>Edit</Button>
                         </Link>
                         <Link href={route('products.index')}>
-                            <Button variant="outline">Back to List</Button>
+                            <Button variant="outline">Kembali</Button>
                         </Link>
                     </div>
                 </ComponentCard>
 
-                <ComponentCard title="Supplier Information">
+                <ComponentCard title="Informasi Supplier">
                     {product.supplier ? (
                         <dl className="space-y-3">
                             <div>
-                                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Supplier Name</dt>
+                                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Nama Supplier</dt>
                                 <dd className="text-sm">
                                     <Link href={route('suppliers.show', product.supplier.id)} className="text-brand-500 hover:text-brand-700">
                                         {product.supplier.name}
@@ -76,7 +76,7 @@ export default function Show({ product }: any) {
                                 </dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Contact Person</dt>
+                                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Kontak Person</dt>
                                 <dd className="text-sm">{product.supplier.contact_person || '-'}</dd>
                             </div>
                             <div>
@@ -84,12 +84,12 @@ export default function Show({ product }: any) {
                                 <dd className="text-sm">{product.supplier.email}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Phone</dt>
+                                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Telepon</dt>
                                 <dd className="text-sm">{product.supplier.phone || '-'}</dd>
                             </div>
                         </dl>
                     ) : (
-                        <p className="text-sm text-gray-500">No supplier assigned.</p>
+                        <p className="text-sm text-gray-500">Tidak ada supplier.</p>
                     )}
                 </ComponentCard>
             </div>

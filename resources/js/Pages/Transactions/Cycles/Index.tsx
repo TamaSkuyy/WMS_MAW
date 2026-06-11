@@ -8,7 +8,7 @@ import SearchableSelect from '../../../Tailadmin/components/form/select/Searchab
 
 export default function Index({ cycles, suppliers, filters }: any) {
     const handleDelete = (id: number) => {
-        if (confirm('Delete this cycle?')) {
+        if (confirm('Hapus cycle ini?')) {
             router.delete(route('cycles.destroy', id));
         }
     };
@@ -21,14 +21,14 @@ export default function Index({ cycles, suppliers, filters }: any) {
 
     return (
         <AppLayout>
-            <Head title="Cycles" />
-            <PageBreadcrumb pageTitle="Cycles" />
-            <ComponentCard title="Cycle List">
+            <Head title="Cycle" />
+            <PageBreadcrumb pageTitle="Cycle" />
+            <ComponentCard title="Daftar Cycle">
                 <div className="mb-4 flex gap-3 flex-wrap items-end">
                     <div className="min-w-[200px]">
                         <label className="block text-xs font-medium text-gray-500 mb-1">Supplier</label>
                         <SearchableSelect
-                            options={[{ value: '', label: 'All Suppliers' }, ...suppliers.map((s: any) => ({ value: s.id, label: s.name }))]}
+                            options={[{ value: '', label: 'Semua Supplier' }, ...suppliers.map((s: any) => ({ value: s.id, label: s.name }))]}
                             value={filters?.supplier_id || ''}
                             onChange={(v) => router.get(route('cycles.index'), { ...filters, supplier_id: v as string }, { preserveState: true, replace: true })}
                         />
@@ -37,7 +37,7 @@ export default function Index({ cycles, suppliers, filters }: any) {
                         <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
                         <SearchableSelect
                             options={[
-                                { value: '', label: 'All Status' },
+                                { value: '', label: 'Semua Status' },
                                 { value: 'draft', label: 'Draft' },
                                 { value: 'receiving', label: 'Receiving' },
                                 { value: 'completed', label: 'Completed' },
@@ -48,7 +48,7 @@ export default function Index({ cycles, suppliers, filters }: any) {
                     </div>
                 </div>
                 <div className="mb-3">
-                    <Link href={route('cycles.create')}><Button>New Cycle</Button></Link>
+                    <Link href={route('cycles.create')}><Button>Cycle Baru</Button></Link>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -57,9 +57,9 @@ export default function Index({ cycles, suppliers, filters }: any) {
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Supplier</th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cycle #</th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Items</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Received</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Diterima</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
@@ -77,29 +77,29 @@ export default function Index({ cycles, suppliers, filters }: any) {
                                         {cycle.received_at ? new Date(cycle.received_at).toLocaleDateString('id-ID') : '-'}
                                     </td>
                                     <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
-                                        <Link href={route('cycles.show', cycle.id)} className="text-brand-500 hover:text-brand-700 mr-2">View</Link>
+                                        <Link href={route('cycles.show', cycle.id)} className="text-brand-500 hover:text-brand-700 mr-2">Lihat</Link>
                                         {cycle.status === 'draft' && (
                                             <><Link href={route('cycles.edit', cycle.id)} className="text-brand-500 hover:text-brand-700 mr-2">Edit</Link>
-                                            <button onClick={() => handleDelete(cycle.id)} className="text-red-500 hover:text-red-700">Delete</button></>
+                                            <button onClick={() => handleDelete(cycle.id)} className="text-red-500 hover:text-red-700">Hapus</button></>
                                         )}
                                     </td>
                                 </tr>
                             ))}
                             {cycles.data.length === 0 && (
-                                <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-500">No cycles.</td></tr>
+                                <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-500">Tidak ada cycle.</td></tr>
                             )}
                         </tbody>
                     </table>
                 </div>
                 {cycles.total > cycles.per_page && (
                     <div className="mt-4 flex justify-between items-center">
-                        <div className="text-sm text-gray-500">Showing {cycles.from || 0} to {cycles.to || 0} of {cycles.total}</div>
+                        <div className="text-sm text-gray-500">Menampilkan {cycles.from || 0} sampai {cycles.to || 0} dari {cycles.total}</div>
                         <div className="flex gap-2">
-                            {cycles.prev_page_url ? <Link href={cycles.prev_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Prev</Link>
-                                : <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Prev</span>}
-                            <span className="px-3 py-1 text-sm">Page {cycles.current_page} of {cycles.last_page}</span>
-                            {cycles.next_page_url ? <Link href={cycles.next_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Next</Link>
-                                : <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Next</span>}
+                            {cycles.prev_page_url ? <Link href={cycles.prev_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Sebelumnya</Link>
+                                : <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Sebelumnya</span>}
+                            <span className="px-3 py-1 text-sm">Halaman {cycles.current_page} dari {cycles.last_page}</span>
+                            {cycles.next_page_url ? <Link href={cycles.next_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Berikutnya</Link>
+                                : <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Berikutnya</span>}
                         </div>
                     </div>
                 )}

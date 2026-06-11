@@ -13,30 +13,30 @@ export default function Show({ shipment }: any) {
     };
 
     const handleShip = () => {
-        if (confirm('Process this shipment? This will deduct stock.')) {
+        if (confirm('Proses pengiriman ini? Stok akan dikurangi.')) {
             router.post(route('shipments.ship', shipment.id));
         }
     };
 
     return (
         <AppLayout>
-            <Head title={`Shipment to ${shipment.partner_name}`} />
-            <PageBreadcrumb pageTitle={`Shipment: ${shipment.partner_name}`} />
+            <Head title={`Pengiriman ke ${shipment.partner_name}`} />
+            <PageBreadcrumb pageTitle={`Pengiriman: ${shipment.partner_name}`} />
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
                 <div className="xl:col-span-1">
-                    <ComponentCard title="Shipment Info">
+                    <ComponentCard title="Info Shipment">
                         <dl className="space-y-3">
-                            <div><dt className="text-sm font-medium text-gray-500">Partner</dt><dd className="text-sm">{shipment.partner_name}</dd></div>
-                            <div><dt className="text-sm font-medium text-gray-500">Date</dt><dd className="text-sm">{shipment.shipment_date}</dd></div>
+                            <div><dt className="text-sm font-medium text-gray-500">Mitra</dt><dd className="text-sm">{shipment.partner_name}</dd></div>
+                            <div><dt className="text-sm font-medium text-gray-500">Tanggal</dt><dd className="text-sm">{shipment.shipment_date}</dd></div>
                             <div><dt className="text-sm font-medium text-gray-500">Status</dt><dd><span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[shipment.status]}`}>{shipment.status}</span></dd></div>
-                            {shipment.notes && <div><dt className="text-sm font-medium text-gray-500">Notes</dt><dd className="text-sm">{shipment.notes}</dd></div>}
+                            {shipment.notes && <div><dt className="text-sm font-medium text-gray-500">Catatan</dt><dd className="text-sm">{shipment.notes}</dd></div>}
                         </dl>
                         <div className="mt-4 flex gap-2">
                             {shipment.status === 'draft' && (
                                 <><Link href={route('shipments.edit', shipment.id)}><Button>Edit</Button></Link>
-                                <Button variant="outline" onClick={handleShip}>Ship Now</Button></>
+                                <Button variant="outline" onClick={handleShip}>Kirim Sekarang</Button></>
                             )}
-                            <Link href={route('shipments.index')}><Button variant="outline">Back</Button></Link>
+                            <Link href={route('shipments.index')}><Button variant="outline">Kembali</Button></Link>
                         </div>
                     </ComponentCard>
                 </div>
@@ -47,9 +47,9 @@ export default function Show({ shipment }: any) {
                                 <thead className="bg-gray-50 dark:bg-gray-800">
                                     <tr>
                                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Part #</th>
-                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Produk</th>
                                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Model</th>
-                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Rack</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Rak</th>
                                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
                                     </tr>
                                 </thead>

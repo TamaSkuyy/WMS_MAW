@@ -45,37 +45,37 @@ export default function Show({ cycle, racks }: any) {
 
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
                 <div className="xl:col-span-1">
-                    <ComponentCard title="Cycle Info">
+                    <ComponentCard title="Info Cycle">
                         <dl className="space-y-3">
                             <div><dt className="text-sm font-medium text-gray-500">Supplier</dt><dd className="text-sm">{cycle.supplier?.name}</dd></div>
-                            <div><dt className="text-sm font-medium text-gray-500">Cycle #</dt><dd className="text-sm font-mono">{cycle.cycle_number}</dd></div>
+                            <div><dt className="text-sm font-medium text-gray-500">Nomor Cycle</dt><dd className="text-sm font-mono">{cycle.cycle_number}</dd></div>
                             <div><dt className="text-sm font-medium text-gray-500">Status</dt><dd><span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[cycle.status]}`}>{cycle.status}</span></dd></div>
-                            <div><dt className="text-sm font-medium text-gray-500">Items</dt><dd className="text-sm">{cycle.items.length}</dd></div>
-                            <div><dt className="text-sm font-medium text-gray-500">Received</dt><dd className="text-sm">{cycle.received_at ? new Date(cycle.received_at).toLocaleDateString('id-ID') : '-'}</dd></div>
-                            {cycle.notes && <div><dt className="text-sm font-medium text-gray-500">Notes</dt><dd className="text-sm">{cycle.notes}</dd></div>}
+                            <div><dt className="text-sm font-medium text-gray-500">Item</dt><dd className="text-sm">{cycle.items.length}</dd></div>
+                            <div><dt className="text-sm font-medium text-gray-500">Diterima</dt><dd className="text-sm">{cycle.received_at ? new Date(cycle.received_at).toLocaleDateString('id-ID') : '-'}</dd></div>
+                            {cycle.notes && <div><dt className="text-sm font-medium text-gray-500">Catatan</dt><dd className="text-sm">{cycle.notes}</dd></div>}
                         </dl>
                         <div className="mt-4 flex gap-2">
                             {cycle.status === 'draft' && <Link href={route('cycles.edit', cycle.id)}><Button>Edit</Button></Link>}
                             {cycle.status !== 'completed' && !isReceiving && (
-                                <Button variant="outline" onClick={() => setIsReceiving(true)}>Receive Items</Button>
+                                <Button variant="outline" onClick={() => setIsReceiving(true)}>Terima Barang</Button>
                             )}
-                            <Link href={route('cycles.index')}><Button variant="outline">Back</Button></Link>
+                            <Link href={route('cycles.index')}><Button variant="outline">Kembali</Button></Link>
                         </div>
                     </ComponentCard>
                 </div>
 
                 <div className="xl:col-span-2">
                     {isReceiving ? (
-                        <ComponentCard title="Receive Items">
+                        <ComponentCard title="Terima Barang">
                             <form onSubmit={handleReceive}>
                                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                     <thead className="bg-gray-50 dark:bg-gray-800">
                                         <tr>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Doc Qty</th>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Rec Qty</th>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Rack</th>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Notes</th>
+                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Produk</th>
+                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Qty Dokumen</th>
+                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Qty Diterima</th>
+                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Rak</th>
+                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Catatan</th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
@@ -90,28 +90,28 @@ export default function Show({ cycle, racks }: any) {
                                                     <SearchableSelect options={racks.map((r: any) => ({ value: r.id, label: r.code }))} value={items[i].rack_id} onChange={(v) => updateItem(i, 'rack_id', v as string)} />
                                                 </td>
                                                 <td className="px-3 py-2">
-                                                    <input type="text" value={items[i].notes} onChange={(e) => updateItem(i, 'notes', e.target.value)} className="w-full text-sm border rounded px-2 py-1 dark:bg-gray-800 dark:border-gray-700" placeholder="e.g. 2 pcs rusak" />
+                                                    <input type="text" value={items[i].notes} onChange={(e) => updateItem(i, 'notes', e.target.value)} className="w-full text-sm border rounded px-2 py-1 dark:bg-gray-800 dark:border-gray-700" placeholder="contoh: 2 pcs rusak" />
                                                 </td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
                                 <div className="mt-4 flex gap-2">
-                                    <Button type="submit">Complete Receiving</Button>
-                                    <Button type="button" variant="outline" onClick={() => setIsReceiving(false)}>Cancel</Button>
+                                    <Button type="submit">Selesaikan Penerimaan</Button>
+                                    <Button type="button" variant="outline" onClick={() => setIsReceiving(false)}>Batal</Button>
                                 </div>
                             </form>
                         </ComponentCard>
                     ) : (
-                        <ComponentCard title="Items">
+                        <ComponentCard title="Item">
                             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                 <thead className="bg-gray-50 dark:bg-gray-800">
                                     <tr>
                                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Part #</th>
-                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Produk</th>
                                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Model</th>
                                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
-                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Rec</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Diterima</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">

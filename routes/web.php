@@ -10,6 +10,9 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RackController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\ShipmentController;
+use App\Http\Controllers\StockController;
+use App\Http\Controllers\VehicleModelController;
+use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\UserController;
 use App\Notifications\TestRealtimeNotification;
 use Illuminate\Support\Facades\Route;
@@ -47,6 +50,9 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('shipments', ShipmentController::class);
     Route::post('shipments/{shipment}/ship', [ShipmentController::class, 'ship'])->name('shipments.ship');
+    Route::resource('stocks', StockController::class)->only(['index']);
+    Route::resource('vehicle-models', VehicleModelController::class)->except(['show']);
+    Route::resource('product-categories', ProductCategoryController::class)->except(['show']);
 
     Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAllRead');
     Route::post('/notifications/{id}/mark-read', [NotificationController::class, 'markAsRead'])->name('notifications.markRead');

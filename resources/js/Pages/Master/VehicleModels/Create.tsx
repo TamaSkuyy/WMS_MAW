@@ -8,28 +8,22 @@ import Input from '../../../Tailadmin/components/form/input/InputField';
 import Label from '../../../Tailadmin/components/form/Label';
 
 export default function Create() {
-    const { data, setData, post, errors } = useForm({ code: '', zone: '' });
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        post(route('racks.store'));
-    };
-
+    const { data, setData, post, errors } = useForm({ name: '', brand: '' });
     return (
         <AppLayout>
-            <Head title="Tambah Rak" />
-            <PageBreadcrumb pageTitle="Tambah Rak" />
-            <ComponentCard title="Rak Baru">
-                <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
+            <Head title="Tambah Model" />
+            <PageBreadcrumb pageTitle="Tambah Model Kendaraan" />
+            <ComponentCard title="Model Baru">
+                <form onSubmit={(e) => { e.preventDefault(); post(route('vehicle-models.store')); }} className="space-y-4 max-w-md">
                     <div>
-                        <Label>Kode *</Label>
-                        <Input type="text" value={data.code} onChange={(e) => setData('code', e.target.value)} placeholder="contoh: A-01" />
-                        {errors.code && <p className="mt-1 text-sm text-red-500">{errors.code}</p>}
+                        <Label>Merek *</Label>
+                        <Input type="text" value={data.brand} onChange={(e) => setData('brand', e.target.value)} placeholder="contoh: Toyota" />
+                        {errors.brand && <p className="mt-1 text-sm text-red-500">{errors.brand}</p>}
                     </div>
                     <div>
-                        <Label>Zona *</Label>
-                        <Input type="text" value={data.zone} onChange={(e) => setData('zone', e.target.value)} placeholder="contoh: Zona A" />
-                        {errors.zone && <p className="mt-1 text-sm text-red-500">{errors.zone}</p>}
+                        <Label>Model *</Label>
+                        <Input type="text" value={data.name} onChange={(e) => setData('name', e.target.value)} placeholder="contoh: Fortuner VRZ" />
+                        {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
                     </div>
                     <div className="flex gap-2">
                         <Button type="submit">Simpan</Button>

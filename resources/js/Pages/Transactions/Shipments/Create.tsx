@@ -37,32 +37,32 @@ export default function Create({ products, racks }: any) {
 
     return (
         <AppLayout>
-            <Head title="New Shipment" />
-            <PageBreadcrumb pageTitle="New Shipment" />
+            <Head title="Shipment Baru" />
+            <PageBreadcrumb pageTitle="Shipment Baru" />
             <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-                    <ComponentCard title="Shipment Info">
+                    <ComponentCard title="Info Shipment">
                         <div className="space-y-4">
                             <div>
-                                <Label>Partner Name *</Label>
-                                <Input type="text" value={data.partner_name} onChange={(e) => setData('partner_name', e.target.value)} placeholder="e.g. PT Maju Jaya" />
+                                <Label>Nama Mitra *</Label>
+                                <Input type="text" value={data.partner_name} onChange={(e) => setData('partner_name', e.target.value)} placeholder="contoh: PT Maju Jaya" />
                                 {errors.partner_name && <p className="mt-1 text-sm text-red-500">{errors.partner_name}</p>}
                             </div>
                             <div>
-                                <Label>Shipment Date *</Label>
+                                <Label>Tanggal Kirim *</Label>
                                 <Input type="date" value={data.shipment_date} onChange={(e) => setData('shipment_date', e.target.value)} />
                                 {errors.shipment_date && <p className="mt-1 text-sm text-red-500">{errors.shipment_date}</p>}
                             </div>
                             <div>
-                                <Label>Notes</Label>
+                                <Label>Catatan</Label>
                                 <textarea value={data.notes} onChange={(e) => setData('notes', e.target.value)} rows={2} className="w-full rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-gray-800 px-3 py-2 text-sm" />
                             </div>
                         </div>
                     </ComponentCard>
-                    <ComponentCard title="Add Items">
+                    <ComponentCard title="Tambah Item">
                         <div className="flex gap-2 items-end mb-4 flex-wrap">
                             <div className="flex-1 min-w-[150px]">
-                                <Label>Product</Label>
+                                <Label>Produk</Label>
                                 <SearchableSelect
                                     options={products.map((p: any) => ({ value: p.id, label: `${p.part_number} - ${p.name}` }))}
                                     value={selProduct}
@@ -70,7 +70,7 @@ export default function Create({ products, racks }: any) {
                                 />
                             </div>
                             <div className="w-24">
-                                <Label>Rack</Label>
+                                <Label>Rak</Label>
                                 <SearchableSelect
                                     options={racks.map((r: any) => ({ value: r.id, label: r.code }))}
                                     value={selRack}
@@ -81,7 +81,7 @@ export default function Create({ products, racks }: any) {
                                 <Label>Qty</Label>
                                 <Input type="number" value={selQty} onChange={(e) => setSelQty(parseInt(e.target.value) || 0)} min={1} />
                             </div>
-                            <Button type="button" onClick={addItem}>Add</Button>
+                            <Button type="button" onClick={addItem}>Tambah</Button>
                         </div>
                         {errors.items && <p className="mt-1 text-sm text-red-500">{errors.items}</p>}
 
@@ -89,8 +89,8 @@ export default function Create({ products, racks }: any) {
                             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 mt-3">
                                 <thead className="bg-gray-50 dark:bg-gray-800">
                                     <tr>
-                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Rack</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Produk</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Rak</th>
                                         <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
                                         <th></th>
                                     </tr>
@@ -114,8 +114,8 @@ export default function Create({ products, racks }: any) {
                     </ComponentCard>
                 </div>
                 <div className="mt-4 flex gap-2">
-                    <Button type="submit" disabled={data.items.length === 0}>Save Shipment</Button>
-                    <Button type="button" variant="outline" onClick={() => window.history.back()}>Cancel</Button>
+                    <Button type="submit" disabled={data.items.length === 0}>Simpan Shipment</Button>
+                    <Button type="button" variant="outline" onClick={() => window.history.back()}>Batal</Button>
                 </div>
             </form>
         </AppLayout>

@@ -2,13 +2,13 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\Menu;
 use App\Models\User;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class RoleAndMenuSeeder extends Seeder
 {
@@ -18,7 +18,7 @@ class RoleAndMenuSeeder extends Seeder
     public function run(): void
     {
         // Reset cached roles and permissions
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // create permissions
         Permission::create(['name' => 'view menus']);
@@ -43,14 +43,14 @@ class RoleAndMenuSeeder extends Seeder
 
         // create basic menus
         // 1. Dashboard
-        Menu::create([
-            'name' => 'Dashboard',
-            'icon' => 'GridIcon',
-            'path' => '/',
-            'sort_order' => 1,
-            'permission_name' => 'view dashboard',
-            'group' => 'main',
-        ]);
+        // Menu::create([
+        //     'name' => 'Dashboard',
+        //     'icon' => 'GridIcon',
+        //     'path' => '/',
+        //     'sort_order' => 1,
+        //     'permission_name' => 'view dashboard',
+        //     'group' => 'main',
+        // ]);
 
         // 2. Setup (Others) -> User Management & Menu Management
         $setupMenu = Menu::create([
@@ -60,22 +60,22 @@ class RoleAndMenuSeeder extends Seeder
             'group' => 'others',
         ]);
 
-        Menu::create([
-            'name' => 'Menu Management',
-            'path' => '/menus',
-            'parent_id' => $setupMenu->id,
-            'sort_order' => 1,
-            'permission_name' => 'manage menus',
-            'group' => 'others',
-        ]);
+        // Menu::create([
+        //     'name' => 'Menu Management',
+        //     'path' => '/menus',
+        //     'parent_id' => $setupMenu->id,
+        //     'sort_order' => 1,
+        //     'permission_name' => 'manage menus',
+        //     'group' => 'others',
+        // ]);
 
-        Menu::create([
-            'name' => 'User Management',
-            'path' => '/users',
-            'parent_id' => $setupMenu->id,
-            'sort_order' => 2,
-            'permission_name' => 'manage users',
-            'group' => 'others',
-        ]);
+        // Menu::create([
+        //     'name' => 'User Management',
+        //     'path' => '/users',
+        //     'parent_id' => $setupMenu->id,
+        //     'sort_order' => 2,
+        //     'permission_name' => 'manage users',
+        //     'group' => 'others',
+        // ]);
     }
 }
