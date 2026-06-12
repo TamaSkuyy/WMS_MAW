@@ -512,6 +512,20 @@ for i in $(seq 1 $RETRIES); do
 done
 echo
 
+# ── Wait for Redis ────────────────────────────────────────────────────────────
+log "Cek koneksi Redis..."
+RETRIES=10
+for i in $(seq 1 $RETRIES); do
+    if dc exec -T app php -r "try { (new \Illuminate\Redis\Connectors\PhpRedisConnector)->connect(array_merge(config('database.redis.default'), ['timeout'=>1])); echo 'OK'; } catch(\Exception \$e) { exit(1); }" 2>/dev/null; then
+        log "Redis OK ✓"
+        break
+    fi
+    if [ "$i" = "$RETRIES" ]; then
+        warn "Redis belum siap — lanjut aja, config:cache bakal retry"
+    fi
+    sleep 2
+done
+
 # ── Run migrations ───────────────────────────────────────────────────────────
 log "Menjalankan migrasi database..."
 dc exec -T app php artisan migrate --force
