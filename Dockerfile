@@ -1,4 +1,4 @@
-FROM dunglas/frankenphp:8.2-php
+FROM dunglas/frankenphp:1.4-php8.4
 
 # Install additional PHP extensions
 RUN install-php-extensions \
@@ -24,12 +24,8 @@ COPY . .
 # Install dependencies (no dev)
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Create storage symlink for public access
-RUN php artisan storage:link || true
-
-# Optimize Laravel
-RUN php artisan optimize || true
-
+# Create storage symlink for public access (done at runtime via deploy script)
 EXPOSE 8080
 
-CMD ["php", "artisan", "octane:start", "--server=frankenphp", "--host=0.0.0.0", "--port=8080", "--workers=4", "--max-requests=500"]
+# Workers=2 for VPS (adjust if more CPU/RAM available)
+CMD ["php", "artisan", "octane:start", "--server=frankenphp", "--host=0.0.0.0", "--port=8080", "--workers=2", "--max-requests=500"]

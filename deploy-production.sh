@@ -344,6 +344,7 @@ smart_rebuild() {
 
     # Migrate + cache
     dc exec -T app php artisan migrate --force
+    dc exec -T app php artisan storage:link --force || true
     clear_laravel_caches
     dc exec -T app php artisan config:cache
     dc exec -T app php artisan route:cache
@@ -514,7 +515,8 @@ echo
 # ── Run migrations ───────────────────────────────────────────────────────────
 log "Menjalankan migrasi database..."
 dc exec -T app php artisan migrate --force
-log "Rebuild artisan caches..."
+log "Storage link + rebuild artisan caches..."
+dc exec -T app php artisan storage:link --force || true
 clear_laravel_caches
 dc exec -T app php artisan config:cache
 dc exec -T app php artisan route:cache
