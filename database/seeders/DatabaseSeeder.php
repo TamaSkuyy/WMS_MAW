@@ -16,8 +16,8 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            MenuSeeder::class,            // Sidebar navigation menus (MUST run first)
             RoleAndMenuSeeder::class,     // Roles, permissions, admin user
-            MenuSeeder::class,            // Sidebar navigation menus
             SupplierSeeder::class,        // 10 sample suppliers
             ProductSeeder::class,         // 5 models, 5 categories, 20 products
             RackSeeder::class,            // 5 sample racks

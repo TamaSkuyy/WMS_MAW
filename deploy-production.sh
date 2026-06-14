@@ -110,7 +110,6 @@ seed_storage() {
     log "Copying ./storage ke container app..."
     ${RUNTIME} cp ./storage/. "${CONTAINER}:/var/www/html/storage/"
     log "Fixing permissions..."
-    dc exec -T app chown -R sail:sail /var/www/html/storage
     dc exec -T app chmod -R 775 /var/www/html/storage
     log "Storage seeded ✓"
 }
@@ -176,24 +175,18 @@ quick_update() {
     # Pastikan resources dir exist sebelum copy
     dc exec -T app mkdir -p /var/www/html/resources
     ${RUNTIME} cp resources/. "${APP_CONTAINER}:/var/www/html/resources/" 2>/dev/null || warn "Resources copy partial atau kosong"
-    dc exec -T app chown -R sail:sail \
-        /var/www/html/app \
-        /var/www/html/config \
-        /var/www/html/database \
-        /var/www/html/routes \
-        /var/www/html/resources
 
     # 3. Build & salin frontend assets (opsional)
     if [ "${BUILD_ASSETS}" = true ]; then
         log "3/7 Build frontend assets (Vite)..."
-        # Clear Vite cache agar selalu rebuild dari scratch (bukan pakai cache lama)
+        # Clear Vite cache + old build (chown dulu karena file mungkin punya Docker)
+        sudo chown -R $USER:$USER node_modules/.vite public/build 2>/dev/null || true
         rm -rf node_modules/.vite public/build
         # ASSET_URL harus '/' agar CSS tidak meng-embed URL absolut localhost ke font path
         ASSET_URL="/" VITE_APP_URL="" npm run build
 
         # Salin ke container app
         ${RUNTIME} cp public/build/. "${APP_CONTAINER}:/var/www/html/public/build/"
-        dc exec -T app chown -R sail:sail /var/www/html/public/build
 
         # PENTING: Salin juga ke container nginx karena nginx yang serve static files
         NGINX_CONTAINER=$(dc ps -q nginx 2>/dev/null | head -1 || true)

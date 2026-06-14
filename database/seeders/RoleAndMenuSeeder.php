@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Menu;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -41,41 +40,6 @@ class RoleAndMenuSeeder extends Seeder
         );
         $admin->assignRole($roleAdmin);
 
-        // create basic menus
-        // 1. Dashboard
-        // Menu::create([
-        //     'name' => 'Dashboard',
-        //     'icon' => 'GridIcon',
-        //     'path' => '/',
-        //     'sort_order' => 1,
-        //     'permission_name' => 'view dashboard',
-        //     'group' => 'main',
-        // ]);
-
-        // 2. Setup (Others) -> User Management & Menu Management
-        $setupMenu = Menu::create([
-            'name' => 'Setup',
-            'icon' => 'BoxCubeIcon',
-            'sort_order' => 1,
-            'group' => 'others',
-        ]);
-
-        // Menu::create([
-        //     'name' => 'Menu Management',
-        //     'path' => '/menus',
-        //     'parent_id' => $setupMenu->id,
-        //     'sort_order' => 1,
-        //     'permission_name' => 'manage menus',
-        //     'group' => 'others',
-        // ]);
-
-        // Menu::create([
-        //     'name' => 'User Management',
-        //     'path' => '/users',
-        //     'parent_id' => $setupMenu->id,
-        //     'sort_order' => 2,
-        //     'permission_name' => 'manage users',
-        //     'group' => 'others',
-        // ]);
+        // Menus are handled by MenuSeeder
     }
 }
