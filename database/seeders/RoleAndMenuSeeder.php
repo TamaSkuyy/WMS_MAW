@@ -20,14 +20,14 @@ class RoleAndMenuSeeder extends Seeder
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // create permissions
-        Permission::create(['name' => 'view menus']);
-        Permission::create(['name' => 'manage menus']);
-        Permission::create(['name' => 'view users']);
-        Permission::create(['name' => 'manage users']);
-        Permission::create(['name' => 'view dashboard']);
+        Permission::firstOrCreate(['name' => 'view menus']);
+        Permission::firstOrCreate(['name' => 'manage menus']);
+        Permission::firstOrCreate(['name' => 'view users']);
+        Permission::firstOrCreate(['name' => 'manage users']);
+        Permission::firstOrCreate(['name' => 'view dashboard']);
 
         // create roles and assign created permissions
-        $roleAdmin = Role::create(['name' => 'Super Admin']);
+        $roleAdmin = Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'web']);
         $roleAdmin->givePermissionTo(Permission::all());
 
         // create an admin user

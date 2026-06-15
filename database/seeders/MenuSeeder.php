@@ -9,10 +9,11 @@ class MenuSeeder extends Seeder
 {
     public function run(): void
     {
-        // Skip if menus already exist
-        if (Menu::count() > 0) {
-            return;
-        }
+        // Truncate dulu supaya data bersih, tidak tumpang tindih
+        // Disable foreign key checks karena parent_id self-reference
+        \DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        Menu::truncate();
+        \DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
         // === MAIN group ===
         // Dashboard
@@ -74,6 +75,42 @@ class MenuSeeder extends Seeder
             'path' => '/product-categories',
             'parent_id' => $masterData->id,
             'sort_order' => 5,
+            'group' => 'main',
+        ]);
+
+        Menu::create([
+            'name' => 'Jabatan',
+            'icon' => 'BadgeIcon',
+            'path' => '/job-positions',
+            'parent_id' => $masterData->id,
+            'sort_order' => 6,
+            'group' => 'main',
+        ]);
+
+        Menu::create([
+            'name' => 'Lokasi Kerja',
+            'icon' => 'MapPinIcon',
+            'path' => '/work-locations',
+            'parent_id' => $masterData->id,
+            'sort_order' => 7,
+            'group' => 'main',
+        ]);
+
+        Menu::create([
+            'name' => 'Departemen',
+            'icon' => 'BuildingIcon',
+            'path' => '/departments',
+            'parent_id' => $masterData->id,
+            'sort_order' => 8,
+            'group' => 'main',
+        ]);
+
+        Menu::create([
+            'name' => 'Karyawan',
+            'icon' => 'UsersIcon',
+            'path' => '/employees',
+            'parent_id' => $masterData->id,
+            'sort_order' => 9,
             'group' => 'main',
         ]);
 

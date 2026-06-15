@@ -14,6 +14,10 @@ use App\Http\Controllers\StockController;
 use App\Http\Controllers\VehicleModelController;
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\JobPositionController;
+use App\Http\Controllers\WorkLocationController;
+use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\EmployeeController;
 use App\Notifications\TestRealtimeNotification;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -53,6 +57,10 @@ Route::middleware('auth')->group(function () {
     Route::resource('stocks', StockController::class)->only(['index']);
     Route::resource('vehicle-models', VehicleModelController::class)->except(['show']);
     Route::resource('product-categories', ProductCategoryController::class)->except(['show']);
+    Route::resource('job-positions', JobPositionController::class)->except(['show']);
+    Route::resource('work-locations', WorkLocationController::class)->except(['show']);
+    Route::resource('departments', DepartmentController::class)->except(['show']);
+    Route::resource('employees', EmployeeController::class);
 
     Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAllRead');
     Route::post('/notifications/{id}/mark-read', [NotificationController::class, 'markAsRead'])->name('notifications.markRead');
