@@ -4,40 +4,65 @@ import { Head, Link, router } from '@inertiajs/react';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
+import SearchInput from '../../../Tailadmin/components/form/input/SearchInput';
+import TableActions from '../../../Tailadmin/components/common/TableActions';
+import EmptyState from '../../../Tailadmin/components/common/EmptyState';
 
-export default function Index({ vehicleModels }: any) {
+export default function Index({ vehicleModels, filters }: any) {
+    const handleDelete = (id: number) => {
+        if (confirm('Hapus model ini?')) {
+            router.delete(route('vehicle-models.destroy', id));
+        }
+    };
+
     return (
         <AppLayout>
             <Head title="Model Kendaraan" />
             <PageBreadcrumb pageTitle="Model Kendaraan" />
             <ComponentCard title="Daftar Model Kendaraan">
-                <div className="mb-3">
+                <div className="mb-3 flex flex-wrap items-center gap-3">
                     <Link href={route('vehicle-models.create')}><Button>Tambah Model</Button></Link>
+                    <SearchInput
+                        placeholder="Cari merek atau model..."
+                        routeName="vehicle-models.index"
+                        filters={filters}
+                    />
                 </div>
+                {vehicleModels.data.length === 0 ? (
+                    <EmptyState
+                        icon="🚗"
+                        title="Belum ada model kendaraan"
+                        message="Tambahkan model kendaraan seperti Fortuner, Avanza."
+                        actionLabel="Tambah Model"
+                        actionRoute={route('vehicle-models.create')}
+                    />
+                ) : (
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead className="bg-gray-50 dark:bg-gray-800">
+                    <table className="min-w-full">
+                        <thead className="bg-[#F8F9FC] border-b border-[#E9ECEF]">
                             <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Merek</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Model</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Merek</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Model</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider w-24">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
+                        <tbody>
                             {vehicleModels.data.map((m: any) => (
-                                <tr key={m.id}>
-                                    <td className="px-4 py-3 text-sm">{m.brand}</td>
-                                    <td className="px-4 py-3 text-sm">{m.name}</td>
-                                    <td className="px-4 py-3 text-sm font-medium">
-                                        <Link href={route('vehicle-models.edit', m.id)} className="text-brand-500 hover:text-brand-700 mr-2">Edit</Link>
-                                        <Link href={route('vehicle-models.destroy', m.id)} as="button" method="delete" onClick={(e: any) => { if (!confirm('Hapus model ini?')) e.preventDefault(); }} className="text-red-500 hover:text-red-700">Hapus</Link>
+                                <tr key={m.id} className="border-b border-[#F1F3F5] hover:bg-[#F8F9FC] transition-all duration-150">
+                                    <td className="px-4 py-3 text-sm text-[#1A1D23]">{m.brand}</td>
+                                    <td className="px-4 py-3 text-sm text-[#1A1D23]">{m.name}</td>
+                                    <td className="px-4 py-3 text-sm text-[#1A1D23]">
+                                        <TableActions
+                                            editRoute={route('vehicle-models.edit', m.id)}
+                                            onDelete={() => handleDelete(m.id)}
+                                        />
                                     </td>
                                 </tr>
                             ))}
-                            {vehicleModels.data.length === 0 && <tr><td colSpan={3} className="px-4 py-8 text-center text-sm text-gray-500">Tidak ada model.</td></tr>}
                         </tbody>
                     </table>
                 </div>
+                )}
                 {vehicleModels.total > vehicleModels.per_page && (
                     <div className="mt-4 flex justify-between items-center">
                         <div className="text-sm text-gray-500">Menampilkan {vehicleModels.from} sampai {vehicleModels.to} dari {vehicleModels.total}</div>

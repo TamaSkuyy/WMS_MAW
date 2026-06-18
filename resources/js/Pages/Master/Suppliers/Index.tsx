@@ -4,8 +4,11 @@ import { Head, Link, router } from '@inertiajs/react';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
+import SearchInput from '../../../Tailadmin/components/form/input/SearchInput';
+import TableActions from '../../../Tailadmin/components/common/TableActions';
+import EmptyState from '../../../Tailadmin/components/common/EmptyState';
 
-export default function Index({ suppliers }: any) {
+export default function Index({ suppliers, filters }: any) {
     const handleDelete = (id: number) => {
         if (confirm('Yakin ingin menghapus supplier ini?')) {
             router.delete(route('suppliers.destroy', id));
@@ -18,44 +21,56 @@ export default function Index({ suppliers }: any) {
             <PageBreadcrumb pageTitle="Supplier" />
 
             <ComponentCard title="Daftar Supplier">
-                <div className="mb-3">
+                <div className="mb-3 flex flex-wrap items-center gap-3">
                     <Link href={route('suppliers.create')}>
                         <Button>Tambah Supplier</Button>
                     </Link>
+                    <SearchInput
+                        placeholder="Cari nama supplier..."
+                        routeName="suppliers.index"
+                        filters={filters}
+                    />
                 </div>
+                {suppliers.data.length === 0 ? (
+                    <EmptyState
+                        icon="📦"
+                        title="Belum ada supplier"
+                        message="Tambahkan supplier pertama untuk mulai menerima barang."
+                        actionLabel="Tambah Supplier"
+                        actionRoute={route('suppliers.create')}
+                    />
+                ) : (
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead className="bg-gray-50 dark:bg-gray-800">
+                    <table className="min-w-full">
+                        <thead className="bg-[#F8F9FC] border-b border-[#E9ECEF]">
                             <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kontak Person</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telepon</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Nama</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Kontak Person</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Email</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Telepon</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider w-24">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
+                        <tbody>
                             {suppliers.data.map((supplier: any) => (
-                                <tr key={supplier.id}>
-                                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">{supplier.name}</td>
-                                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{supplier.contact_person || '-'}</td>
-                                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{supplier.email}</td>
-                                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{supplier.phone || '-'}</td>
-                                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
-                                        <Link href={route('suppliers.show', supplier.id)} className="text-brand-500 hover:text-brand-700 mr-3">Lihat</Link>
-                                        <Link href={route('suppliers.edit', supplier.id)} className="text-brand-500 hover:text-brand-700 mr-3">Edit</Link>
-                                        <button onClick={() => handleDelete(supplier.id)} className="text-red-500 hover:text-red-700">Hapus</button>
+                                <tr key={supplier.id} className="border-b border-[#F1F3F5] hover:bg-[#F8F9FC] transition-all duration-150">
+                                    <td className="px-4 py-3 whitespace-nowrap text-sm text-[#1A1D23] font-medium">{supplier.name}</td>
+                                    <td className="px-4 py-3 whitespace-nowrap text-[13px] text-[#6C757D]">{supplier.contact_person || '-'}</td>
+                                    <td className="px-4 py-3 whitespace-nowrap text-[13px] text-[#6C757D]">{supplier.email}</td>
+                                    <td className="px-4 py-3 whitespace-nowrap text-[13px] text-[#6C757D]">{supplier.phone || '-'}</td>
+                                    <td className="px-4 py-3 whitespace-nowrap text-sm text-[#1A1D23]">
+                                        <TableActions
+                                            viewRoute={route('suppliers.show', supplier.id)}
+                                            editRoute={route('suppliers.edit', supplier.id)}
+                                            onDelete={() => handleDelete(supplier.id)}
+                                        />
                                     </td>
                                 </tr>
                             ))}
-                            {suppliers.data.length === 0 && (
-                                <tr>
-                                    <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-500">Tidak ada supplier.</td>
-                                </tr>
-                            )}
                         </tbody>
                     </table>
                 </div>
+                )}
 
                 {suppliers.total > suppliers.per_page && (
                     <div className="mt-4 flex justify-between items-center">

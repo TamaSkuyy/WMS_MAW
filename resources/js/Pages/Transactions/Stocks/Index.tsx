@@ -3,6 +3,7 @@ import AppLayout from '../../../Tailadmin/layout/AppLayout';
 import { Head, Link } from '@inertiajs/react';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
+import EmptyState from '../../../Tailadmin/components/common/EmptyState';
 
 export default function Index({ stocks }: any) {
     return (
@@ -10,39 +11,44 @@ export default function Index({ stocks }: any) {
             <Head title="Inventori Stok" />
             <PageBreadcrumb pageTitle="Inventori Stok" />
             <ComponentCard title="Stok Saat Ini">
+                {stocks.data.length === 0 ? (
+                    <EmptyState
+                        icon="📊"
+                        title="Belum ada stok"
+                        message="Stok akan muncul setelah cycle diterima."
+                    />
+                ) : (
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead className="bg-gray-50 dark:bg-gray-800">
+                    <table className="min-w-full">
+                        <thead className="bg-[#F8F9FC] border-b border-[#E9ECEF]">
                             <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Produk</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Part Number</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rak</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Zona</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Supplier</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Produk</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Part Number</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Rak</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Zona</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider w-24">Qty</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Supplier</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
+                        <tbody>
                             {stocks.data.map((stock: any) => (
-                                <tr key={stock.id}>
-                                    <td className="px-4 py-3 text-sm">{stock.product?.name}</td>
-                                    <td className="px-4 py-3 text-sm font-mono">{stock.product?.part_number}</td>
-                                    <td className="px-4 py-3 text-sm font-mono">{stock.rack?.code}</td>
-                                    <td className="px-4 py-3 text-sm text-gray-500">{stock.rack?.zone}</td>
-                                    <td className="px-4 py-3 text-sm font-medium">{stock.quantity}</td>
-                                    <td className="px-4 py-3 text-sm text-gray-500">
+                                <tr key={stock.id} className="border-b border-[#F1F3F5] hover:bg-[#F8F9FC] transition-all duration-150">
+                                    <td className="px-4 py-3 text-sm text-[#1A1D23]">{stock.product?.name}</td>
+                                    <td className="px-4 py-3 text-sm text-[#1A1D23] font-mono">{stock.product?.part_number}</td>
+                                    <td className="px-4 py-3 text-sm text-[#1A1D23] font-mono">{stock.rack?.code}</td>
+                                    <td className="px-4 py-3 text-[13px] text-[#6C757D]">{stock.rack?.zone}</td>
+                                    <td className="px-4 py-3 text-sm text-[#1A1D23] font-medium">{stock.quantity}</td>
+                                    <td className="px-4 py-3 text-[13px] text-[#6C757D]">
                                         <Link href={route('suppliers.show', stock.product?.supplier_id)} className="text-brand-500 hover:text-brand-700">
                                             {stock.product?.supplier?.name || '-'}
                                         </Link>
                                     </td>
                                 </tr>
                             ))}
-                            {stocks.data.length === 0 && (
-                                <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-500">Belum ada stok.</td></tr>
-                            )}
                         </tbody>
                     </table>
                 </div>
+                )}
                 {stocks.total > stocks.per_page && (
                     <div className="mt-4 flex justify-between items-center">
                         <div className="text-sm text-gray-500">Menampilkan {stocks.from || 0} sampai {stocks.to || 0} dari {stocks.total}</div>

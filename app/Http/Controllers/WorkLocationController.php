@@ -8,10 +8,16 @@ use Inertia\Inertia;
 
 class WorkLocationController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         return Inertia::render('Master/WorkLocations/Index', [
-            'locations' => WorkLocation::orderBy('name')->paginate(20),
+            'locations' => WorkLocation::orderBy('name')
+                ->when($request->search, function ($query, $search) {
+                    $query->where('name', 'like', "%{$search}%");
+                })
+                ->paginate(10)
+                ->withQueryString(),
+            'filters' => $request->only(['search']),
         ]);
     }
 

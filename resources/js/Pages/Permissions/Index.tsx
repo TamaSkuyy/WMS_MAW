@@ -92,28 +92,28 @@ export default function Index({ permissions }: any) {
                 <div className="xl:col-span-2">
                     <ComponentCard title="Permission List">
                         <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                <thead className="bg-gray-50 dark:bg-gray-800">
+                            <table className="min-w-full">
+                                <thead className="bg-[#F8F9FC] border-b border-[#E9ECEF]">
                                     <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Permission Name</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Actions</th>
+                                        <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">ID</th>
+                                        <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Permission Name</th>
+                                        <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider w-32">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
+                                <tbody>
                                     {permissions.map((permission: any) => (
-                                        <tr key={permission.id}>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        <tr key={permission.id} className="border-b border-[#F1F3F5] hover:bg-[#F8F9FC] transition-all duration-150">
+                                            <td className="px-4 py-3 whitespace-nowrap text-[13px] text-[#6C757D]">
                                                 {permission.id}
                                             </td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-[#1A1D23] font-medium">
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F8F9FC] text-[#6C757D] border border-[#E9ECEF]">
                                                     {permission.name}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
-                                                <button onClick={() => handleEdit(permission)} className="text-brand-500 hover:text-brand-700 mr-3">Edit</button>
-                                                <button onClick={() => handleDelete(permission)} className="text-red-500 hover:text-red-700">Delete</button>
+                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-[#1A1D23] font-medium">
+                                                <button onClick={() => handleEdit(permission)} className="text-[#3B5BDB] hover:text-[#4DABF7] mr-3 transition-all duration-150">Edit</button>
+                                                <button onClick={() => handleDelete(permission)} className="text-[#FA5252] hover:text-[#E03131] transition-all duration-150">Delete</button>
                                             </td>
                                         </tr>
                                     ))}

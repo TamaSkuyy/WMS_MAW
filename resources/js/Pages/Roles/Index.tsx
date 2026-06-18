@@ -135,43 +135,43 @@ export default function Index({ roles, permissions }: any) {
                 <div className="xl:col-span-2">
                     <ComponentCard title="Role List">
                         <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                <thead className="bg-gray-50 dark:bg-gray-800">
+                            <table className="min-w-full">
+                                <thead className="bg-[#F8F9FC] border-b border-[#E9ECEF]">
                                     <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role Name</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Permissions</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Actions</th>
+                                        <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Role Name</th>
+                                        <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Permissions</th>
+                                        <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider w-32">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
+                                <tbody>
                                     {roles.map((role: any) => (
-                                        <tr key={role.id}>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                                        <tr key={role.id} className="border-b border-[#F1F3F5] hover:bg-[#F8F9FC] transition-all duration-150">
+                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-[#1A1D23] font-medium">
                                                 {role.name}
                                             </td>
-                                            <td className="px-4 py-3 text-sm text-gray-500">
+                                            <td className="px-4 py-3 text-[13px] text-[#6C757D]">
                                                 {role.name === 'Super Admin' ? (
-                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-100 text-brand-800 dark:bg-brand-900 dark:text-brand-300">
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#EEF2FF] text-[#3B5BDB]">
                                                         All Permissions
                                                     </span>
                                                 ) : (
                                                     <div className="flex flex-wrap gap-1">
                                                         {role.permissions?.length > 0 ? (
                                                             role.permissions.map((p: any) => (
-                                                                <span key={p.id} className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+                                                                <span key={p.id} className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-[#F8F9FC] text-[#6C757D] border border-[#E9ECEF]">
                                                                     {p.name}
                                                                 </span>
                                                             ))
                                                         ) : (
-                                                            <span className="text-gray-400 italic text-xs">No permissions</span>
+                                                            <span className="text-[#ADB5BD] italic text-xs">No permissions</span>
                                                         )}
                                                     </div>
                                                 )}
                                             </td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
-                                                <button onClick={() => handleEdit(role)} className="text-brand-500 hover:text-brand-700 mr-3">Edit</button>
+                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-[#1A1D23] font-medium">
+                                                <button onClick={() => handleEdit(role)} className="text-[#3B5BDB] hover:text-[#4DABF7] mr-3 transition-all duration-150">Edit</button>
                                                 {role.name !== 'Super Admin' && (
-                                                    <button onClick={() => handleDelete(role)} className="text-red-500 hover:text-red-700">Delete</button>
+                                                    <button onClick={() => handleDelete(role)} className="text-[#FA5252] hover:text-[#E03131] transition-all duration-150">Delete</button>
                                                 )}
                                             </td>
                                         </tr>

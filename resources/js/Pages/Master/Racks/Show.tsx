@@ -1,6 +1,7 @@
 import React from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
 import { Head, Link } from '@inertiajs/react';
+import { PencilIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
@@ -9,34 +10,38 @@ export default function Show({ rack }: any) {
     return (
         <AppLayout>
             <Head title={`Rak ${rack.code}`} />
-            <PageBreadcrumb pageTitle={`Rak: ${rack.code}`} />
+            <PageBreadcrumb pageTitle={`Detail: ${rack.code}`} />
 
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
                 <div className="xl:col-span-1">
-                    <ComponentCard title="Info Rak">
-                        <dl className="space-y-3">
+                    <ComponentCard title="Info Rak" desc="Detail data rak">
+                        <dl className="space-y-4">
                             <div>
-                                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Kode</dt>
-                                <dd className="text-sm font-mono text-lg">{rack.code}</dd>
+                                <dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Kode</dt>
+                                <dd className="text-sm text-[#1A1D23] font-mono">{rack.code}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Zona</dt>
-                                <dd className="text-sm">{rack.zone}</dd>
+                                <dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Zona</dt>
+                                <dd className="text-sm text-[#1A1D23]">{rack.zone}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Produk</dt>
-                                <dd className="text-sm">{rack.stocks?.length || 0}</dd>
+                                <dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Total Produk</dt>
+                                <dd className="text-sm text-[#1A1D23]">{rack.stocks?.length || 0}</dd>
                             </div>
                         </dl>
-                        <div className="mt-4 flex gap-2">
-                            <Link href={route('racks.edit', rack.id)}><Button>Edit</Button></Link>
-                            <Link href={route('racks.index')}><Button variant="outline">Kembali</Button></Link>
+                        <div className="mt-6 flex gap-2 pt-4 border-t border-[#F1F3F5]">
+                            <Link href={route('racks.edit', rack.id)}>
+                                <Button icon={<PencilIcon className="w-4 h-4" />} size="sm">Edit</Button>
+                            </Link>
+                            <Link href={route('racks.index')}>
+                                <Button variant="outline" size="sm">Kembali</Button>
+                            </Link>
                         </div>
                     </ComponentCard>
                 </div>
 
                 <div className="xl:col-span-2">
-                    <ComponentCard title="Stok di Rak Ini">
+                    <ComponentCard title="Stok di Rak Ini" desc="Daftar produk yang disimpan di rak ini">
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                 <thead className="bg-gray-50 dark:bg-gray-800">

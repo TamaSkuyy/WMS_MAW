@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
 import { Head, useForm } from '@inertiajs/react';
+import { ArrowLeftIcon, CheckIcon } from '@heroicons/react/24/outline';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
 import Input from '../../../Tailadmin/components/form/input/InputField';
 import Label from '../../../Tailadmin/components/form/Label';
 import SearchableSelect from '../../../Tailadmin/components/form/select/SearchableSelect';
+import { Link } from '@inertiajs/react';
 
 export default function Create({ suppliers, products }: any) {
     const { data, setData, post, errors } = useForm({
@@ -42,11 +44,20 @@ export default function Create({ suppliers, products }: any) {
     return (
         <AppLayout>
             <Head title="Cycle Baru" />
-            <PageBreadcrumb pageTitle="Cycle Baru" />
+            <PageBreadcrumb pageTitle="Tambah Cycle" />
+
             <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-                    <ComponentCard title="Info Cycle">
-                        <div className="space-y-4">
+                    <ComponentCard
+                        title="Info Cycle"
+                        desc="Data cycle penerimaan barang"
+                        action={
+                            <Link href={route('cycles.index')}>
+                                <Button variant="outline" size="sm" icon={<ArrowLeftIcon className="w-4 h-4" />}>Kembali</Button>
+                            </Link>
+                        }
+                    >
+                        <div className="space-y-5">
                             <div>
                                 <Label>Supplier *</Label>
                                 <SearchableSelect options={suppliers.map((s: any) => ({ value: s.id, label: s.name }))} value={data.supplier_id} onChange={(v) => setData('supplier_id', v as string)} />
@@ -64,7 +75,7 @@ export default function Create({ suppliers, products }: any) {
                         </div>
                     </ComponentCard>
 
-                    <ComponentCard title="Tambah Item">
+                    <ComponentCard title="Tambah Item" desc="Pilih produk yang akan diterima">
                         <div className="flex gap-2 items-end mb-4">
                             <div className="flex-1">
                                 <Label>Produk</Label>
@@ -109,8 +120,8 @@ export default function Create({ suppliers, products }: any) {
                         )}
                     </ComponentCard>
                 </div>
-                <div className="mt-4 flex gap-2">
-                    <Button type="submit" disabled={data.items.length === 0}>Simpan Cycle</Button>
+                <div className="mt-4 flex gap-3">
+                    <Button type="submit" disabled={data.items.length === 0} icon={<CheckIcon className="w-4 h-4" />}>Simpan Cycle</Button>
                     <Button type="button" variant="outline" onClick={() => window.history.back()}>Batal</Button>
                 </div>
             </form>

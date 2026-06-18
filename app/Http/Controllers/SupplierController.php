@@ -11,13 +11,21 @@ class SupplierController extends Controller
     /**
      * Display a listing of suppliers.
      */
-    public function index()
+    public function index(Request $request)
     {
         $suppliers = Supplier::with('primaryAddress')
-                             ->paginate(15);
+            ->when($request->search, function ($query, $search) {
+                $query->where('name', 'like', "%{$search}%")
+                      ->orWhere('contact_person', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%");
+            })
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
 
         return Inertia::render('Master/Suppliers/Index', [
             'suppliers' => $suppliers,
+            'filters' => $request->only(['search']),
         ]);
     }
 

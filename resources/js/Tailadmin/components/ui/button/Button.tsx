@@ -1,12 +1,13 @@
 import { ReactNode } from "react";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  children: ReactNode; // Button text or content
-  size?: "sm" | "md"; // Button size
-  variant?: "primary" | "outline"; // Button variant
-  startIcon?: ReactNode; // Icon before the text
-  endIcon?: ReactNode; // Icon after the text
-  className?: string; // Additional classes
+  children: ReactNode;
+  size?: "sm" | "md";
+  variant?: "primary" | "outline" | "danger";
+  startIcon?: ReactNode;
+  endIcon?: ReactNode;
+  icon?: ReactNode;
+  className?: string;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -15,32 +16,34 @@ const Button: React.FC<ButtonProps> = ({
   variant = "primary",
   startIcon,
   endIcon,
+  icon,
   className = "",
   ...props
 }) => {
-  // Size Classes
   const sizeClasses = {
-    sm: "px-4 py-3 text-sm",
-    md: "px-5 py-3.5 text-sm",
+    sm: "px-3 py-1.5 text-xs",
+    md: "px-4 py-2.5 text-sm",
   };
 
-  // Variant Classes
   const variantClasses = {
     primary:
-      "bg-brand-500 text-white shadow-theme-xs hover:bg-brand-600 disabled:bg-brand-300",
+      "bg-gradient-to-r from-[#3B5BDB] to-[#4DABF7] text-white hover:brightness-110 shadow-sm",
     outline:
-      "bg-white text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700 dark:hover:bg-white/[0.03] dark:hover:text-gray-300",
+      "border border-[#DEE2E6] text-[#6C757D] hover:bg-[#F8F9FC]",
+    danger:
+      "bg-[#FA5252] text-white hover:bg-[#E03131]",
   };
 
   return (
     <button
-      className={`inline-flex items-center justify-center gap-2 rounded-lg transition ${className} ${
+      className={`inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-150 ${className} ${
         sizeClasses[size]
       } ${variantClasses[variant]} ${
         props.disabled ? "cursor-not-allowed opacity-50" : ""
       }`}
       {...props}
     >
+      {icon && <span className="flex items-center">{icon}</span>}
       {startIcon && <span className="flex items-center">{startIcon}</span>}
       {children}
       {endIcon && <span className="flex items-center">{endIcon}</span>}

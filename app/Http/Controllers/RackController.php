@@ -8,10 +8,17 @@ use Inertia\Inertia;
 
 class RackController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         return Inertia::render('Master/Racks/Index', [
-            'racks' => Rack::orderBy('zone')->orderBy('code')->paginate(20),
+            'racks' => Rack::orderBy('zone')->orderBy('code')
+                ->when($request->search, function ($query, $search) {
+                    $query->where('code', 'like', "%{$search}%")
+                          ->orWhere('zone', 'like', "%{$search}%");
+                })
+                ->paginate(10)
+                ->withQueryString(),
+            'filters' => $request->only(['search']),
         ]);
     }
 

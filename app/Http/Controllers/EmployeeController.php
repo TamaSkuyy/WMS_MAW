@@ -12,12 +12,19 @@ use Inertia\Inertia;
 
 class EmployeeController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         return Inertia::render('Master/Employees/Index', [
             'employees' => Employee::with(['jobPosition', 'workLocation', 'department', 'user'])
                 ->orderBy('name')
-                ->paginate(20),
+                ->when($request->search, function ($query, $search) {
+                    $query->where('name', 'like', "%{$search}%")
+                          ->orWhere('nik', 'like', "%{$search}%")
+                          ->orWhere('email', 'like', "%{$search}%");
+                })
+                ->paginate(10)
+                ->withQueryString(),
+            'filters' => $request->only(['search']),
         ]);
     }
 

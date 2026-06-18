@@ -1,45 +1,68 @@
 import React from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
+import SearchInput from '../../../Tailadmin/components/form/input/SearchInput';
+import TableActions from '../../../Tailadmin/components/common/TableActions';
+import EmptyState from '../../../Tailadmin/components/common/EmptyState';
 
-export default function Index({ employees }: any) {
+export default function Index({ employees, filters }: any) {
+    const handleDelete = (id: number) => {
+        if (confirm('Hapus karyawan ini?')) {
+            router.delete(route('employees.destroy', id));
+        }
+    };
+
     return (
         <AppLayout>
             <Head title="Karyawan" />
             <PageBreadcrumb pageTitle="Karyawan" />
             <ComponentCard title="Daftar Karyawan">
-                <div className="mb-3">
+                <div className="mb-3 flex flex-wrap items-center gap-3">
                     <Link href={route('employees.create')}><Button>Tambah Karyawan</Button></Link>
+                    <SearchInput
+                        placeholder="Cari nama, NIK, atau email..."
+                        routeName="employees.index"
+                        filters={filters}
+                    />
                 </div>
+                {employees.data.length === 0 ? (
+                    <EmptyState
+                        icon="👤"
+                        title="Belum ada karyawan"
+                        message="Tambahkan data karyawan dan hubungkan ke akun login."
+                        actionLabel="Tambah Karyawan"
+                        actionRoute={route('employees.create')}
+                    />
+                ) : (
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead className="bg-gray-50 dark:bg-gray-800">
+                    <table className="min-w-full">
+                        <thead className="bg-[#F8F9FC] border-b border-[#E9ECEF]">
                             <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">NIK</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jabatan</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lokasi Kerja</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Departemen</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Nama</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">NIK</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Jabatan</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Lokasi Kerja</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Departemen</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Status</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">User</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider w-24">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
+                        <tbody>
                             {employees.data.map((e: any) => (
-                                <tr key={e.id}>
-                                    <td className="px-4 py-3 text-sm font-medium">
-                                        <Link href={route('employees.show', e.id)} className="text-brand-500 hover:text-brand-700">
+                                <tr key={e.id} className="border-b border-[#F1F3F5] hover:bg-[#F8F9FC] transition-all duration-150">
+                                    <td className="px-4 py-3 text-sm text-[#1A1D23] font-medium">
+                                        <Link href={route('employees.show', e.id)} className="text-[#3B5BDB] hover:text-[#4DABF7]">
                                             {e.name}
                                         </Link>
                                     </td>
-                                    <td className="px-4 py-3 text-sm text-gray-500">{e.nik || '-'}</td>
-                                    <td className="px-4 py-3 text-sm text-gray-500">{e.job_position?.name || '-'}</td>
-                                    <td className="px-4 py-3 text-sm text-gray-500">{e.work_location?.name || '-'}</td>
-                                    <td className="px-4 py-3 text-sm text-gray-500">{e.department?.name || '-'}</td>
+                                    <td className="px-4 py-3 text-[13px] text-[#6C757D]">{e.nik || '-'}</td>
+                                    <td className="px-4 py-3 text-[13px] text-[#6C757D]">{e.job_position?.name || '-'}</td>
+                                    <td className="px-4 py-3 text-[13px] text-[#6C757D]">{e.work_location?.name || '-'}</td>
+                                    <td className="px-4 py-3 text-[13px] text-[#6C757D]">{e.department?.name || '-'}</td>
                                     <td className="px-4 py-3 text-sm">
                                         <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${e.status === 'Aktif' ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'}`}>
                                             {e.status}
@@ -47,15 +70,18 @@ export default function Index({ employees }: any) {
                                     </td>
                                     <td className="px-4 py-3 text-sm text-gray-500">{e.user?.name || '-'}</td>
                                     <td className="px-4 py-3 text-sm font-medium">
-                                        <Link href={route('employees.edit', e.id)} className="text-brand-500 hover:text-brand-700 mr-2">Edit</Link>
-                                        <Link href={route('employees.destroy', e.id)} as="button" method="delete" onClick={(ev: any) => { if (!confirm('Hapus karyawan ini?')) ev.preventDefault(); }} className="text-red-500 hover:text-red-700">Hapus</Link>
+                                        <TableActions
+                                            viewRoute={route('employees.show', e.id)}
+                                            editRoute={route('employees.edit', e.id)}
+                                            onDelete={() => handleDelete(e.id)}
+                                        />
                                     </td>
                                 </tr>
                             ))}
-                            {employees.data.length === 0 && <tr><td colSpan={8} className="px-4 py-8 text-center text-sm text-gray-500">Tidak ada karyawan.</td></tr>}
                         </tbody>
                     </table>
                 </div>
+                )}
                 {employees.total > employees.per_page && (
                     <div className="mt-4 flex justify-between items-center">
                         <div className="text-sm text-gray-500">Menampilkan {employees.from} sampai {employees.to} dari {employees.total}</div>

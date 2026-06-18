@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
 import { Head, useForm } from '@inertiajs/react';
+import { ArrowLeftIcon, CheckIcon } from '@heroicons/react/24/outline';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
 import Input from '../../../Tailadmin/components/form/input/InputField';
 import Label from '../../../Tailadmin/components/form/Label';
 import SearchableSelect from '../../../Tailadmin/components/form/select/SearchableSelect';
+import { Link } from '@inertiajs/react';
 
 export default function Edit({ shipment, products, racks }: any) {
     const { data, setData, put, errors } = useForm({
@@ -39,10 +41,19 @@ export default function Edit({ shipment, products, racks }: any) {
         <AppLayout>
             <Head title="Edit Shipment" />
             <PageBreadcrumb pageTitle={`Edit: ${shipment.partner_name}`} />
+
             <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-                    <ComponentCard title="Info Shipment">
-                        <div className="space-y-4">
+                    <ComponentCard
+                        title="Info Shipment"
+                        desc="Perbarui data pengiriman"
+                        action={
+                            <Link href={route('shipments.index')}>
+                                <Button variant="outline" size="sm" icon={<ArrowLeftIcon className="w-4 h-4" />}>Kembali</Button>
+                            </Link>
+                        }
+                    >
+                        <div className="space-y-5">
                             <div>
                                 <Label>Nama Mitra *</Label>
                                 <Input type="text" value={data.partner_name} onChange={(e) => setData('partner_name', e.target.value)} />
@@ -59,7 +70,7 @@ export default function Edit({ shipment, products, racks }: any) {
                             </div>
                         </div>
                     </ComponentCard>
-                    <ComponentCard title="Item">
+                    <ComponentCard title="Item" desc="Daftar produk dalam shipment">
                         <div className="flex gap-2 items-end mb-4 flex-wrap">
                             <div className="flex-1 min-w-[150px]">
                                 <Label>Produk</Label>
@@ -111,8 +122,8 @@ export default function Edit({ shipment, products, racks }: any) {
                         )}
                     </ComponentCard>
                 </div>
-                <div className="mt-4 flex gap-2">
-                    <Button type="submit" disabled={data.items.length === 0}>Update Shipment</Button>
+                <div className="mt-4 flex gap-3">
+                    <Button type="submit" disabled={data.items.length === 0} icon={<CheckIcon className="w-4 h-4" />}>Update Shipment</Button>
                     <Button type="button" variant="outline" onClick={() => window.history.back()}>Batal</Button>
                 </div>
             </form>

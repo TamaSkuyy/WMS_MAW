@@ -19,7 +19,7 @@ class CycleController extends Controller
             ->when($request->supplier_id, fn($q, $id) => $q->where('supplier_id', $id))
             ->when($request->status, fn($q, $s) => $q->where('status', $s))
             ->latest()
-            ->paginate(15)
+            ->paginate(10)
             ->withQueryString();
 
         return Inertia::render('Transactions/Cycles/Index', [

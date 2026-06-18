@@ -1,41 +1,66 @@
 import React from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
+import SearchInput from '../../../Tailadmin/components/form/input/SearchInput';
+import TableActions from '../../../Tailadmin/components/common/TableActions';
+import EmptyState from '../../../Tailadmin/components/common/EmptyState';
 
-export default function Index({ locations }: any) {
+export default function Index({ locations, filters }: any) {
+    const handleDelete = (id: number) => {
+        if (confirm('Hapus lokasi kerja ini?')) {
+            router.delete(route('work-locations.destroy', id));
+        }
+    };
+
     return (
         <AppLayout>
             <Head title="Lokasi Kerja" />
             <PageBreadcrumb pageTitle="Lokasi Kerja" />
             <ComponentCard title="Daftar Lokasi Kerja">
-                <div className="mb-3">
+                <div className="mb-3 flex flex-wrap items-center gap-3">
                     <Link href={route('work-locations.create')}><Button>Tambah Lokasi</Button></Link>
+                    <SearchInput
+                        placeholder="Cari nama lokasi..."
+                        routeName="work-locations.index"
+                        filters={filters}
+                    />
                 </div>
+                {locations.data.length === 0 ? (
+                    <EmptyState
+                        icon="📍"
+                        title="Belum ada lokasi kerja"
+                        message="Tambahkan lokasi kerja cabang atau kantor."
+                        actionLabel="Tambah Lokasi"
+                        actionRoute={route('work-locations.create')}
+                    />
+                ) : (
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead className="bg-gray-50 dark:bg-gray-800">
+                    <table className="min-w-full">
+                        <thead className="bg-[#F8F9FC] border-b border-[#E9ECEF]">
                             <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Nama</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider w-24">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
+                        <tbody>
                             {locations.data.map((l: any) => (
-                                <tr key={l.id}>
-                                    <td className="px-4 py-3 text-sm font-medium">{l.name}</td>
-                                    <td className="px-4 py-3 text-sm font-medium">
-                                        <Link href={route('work-locations.edit', l.id)} className="text-brand-500 hover:text-brand-700 mr-2">Edit</Link>
-                                        <Link href={route('work-locations.destroy', l.id)} as="button" method="delete" onClick={(e: any) => { if (!confirm('Hapus lokasi kerja ini?')) e.preventDefault(); }} className="text-red-500 hover:text-red-700">Hapus</Link>
+                                <tr key={l.id} className="border-b border-[#F1F3F5] hover:bg-[#F8F9FC] transition-all duration-150">
+                                    <td className="px-4 py-3 text-sm text-[#1A1D23] font-medium">{l.name}</td>
+                                    <td className="px-4 py-3 text-sm text-[#1A1D23]">
+                                        <TableActions
+                                            editRoute={route('work-locations.edit', l.id)}
+                                            onDelete={() => handleDelete(l.id)}
+                                        />
                                     </td>
                                 </tr>
                             ))}
-                            {locations.data.length === 0 && <tr><td colSpan={2} className="px-4 py-8 text-center text-sm text-gray-500">Tidak ada lokasi kerja.</td></tr>}
                         </tbody>
                     </table>
                 </div>
+                )}
                 {locations.total > locations.per_page && (
                     <div className="mt-4 flex justify-between items-center">
                         <div className="text-sm text-gray-500">Menampilkan {locations.from} sampai {locations.to} dari {locations.total}</div>

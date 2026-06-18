@@ -6,10 +6,17 @@ use Inertia\Inertia;
 
 class VehicleModelController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         return Inertia::render('Master/VehicleModels/Index', [
-            'vehicleModels' => VehicleModel::orderBy('brand')->orderBy('name')->paginate(20),
+            'vehicleModels' => VehicleModel::orderBy('brand')->orderBy('name')
+                ->when($request->search, function ($query, $search) {
+                    $query->where('name', 'like', "%{$search}%")
+                          ->orWhere('brand', 'like', "%{$search}%");
+                })
+                ->paginate(10)
+                ->withQueryString(),
+            'filters' => $request->only(['search']),
         ]);
     }
     public function create()

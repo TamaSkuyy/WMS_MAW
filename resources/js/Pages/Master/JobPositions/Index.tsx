@@ -1,43 +1,68 @@
 import React from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
+import SearchInput from '../../../Tailadmin/components/form/input/SearchInput';
+import TableActions from '../../../Tailadmin/components/common/TableActions';
+import EmptyState from '../../../Tailadmin/components/common/EmptyState';
 
-export default function Index({ positions }: any) {
+export default function Index({ positions, filters }: any) {
+    const handleDelete = (id: number) => {
+        if (confirm('Hapus jabatan ini?')) {
+            router.delete(route('job-positions.destroy', id));
+        }
+    };
+
     return (
         <AppLayout>
             <Head title="Jabatan" />
             <PageBreadcrumb pageTitle="Jabatan" />
             <ComponentCard title="Daftar Jabatan">
-                <div className="mb-3">
+                <div className="mb-3 flex flex-wrap items-center gap-3">
                     <Link href={route('job-positions.create')}><Button>Tambah Jabatan</Button></Link>
+                    <SearchInput
+                        placeholder="Cari nama jabatan..."
+                        routeName="job-positions.index"
+                        filters={filters}
+                    />
                 </div>
+                {positions.data.length === 0 ? (
+                    <EmptyState
+                        icon="🪪"
+                        title="Belum ada jabatan"
+                        message="Tambahkan jabatan seperti Staff, Leader, Manager."
+                        actionLabel="Tambah Jabatan"
+                        actionRoute={route('job-positions.create')}
+                    />
+                ) : (
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead className="bg-gray-50 dark:bg-gray-800">
+                    <table className="min-w-full">
+                        <thead className="bg-[#F8F9FC] border-b border-[#E9ECEF]">
                             <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Level</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Nama</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Level</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider w-24">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
+                        <tbody>
                             {positions.data.map((p: any) => (
-                                <tr key={p.id}>
-                                    <td className="px-4 py-3 text-sm font-medium">{p.name}</td>
-                                    <td className="px-4 py-3 text-sm text-gray-500">{p.level || '-'}</td>
-                                    <td className="px-4 py-3 text-sm font-medium">
-                                        <Link href={route('job-positions.edit', p.id)} className="text-brand-500 hover:text-brand-700 mr-2">Edit</Link>
-                                        <Link href={route('job-positions.destroy', p.id)} as="button" method="delete" onClick={(e: any) => { if (!confirm('Hapus jabatan ini?')) e.preventDefault(); }} className="text-red-500 hover:text-red-700">Hapus</Link>
+                                <tr key={p.id} className="border-b border-[#F1F3F5] hover:bg-[#F8F9FC] transition-all duration-150">
+                                    <td className="px-4 py-3 text-sm text-[#1A1D23] font-medium">{p.name}</td>
+                                    <td className="px-4 py-3 text-[13px] text-[#6C757D]">{p.level || '-'}</td>
+                                    <td className="px-4 py-3 text-sm text-[#1A1D23]">
+                                        <TableActions
+                                            editRoute={route('job-positions.edit', p.id)}
+                                            onDelete={() => handleDelete(p.id)}
+                                        />
                                     </td>
                                 </tr>
                             ))}
-                            {positions.data.length === 0 && <tr><td colSpan={3} className="px-4 py-8 text-center text-sm text-gray-500">Tidak ada jabatan.</td></tr>}
                         </tbody>
                     </table>
                 </div>
+                )}
                 {positions.total > positions.per_page && (
                     <div className="mt-4 flex justify-between items-center">
                         <div className="text-sm text-gray-500">Menampilkan {positions.from} sampai {positions.to} dari {positions.total}</div>

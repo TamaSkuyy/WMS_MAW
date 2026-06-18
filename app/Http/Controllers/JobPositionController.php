@@ -8,10 +8,17 @@ use Inertia\Inertia;
 
 class JobPositionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         return Inertia::render('Master/JobPositions/Index', [
-            'positions' => JobPosition::orderBy('name')->paginate(20),
+            'positions' => JobPosition::orderBy('name')
+                ->when($request->search, function ($query, $search) {
+                    $query->where('name', 'like', "%{$search}%")
+                          ->orWhere('level', 'like', "%{$search}%");
+                })
+                ->paginate(10)
+                ->withQueryString(),
+            'filters' => $request->only(['search']),
         ]);
     }
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
 import { Head, Link, router } from '@inertiajs/react';
+import { PencilIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
@@ -21,27 +22,28 @@ export default function Show({ shipment }: any) {
     return (
         <AppLayout>
             <Head title={`Pengiriman ke ${shipment.partner_name}`} />
-            <PageBreadcrumb pageTitle={`Pengiriman: ${shipment.partner_name}`} />
+            <PageBreadcrumb pageTitle={`Detail: ${shipment.partner_name}`} />
+
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
                 <div className="xl:col-span-1">
-                    <ComponentCard title="Info Shipment">
-                        <dl className="space-y-3">
-                            <div><dt className="text-sm font-medium text-gray-500">Mitra</dt><dd className="text-sm">{shipment.partner_name}</dd></div>
-                            <div><dt className="text-sm font-medium text-gray-500">Tanggal</dt><dd className="text-sm">{shipment.shipment_date}</dd></div>
-                            <div><dt className="text-sm font-medium text-gray-500">Status</dt><dd><span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[shipment.status]}`}>{shipment.status}</span></dd></div>
-                            {shipment.notes && <div><dt className="text-sm font-medium text-gray-500">Catatan</dt><dd className="text-sm">{shipment.notes}</dd></div>}
+                    <ComponentCard title="Info Shipment" desc="Detail pengiriman barang">
+                        <dl className="space-y-4">
+                            <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Mitra</dt><dd className="text-sm text-[#1A1D23]">{shipment.partner_name}</dd></div>
+                            <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Tanggal</dt><dd className="text-sm text-[#1A1D23]">{shipment.shipment_date}</dd></div>
+                            <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Status</dt><dd><span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[shipment.status]}`}>{shipment.status}</span></dd></div>
+                            {shipment.notes && <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Catatan</dt><dd className="text-sm text-[#1A1D23]">{shipment.notes}</dd></div>}
                         </dl>
-                        <div className="mt-4 flex gap-2">
+                        <div className="mt-6 flex gap-2 pt-4 border-t border-[#F1F3F5]">
                             {shipment.status === 'draft' && (
-                                <><Link href={route('shipments.edit', shipment.id)}><Button>Edit</Button></Link>
-                                <Button variant="outline" onClick={handleShip}>Kirim Sekarang</Button></>
+                                <><Link href={route('shipments.edit', shipment.id)}><Button icon={<PencilIcon className="w-4 h-4" />} size="sm">Edit</Button></Link>
+                                <Button variant="outline" size="sm" onClick={handleShip}>Kirim Sekarang</Button></>
                             )}
-                            <Link href={route('shipments.index')}><Button variant="outline">Kembali</Button></Link>
+                            <Link href={route('shipments.index')}><Button variant="outline" size="sm">Kembali</Button></Link>
                         </div>
                     </ComponentCard>
                 </div>
                 <div className="xl:col-span-2">
-                    <ComponentCard title="Items">
+                    <ComponentCard title="Items" desc="Daftar produk dalam pengiriman">
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                 <thead className="bg-gray-50 dark:bg-gray-800">

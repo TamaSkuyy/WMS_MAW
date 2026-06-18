@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
 import { Head, Link, router } from '@inertiajs/react';
+import { PencilIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
@@ -45,28 +46,28 @@ export default function Show({ cycle, racks }: any) {
 
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
                 <div className="xl:col-span-1">
-                    <ComponentCard title="Info Cycle">
-                        <dl className="space-y-3">
-                            <div><dt className="text-sm font-medium text-gray-500">Supplier</dt><dd className="text-sm">{cycle.supplier?.name}</dd></div>
-                            <div><dt className="text-sm font-medium text-gray-500">Nomor Cycle</dt><dd className="text-sm font-mono">{cycle.cycle_number}</dd></div>
-                            <div><dt className="text-sm font-medium text-gray-500">Status</dt><dd><span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[cycle.status]}`}>{cycle.status}</span></dd></div>
-                            <div><dt className="text-sm font-medium text-gray-500">Item</dt><dd className="text-sm">{cycle.items.length}</dd></div>
-                            <div><dt className="text-sm font-medium text-gray-500">Diterima</dt><dd className="text-sm">{cycle.received_at ? new Date(cycle.received_at).toLocaleDateString('id-ID') : '-'}</dd></div>
-                            {cycle.notes && <div><dt className="text-sm font-medium text-gray-500">Catatan</dt><dd className="text-sm">{cycle.notes}</dd></div>}
+                    <ComponentCard title="Info Cycle" desc="Detail cycle penerimaan">
+                        <dl className="space-y-4">
+                            <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Supplier</dt><dd className="text-sm text-[#1A1D23]">{cycle.supplier?.name}</dd></div>
+                            <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Nomor Cycle</dt><dd className="text-sm text-[#1A1D23] font-mono">{cycle.cycle_number}</dd></div>
+                            <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Status</dt><dd><span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[cycle.status]}`}>{cycle.status}</span></dd></div>
+                            <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Item</dt><dd className="text-sm text-[#1A1D23]">{cycle.items.length}</dd></div>
+                            <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Diterima</dt><dd className="text-sm text-[#1A1D23]">{cycle.received_at ? new Date(cycle.received_at).toLocaleDateString('id-ID') : '-'}</dd></div>
+                            {cycle.notes && <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Catatan</dt><dd className="text-sm text-[#1A1D23]">{cycle.notes}</dd></div>}
                         </dl>
-                        <div className="mt-4 flex gap-2">
-                            {cycle.status === 'draft' && <Link href={route('cycles.edit', cycle.id)}><Button>Edit</Button></Link>}
+                        <div className="mt-6 flex gap-2 pt-4 border-t border-[#F1F3F5]">
+                            {cycle.status === 'draft' && <Link href={route('cycles.edit', cycle.id)}><Button icon={<PencilIcon className="w-4 h-4" />} size="sm">Edit</Button></Link>}
                             {cycle.status !== 'completed' && !isReceiving && (
-                                <Button variant="outline" onClick={() => setIsReceiving(true)}>Terima Barang</Button>
+                                <Button variant="outline" size="sm" onClick={() => setIsReceiving(true)}>Terima Barang</Button>
                             )}
-                            <Link href={route('cycles.index')}><Button variant="outline">Kembali</Button></Link>
+                            <Link href={route('cycles.index')}><Button variant="outline" size="sm">Kembali</Button></Link>
                         </div>
                     </ComponentCard>
                 </div>
 
                 <div className="xl:col-span-2">
                     {isReceiving ? (
-                        <ComponentCard title="Terima Barang">
+                        <ComponentCard title="Terima Barang" desc="Masukkan jumlah dan rak tujuan">
                             <form onSubmit={handleReceive}>
                                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                     <thead className="bg-gray-50 dark:bg-gray-800">
@@ -96,14 +97,14 @@ export default function Show({ cycle, racks }: any) {
                                         ))}
                                     </tbody>
                                 </table>
-                                <div className="mt-4 flex gap-2">
+                                <div className="mt-4 flex gap-3">
                                     <Button type="submit">Selesaikan Penerimaan</Button>
                                     <Button type="button" variant="outline" onClick={() => setIsReceiving(false)}>Batal</Button>
                                 </div>
                             </form>
                         </ComponentCard>
                     ) : (
-                        <ComponentCard title="Item">
+                        <ComponentCard title="Item" desc="Daftar produk dalam cycle">
                             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                 <thead className="bg-gray-50 dark:bg-gray-800">
                                     <tr>

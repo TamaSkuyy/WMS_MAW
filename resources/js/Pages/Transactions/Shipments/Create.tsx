@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
 import { Head, useForm } from '@inertiajs/react';
+import { ArrowLeftIcon, CheckIcon } from '@heroicons/react/24/outline';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
 import Input from '../../../Tailadmin/components/form/input/InputField';
 import Label from '../../../Tailadmin/components/form/Label';
 import SearchableSelect from '../../../Tailadmin/components/form/select/SearchableSelect';
+import { Link } from '@inertiajs/react';
 
 export default function Create({ products, racks }: any) {
     const { data, setData, post, errors } = useForm({
@@ -38,11 +40,20 @@ export default function Create({ products, racks }: any) {
     return (
         <AppLayout>
             <Head title="Shipment Baru" />
-            <PageBreadcrumb pageTitle="Shipment Baru" />
+            <PageBreadcrumb pageTitle="Tambah Shipment" />
+
             <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-                    <ComponentCard title="Info Shipment">
-                        <div className="space-y-4">
+                    <ComponentCard
+                        title="Info Shipment"
+                        desc="Data pengiriman barang"
+                        action={
+                            <Link href={route('shipments.index')}>
+                                <Button variant="outline" size="sm" icon={<ArrowLeftIcon className="w-4 h-4" />}>Kembali</Button>
+                            </Link>
+                        }
+                    >
+                        <div className="space-y-5">
                             <div>
                                 <Label>Nama Mitra *</Label>
                                 <Input type="text" value={data.partner_name} onChange={(e) => setData('partner_name', e.target.value)} placeholder="contoh: PT Maju Jaya" />
@@ -59,7 +70,7 @@ export default function Create({ products, racks }: any) {
                             </div>
                         </div>
                     </ComponentCard>
-                    <ComponentCard title="Tambah Item">
+                    <ComponentCard title="Tambah Item" desc="Pilih produk yang akan dikirim">
                         <div className="flex gap-2 items-end mb-4 flex-wrap">
                             <div className="flex-1 min-w-[150px]">
                                 <Label>Produk</Label>
@@ -113,8 +124,8 @@ export default function Create({ products, racks }: any) {
                         )}
                     </ComponentCard>
                 </div>
-                <div className="mt-4 flex gap-2">
-                    <Button type="submit" disabled={data.items.length === 0}>Simpan Shipment</Button>
+                <div className="mt-4 flex gap-3">
+                    <Button type="submit" disabled={data.items.length === 0} icon={<CheckIcon className="w-4 h-4" />}>Simpan Shipment</Button>
                     <Button type="button" variant="outline" onClick={() => window.history.back()}>Batal</Button>
                 </div>
             </form>

@@ -169,26 +169,26 @@ export default function Index({ menuItems, permissions, parentMenus }: any) {
                 <div className="xl:col-span-2">
                     <ComponentCard title="Menu List">
                         <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                <thead className="bg-gray-50 dark:bg-gray-800">
+                            <table className="min-w-full">
+                                <thead className="bg-[#F8F9FC] border-b border-[#E9ECEF]">
                                     <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Path</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Group</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Parent</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Name</th>
+                                        <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Path</th>
+                                        <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Group</th>
+                                        <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Parent</th>
+                                        <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
+                                <tbody>
                                     {menuItems.map((menu: any) => (
-                                        <tr key={menu.id}>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm">{menu.name}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{menu.path || '-'}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{menu.group}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{menu.parent?.name || '-'}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
-                                                <button onClick={() => handleEdit(menu)} className="text-brand-500 hover:text-brand-700 mr-3">Edit</button>
-                                                <button onClick={() => handleDelete(menu.id)} className="text-red-500 hover:text-red-700">Delete</button>
+                                        <tr key={menu.id} className="border-b border-[#F1F3F5] hover:bg-[#F8F9FC] transition-all duration-150">
+                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-[#1A1D23]">{menu.name}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap text-[13px] text-[#6C757D]">{menu.path || '-'}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap text-[13px] text-[#6C757D]">{menu.group}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap text-[13px] text-[#6C757D]">{menu.parent?.name || '-'}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-[#1A1D23] font-medium">
+                                                <button onClick={() => handleEdit(menu)} className="text-[#3B5BDB] hover:text-[#4DABF7] mr-3 transition-all duration-150">Edit</button>
+                                                <button onClick={() => handleDelete(menu.id)} className="text-[#FA5252] hover:text-[#E03131] transition-all duration-150">Delete</button>
                                             </td>
                                         </tr>
                                     ))}

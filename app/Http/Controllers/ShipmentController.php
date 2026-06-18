@@ -17,7 +17,7 @@ class ShipmentController extends Controller
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->search, fn ($q, $s) => $q->where('partner_name', 'like', "%{$s}%"))
             ->latest()
-            ->paginate(15)
+            ->paginate(10)
             ->withQueryString();
 
         return Inertia::render('Transactions/Shipments/Index', [

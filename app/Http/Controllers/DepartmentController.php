@@ -8,10 +8,16 @@ use Inertia\Inertia;
 
 class DepartmentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         return Inertia::render('Master/Departments/Index', [
-            'departments' => Department::orderBy('name')->paginate(20),
+            'departments' => Department::orderBy('name')
+                ->when($request->search, function ($query, $search) {
+                    $query->where('name', 'like', "%{$search}%");
+                })
+                ->paginate(10)
+                ->withQueryString(),
+            'filters' => $request->only(['search']),
         ]);
     }
 
