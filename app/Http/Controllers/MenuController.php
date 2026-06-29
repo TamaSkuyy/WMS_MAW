@@ -3,17 +3,21 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
 use App\Models\Menu;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Permission;
 
-class MenuController extends Controller
+class MenuController extends Controller implements HasMiddleware
 {
-    public function __construct()
+    public static function middleware(): array
     {
-        $this->middleware('can:view menus')->only(['index']);
-        $this->middleware('can:manage menus')->only(['store', 'update', 'destroy']);
+        return [
+            new Middleware('can:view menus', only: ['index']),
+            new Middleware('can:manage menus', only: ['store', 'update', 'destroy']),
+        ];
     }
 
     public function index()

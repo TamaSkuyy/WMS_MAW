@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { PencilIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
@@ -8,6 +8,18 @@ import Button from '../../../Tailadmin/components/ui/button/Button';
 import SearchableSelect from '../../../Tailadmin/components/form/select/SearchableSelect';
 import Input from '../../../Tailadmin/components/form/input/InputField';
 import Label from '../../../Tailadmin/components/form/Label';
+import QrScanner from '../../../Components/QrScanner';
+
+function beep() {
+    try {
+        const ctx = new AudioContext();
+        const osc = ctx.createOscillator();
+        osc.connect(ctx.destination);
+        osc.frequency.value = 880;
+        osc.start();
+        osc.stop(ctx.currentTime + 0.06);
+    } catch (_) {}
+}
 
 export default function Show({ cycle, racks, lastUsedRacks }: any) {
     const [isReceiving, setIsReceiving] = useState(false);
@@ -33,6 +45,38 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
             };
         })
     );
+
+    const [scannerOpen, setScannerOpen] = useState(false);
+    const [scanFeedback, setScanFeedback] = useState<{ message: string; type: 'ok' | 'warning' | 'error' } | null>(null);
+
+    useEffect(() => {
+        if (!scanFeedback) return;
+        const t = setTimeout(() => setScanFeedback(null), 1500);
+        return () => clearTimeout(t);
+    }, [scanFeedback]);
+
+    const handleScan = useCallback((code: string) => {
+        const index = cycle.items.findIndex(
+            (item: any) => item.product?.part_number?.toLowerCase() === code.toLowerCase()
+        );
+        if (index === -1) {
+            setScanFeedback({ message: `"${code}" tidak ada dalam cycle ini`, type: 'error' });
+            return;
+        }
+        const maxQty = cycle.items[index].quantity;
+        const current = items[index].received_quantity;
+        if (current >= maxQty) {
+            setScanFeedback({ message: `${code} — sudah penuh (${maxQty}/${maxQty})`, type: 'warning' });
+            return;
+        }
+        beep();
+        setScanFeedback({ message: `✓ ${code} — ${current + 1}/${maxQty}`, type: 'ok' });
+        setItems(prev => {
+            const updated = [...prev];
+            updated[index] = { ...updated[index], received_quantity: current + 1 };
+            return updated;
+        });
+    }, [cycle.items, items]);
 
     const statusColors: Record<string, string> = {
         draft: 'bg-gray-100 text-gray-800',
@@ -82,6 +126,11 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
                 <div className="xl:col-span-2">
                     {isReceiving ? (
                         <ComponentCard title="Terima Barang" desc="Masukkan jumlah dan rak tujuan">
+                            <div className="mb-4">
+                                <Button type="button" variant="outline" size="sm" onClick={() => setScannerOpen(true)}>
+                                    📷 Scan QR
+                                </Button>
+                            </div>
                             <form onSubmit={handleReceive}>
                                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                     <thead className="bg-gray-50 dark:bg-gray-800">
@@ -153,6 +202,13 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
                     )}
                 </div>
             </div>
+            <QrScanner
+                isOpen={scannerOpen}
+                onClose={() => setScannerOpen(false)}
+                onScan={handleScan}
+                autoClose={false}
+                feedback={scanFeedback}
+            />
         </AppLayout>
     );
 }

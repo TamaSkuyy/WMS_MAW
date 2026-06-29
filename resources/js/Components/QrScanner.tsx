@@ -1,13 +1,26 @@
 import React, { useEffect, useRef } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 
+interface ScanFeedback {
+    message: string;
+    type: 'ok' | 'warning' | 'error';
+}
+
 interface QrScannerProps {
     isOpen: boolean;
     onClose: () => void;
     onScan: (decoded: string) => void;
+    autoClose?: boolean;
+    feedback?: ScanFeedback | null;
 }
 
-export default function QrScanner({ isOpen, onClose, onScan }: QrScannerProps) {
+const feedbackStyle: Record<ScanFeedback['type'], string> = {
+    ok:      'bg-green-500 text-white',
+    warning: 'bg-yellow-400 text-yellow-900',
+    error:   'bg-orange-500 text-white',
+};
+
+export default function QrScanner({ isOpen, onClose, onScan, autoClose = true, feedback }: QrScannerProps) {
     const scannerRef = useRef<Html5Qrcode | null>(null);
     const lastScanRef = useRef<{ code: string; time: number }>({ code: '', time: 0 });
     const DEBOUNCE_MS = 800;
@@ -33,6 +46,7 @@ export default function QrScanner({ isOpen, onClose, onScan }: QrScannerProps) {
                     }
                     lastScanRef.current = { code, time: now };
                     onScan(code);
+                    if (autoClose) onClose();
                 },
                 undefined
             )
@@ -57,7 +71,14 @@ export default function QrScanner({ isOpen, onClose, onScan }: QrScannerProps) {
                         &times;
                     </button>
                 </div>
-                <div id="qr-reader" className="w-full rounded-lg overflow-hidden" />
+                <div className="relative">
+                    <div id="qr-reader" className="w-full rounded-lg overflow-hidden" />
+                    {feedback && (
+                        <div className={`absolute bottom-0 left-0 right-0 px-3 py-2 text-sm font-medium text-center rounded-b-lg ${feedbackStyle[feedback.type]}`}>
+                            {feedback.message}
+                        </div>
+                    )}
+                </div>
                 <p className="mt-3 text-xs text-center text-gray-500">
                     Arahkan kamera ke QR Code pada barang
                 </p>
