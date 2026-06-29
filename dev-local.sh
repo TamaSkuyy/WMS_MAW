@@ -28,6 +28,7 @@ Options:
   --no-infra  Do not start mysql/redis/mailpit containers
   --with-reverb  Start Laravel Reverb server (artisan reverb:start)
   --with-queue   Start queue worker (artisan queue:work)
+  --with-watch   Enable FrankenPHP file watcher (auto-reload on PHP changes)
   --stop      Stop infra containers started by compose
   -h, --help  Show this help
 
@@ -45,6 +46,7 @@ NO_INFRA=false
 STOP_ONLY=false
 WITH_REVERB=false
 WITH_QUEUE=false
+WITH_WATCH=false
 INFRA_STARTED=false
 
 if command -v podman >/dev/null 2>&1; then
@@ -159,6 +161,7 @@ for arg in "$@"; do
     --no-infra) NO_INFRA=true ;;
     --with-reverb) WITH_REVERB=true ;;
     --with-queue) WITH_QUEUE=true ;;
+    --with-watch) WITH_WATCH=true ;;
     --stop) STOP_ONLY=true ;;
     -h|--help)
       usage
@@ -305,7 +308,12 @@ cleanup() {
 trap cleanup INT TERM EXIT
 
 log "Starting Laravel (Octane/FrankenPHP) on http://localhost:${APP_PORT} ..."
-"${PHP_CMD}" artisan octane:start --server=frankenphp --host=0.0.0.0 --port="${APP_PORT}" --workers=2 --max-requests=500 --watch &
+OCTANE_WATCH_FLAG=""
+if [ "$WITH_WATCH" = true ]; then
+  OCTANE_WATCH_FLAG="--watch"
+  warn "File watcher aktif (--with-watch). Jangan jalankan artisan dari terminal lain saat server berjalan."
+fi
+"${PHP_CMD}" artisan octane:start --server=frankenphp --host=0.0.0.0 --port="${APP_PORT}" --workers=2 --max-requests=500 ${OCTANE_WATCH_FLAG} &
 ARTISAN_PID=$!
 
 log "Starting Vite on http://localhost:${VITE_PORT} ..."

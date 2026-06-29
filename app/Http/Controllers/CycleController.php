@@ -9,6 +9,7 @@ use App\Models\Rack;
 use App\Models\Stock;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class CycleController extends Controller
@@ -67,9 +68,21 @@ class CycleController extends Controller
 
     public function show(Cycle $cycle)
     {
+        $cycle->load(['supplier', 'items.product.vehicleModel', 'items.product.category', 'items.product.defaultRack']);
+
+        $productIds = $cycle->items->pluck('product_id')->toArray();
+        $lastUsedRacks = CycleItem::whereIn('product_id', $productIds)
+            ->whereNotNull('rack_id')
+            ->where('cycle_id', '!=', $cycle->id)
+            ->orderByDesc('updated_at')
+            ->get()
+            ->unique('product_id')
+            ->pluck('rack_id', 'product_id');
+
         return Inertia::render('Transactions/Cycles/Show', [
-            'cycle' => $cycle->load(['supplier', 'items.product.vehicleModel', 'items.product.category']),
+            'cycle' => $cycle,
             'racks' => Rack::orderBy('zone')->orderBy('code')->get(),
+            'lastUsedRacks' => $lastUsedRacks,
         ]);
     }
 
@@ -151,6 +164,7 @@ class CycleController extends Controller
                 ->firstOrFail();
             $item->update([
                 'received_quantity' => $itemData['received_quantity'],
+                'rack_id' => $itemData['rack_id'],
                 'notes' => $itemData['notes'] ?? null,
             ]);
 
@@ -171,5 +185,57 @@ class CycleController extends Controller
         ]);
 
         return redirect()->route('cycles.show', $cycle)->with('success', 'Cycle completed. Stock updated.');
+    }
+
+    public function quickReceiveForm()
+    {
+        return Inertia::render('Transactions/Cycles/QuickReceive', [
+            'suppliers' => Supplier::orderBy('name')->get(),
+            'products'  => Product::with('defaultRack')->where('is_active', true)->orderBy('name')->get(),
+            'racks'     => Rack::orderBy('zone')->orderBy('code')->get(),
+        ]);
+    }
+
+    public function quickReceiveStore(Request $request)
+    {
+        $validated = $request->validate([
+            'supplier_id'        => 'required|exists:suppliers,id',
+            'items'              => 'required|array|min:1',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.rack_id'    => 'required|exists:racks,id',
+            'items.*.quantity'   => 'required|integer|min:1',
+        ]);
+
+        $cycle = DB::transaction(function () use ($validated) {
+            $supplierId  = $validated['supplier_id'];
+            $cycleNumber = (Cycle::where('supplier_id', $supplierId)->max('cycle_number') ?? 0) + 1;
+
+            $cycle = Cycle::create([
+                'supplier_id'  => $supplierId,
+                'cycle_number' => $cycleNumber,
+                'status'       => 'completed',
+                'received_at'  => now(),
+            ]);
+
+            foreach ($validated['items'] as $item) {
+                $cycle->items()->create([
+                    'product_id'        => $item['product_id'],
+                    'quantity'          => $item['quantity'],
+                    'received_quantity' => $item['quantity'],
+                    'rack_id'           => $item['rack_id'],
+                ]);
+
+                $stock = Stock::firstOrNew([
+                    'product_id' => $item['product_id'],
+                    'rack_id'    => $item['rack_id'],
+                ]);
+                $stock->quantity += $item['quantity'];
+                $stock->save();
+            }
+
+            return $cycle;
+        });
+
+        return redirect()->route('cycles.show', $cycle)->with('success', 'Barang diterima. Stock diperbarui.');
     }
 }

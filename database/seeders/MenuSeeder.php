@@ -123,7 +123,7 @@ class MenuSeeder extends Seeder
         ]);
 
         Menu::create([
-            'name' => 'Cycles',
+            'name' => 'Receiving',
             'icon' => 'DownloadIcon',
             'path' => '/cycles',
             'parent_id' => $transactions->id,
@@ -141,7 +141,7 @@ class MenuSeeder extends Seeder
         ]);
 
         Menu::create([
-            'name' => 'Shipments',
+            'name' => 'Shopping',
             'icon' => 'UploadIcon',
             'path' => '/shipments',
             'parent_id' => $transactions->id,
@@ -164,6 +164,7 @@ class MenuSeeder extends Seeder
             'path' => '/menus',
             'parent_id' => $setupMenu->id,
             'sort_order' => 1,
+            'permission_name' => 'view menus',
             'group' => 'others',
         ]);
 

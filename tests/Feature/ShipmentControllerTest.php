@@ -7,6 +7,7 @@ use App\Models\Rack;
 use App\Models\Shipment;
 use App\Models\Stock;
 use App\Models\User;
+use App\Models\VehicleModel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -58,6 +59,16 @@ class ShipmentControllerTest extends TestCase
             'status' => 'draft',
         ]);
         $response->assertRedirect();
+    }
+
+    public function test_create_passes_vehicle_models_to_view(): void
+    {
+        \App\Models\VehicleModel::factory()->create(['name' => 'Fortuner', 'brand' => 'Toyota', 'suffix' => 'VRZ']);
+
+        $response = $this->actingAs($this->user)->get(route('shipments.create'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Fortuner');
     }
 
     public function test_show_displays_shipment(): void
@@ -117,5 +128,32 @@ class ShipmentControllerTest extends TestCase
         $response = $this->actingAs($this->user)->post(route('shipments.store'), []);
 
         $response->assertSessionHasErrors(['partner_name', 'shipment_date', 'items']);
+    }
+
+    public function test_create_passes_products_with_stocks_to_view(): void
+    {
+        $vm = VehicleModel::factory()->create(['brand' => 'Toyota', 'name' => 'Rush', 'suffix' => 'TRD']);
+        $rack = Rack::factory()->create();
+        $product = Product::factory()->create(['vehicle_model_id' => $vm->id, 'default_rack_id' => $rack->id]);
+        Stock::create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 7]);
+
+        $response = $this->actingAs($this->user)->get(route('shipments.create'));
+
+        $response->assertStatus(200);
+        $response->assertSee($product->part_number);
+    }
+
+    public function test_edit_passes_products_with_stocks_to_view(): void
+    {
+        $vm = VehicleModel::factory()->create(['brand' => 'Toyota', 'name' => 'Rush', 'suffix' => 'TRD']);
+        $rack = Rack::factory()->create();
+        $product = Product::factory()->create(['vehicle_model_id' => $vm->id, 'default_rack_id' => $rack->id]);
+        Stock::create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 5]);
+        $shipment = Shipment::factory()->create(['status' => 'draft']);
+        $shipment->items()->create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 2]);
+
+        $response = $this->actingAs($this->user)->get(route('shipments.edit', $shipment));
+
+        $response->assertStatus(200);
     }
 }

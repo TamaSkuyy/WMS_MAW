@@ -26,8 +26,9 @@ class VehicleModelController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:100',
-            'brand' => 'required|string|max:100',
+            'name'   => 'required|string|max:100',
+            'brand'  => 'required|string|max:100',
+            'suffix' => 'nullable|string|max:50',
         ]);
         VehicleModel::create($validated);
         return redirect()->route('vehicle-models.index')->with('success', 'Model kendaraan berhasil dibuat.');
@@ -39,8 +40,15 @@ class VehicleModelController extends Controller
     public function update(Request $request, VehicleModel $vehicleModel)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:100|unique:vehicle_models,name,'.$vehicleModel->id.',id,brand,'.$request->brand,
-            'brand' => 'required|string|max:100',
+            'name'   => [
+                'required', 'string', 'max:100',
+                \Illuminate\Validation\Rule::unique('vehicle_models')->where(function ($query) use ($request) {
+                    return $query->where('brand', $request->brand)
+                                 ->where('suffix', $request->suffix);
+                })->ignore($vehicleModel->id),
+            ],
+            'brand'  => 'required|string|max:100',
+            'suffix' => 'nullable|string|max:50',
         ]);
         $vehicleModel->update($validated);
         return redirect()->route('vehicle-models.index')->with('success', 'Model kendaraan berhasil diupdate.');

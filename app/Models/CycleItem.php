@@ -10,7 +10,7 @@ class CycleItem extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['cycle_id', 'product_id', 'quantity', 'received_quantity', 'notes'];
+    protected $fillable = ['cycle_id', 'product_id', 'quantity', 'received_quantity', 'rack_id', 'notes'];
 
     public function cycle(): BelongsTo
     {
@@ -20,5 +20,10 @@ class CycleItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function rack(): BelongsTo
+    {
+        return $this->belongsTo(Rack::class);
     }
 }

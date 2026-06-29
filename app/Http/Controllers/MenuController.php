@@ -10,6 +10,12 @@ use Spatie\Permission\Models\Permission;
 
 class MenuController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:view menus')->only(['index']);
+        $this->middleware('can:manage menus')->only(['store', 'update', 'destroy']);
+    }
+
     public function index()
     {
         $menus = Menu::with('parent')->orderBy('sort_order')->get();

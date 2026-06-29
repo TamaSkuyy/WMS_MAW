@@ -49,8 +49,11 @@ export default function Index({ cycles, suppliers, filters }: any) {
                         />
                     </div>
                 </div>
-                <div className="mb-3">
+                <div className="mb-3 flex gap-2">
                     <Link href={route('cycles.create')}><Button>Cycle Baru</Button></Link>
+                    <Link href={route('cycles.quick-receive.form')}>
+                        <Button variant="outline">📷 Terima Cepat</Button>
+                    </Link>
                 </div>
                 {cycles.data.length === 0 ? (
                     <EmptyState

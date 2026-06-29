@@ -9,15 +9,29 @@ import SearchableSelect from '../../../Tailadmin/components/form/select/Searchab
 import Input from '../../../Tailadmin/components/form/input/InputField';
 import Label from '../../../Tailadmin/components/form/Label';
 
-export default function Show({ cycle, racks }: any) {
+export default function Show({ cycle, racks, lastUsedRacks }: any) {
     const [isReceiving, setIsReceiving] = useState(false);
     const [items, setItems] = useState<any[]>(
-        cycle.items.map((item: any) => ({
-            id: item.id,
-            received_quantity: item.received_quantity || 0,
-            rack_id: '',
-            notes: item.notes || '',
-        }))
+        cycle.items.map((item: any) => {
+            let rackId = '';
+            let rackSource: 'default' | 'history' | 'none' = 'none';
+
+            if (item.product?.default_rack_id) {
+                rackId = String(item.product.default_rack_id);
+                rackSource = 'default';
+            } else if (lastUsedRacks[item.product_id]) {
+                rackId = String(lastUsedRacks[item.product_id]);
+                rackSource = 'history';
+            }
+
+            return {
+                id: item.id,
+                received_quantity: item.received_quantity || 0,
+                rack_id: rackId,
+                rack_source: rackSource,
+                notes: item.notes || '',
+            };
+        })
     );
 
     const statusColors: Record<string, string> = {
@@ -88,7 +102,15 @@ export default function Show({ cycle, racks }: any) {
                                                     <Input type="number" value={items[i].received_quantity} onChange={(e) => updateItem(i, 'received_quantity', parseInt(e.target.value) || 0)} min={0} max={item.quantity} />
                                                 </td>
                                                 <td className="px-3 py-2">
-                                                    <SearchableSelect options={racks.map((r: any) => ({ value: r.id, label: r.code }))} value={items[i].rack_id} onChange={(v) => updateItem(i, 'rack_id', v as string)} />
+                                                    <div className="flex flex-col gap-1">
+                                                        <SearchableSelect options={racks.map((r: any) => ({ value: r.id, label: r.code }))} value={items[i].rack_id} onChange={(v) => updateItem(i, 'rack_id', v as string)} />
+                                                        {items[i].rack_source === 'default' && (
+                                                            <span className="self-start px-1.5 py-0.5 text-xs font-medium rounded bg-blue-100 text-blue-700">Default</span>
+                                                        )}
+                                                        {items[i].rack_source === 'history' && (
+                                                            <span className="self-start px-1.5 py-0.5 text-xs font-medium rounded bg-gray-100 text-gray-600">Terakhir</span>
+                                                        )}
+                                                    </div>
                                                 </td>
                                                 <td className="px-3 py-2">
                                                     <input type="text" value={items[i].notes} onChange={(e) => updateItem(i, 'notes', e.target.value)} className="w-full text-sm border rounded px-2 py-1 dark:bg-gray-800 dark:border-gray-700" placeholder="contoh: 2 pcs rusak" />

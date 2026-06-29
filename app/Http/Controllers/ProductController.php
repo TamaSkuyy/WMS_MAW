@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Rack;
 use App\Models\Supplier;
 use App\Models\VehicleModel;
 use App\Models\ProductCategory;
@@ -48,6 +49,7 @@ class ProductController extends Controller
             'vehicleModels' => VehicleModel::orderBy('brand')->orderBy('name')->get(),
             'categories' => ProductCategory::orderBy('name')->get(),
             'suppliers' => Supplier::orderBy('name')->get(),
+            'racks' => Rack::orderBy('zone')->orderBy('code')->get(),
         ]);
     }
 
@@ -66,6 +68,7 @@ class ProductController extends Controller
             'description' => 'nullable|string|max:1000',
             'base_price' => 'nullable|numeric|min:0',
             'is_active' => 'boolean',
+            'default_rack_id' => 'nullable|exists:racks,id',
         ]);
 
         Product::create($validated);
@@ -80,7 +83,7 @@ class ProductController extends Controller
     public function show(Product $product)
     {
         return Inertia::render('Master/Products/Show', [
-            'product' => $product->load(['vehicleModel', 'supplier', 'category']),
+            'product' => $product->load(['vehicleModel', 'supplier', 'category', 'defaultRack']),
         ]);
     }
 
@@ -94,6 +97,7 @@ class ProductController extends Controller
             'vehicleModels' => VehicleModel::orderBy('brand')->orderBy('name')->get(),
             'categories' => ProductCategory::orderBy('name')->get(),
             'suppliers' => Supplier::orderBy('name')->get(),
+            'racks' => Rack::orderBy('zone')->orderBy('code')->get(),
         ]);
     }
 
@@ -112,6 +116,7 @@ class ProductController extends Controller
             'description' => 'nullable|string|max:1000',
             'base_price' => 'nullable|numeric|min:0',
             'is_active' => 'boolean',
+            'default_rack_id' => 'nullable|exists:racks,id',
         ]);
 
         $product->update($validated);

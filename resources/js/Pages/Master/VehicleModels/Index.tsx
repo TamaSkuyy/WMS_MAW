@@ -43,6 +43,7 @@ export default function Index({ vehicleModels, filters }: any) {
                             <tr>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Merek</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Model</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Suffix</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider w-24">Aksi</th>
                             </tr>
                         </thead>
@@ -51,6 +52,7 @@ export default function Index({ vehicleModels, filters }: any) {
                                 <tr key={m.id} className="border-b border-[#F1F3F5] hover:bg-[#F8F9FC] transition-all duration-150">
                                     <td className="px-4 py-3 text-sm text-[#1A1D23]">{m.brand}</td>
                                     <td className="px-4 py-3 text-sm text-[#1A1D23]">{m.name}</td>
+                                    <td className="px-4 py-3 text-sm text-[#6C757D]">{m.suffix || '-'}</td>
                                     <td className="px-4 py-3 text-sm text-[#1A1D23]">
                                         <TableActions
                                             editRoute={route('vehicle-models.edit', m.id)}

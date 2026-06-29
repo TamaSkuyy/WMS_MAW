@@ -26,7 +26,11 @@ export default function Show({ product }: any) {
                             </div>
                             <div>
                                 <dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Model Kendaraan</dt>
-                                <dd className="text-sm text-[#1A1D23]">{product.vehicle_model ? `${product.vehicle_model.name} (${product.vehicle_model.brand})` : '-'}</dd>
+                                <dd className="text-sm text-[#1A1D23]">
+                                    {product.vehicle_model
+                                        ? `${product.vehicle_model.brand} ${product.vehicle_model.name}${product.vehicle_model.suffix ? ' ' + product.vehicle_model.suffix : ''}`
+                                        : '-'}
+                                </dd>
                             </div>
                             <div>
                                 <dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Kategori</dt>
@@ -46,6 +50,14 @@ export default function Show({ product }: any) {
                                     <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${product.is_active ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
                                         {product.is_active ? 'Aktif' : 'Nonaktif'}
                                     </span>
+                                </dd>
+                            </div>
+                            <div>
+                                <dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Rack Default</dt>
+                                <dd className="text-sm text-[#1A1D23]">
+                                    {product.default_rack
+                                        ? <span className="font-mono">{product.default_rack.code}</span>
+                                        : <span className="text-gray-400">-</span>}
                                 </dd>
                             </div>
                             {product.description && (

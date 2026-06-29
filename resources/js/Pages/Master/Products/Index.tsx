@@ -104,7 +104,11 @@ export default function Index({ products, categories, suppliers, filters }: any)
                                 <tr key={product.id} className="border-b border-[#F1F3F5] hover:bg-[#F8F9FC] transition-all duration-150">
                                     <td className="px-4 py-3 whitespace-nowrap text-sm text-[#1A1D23] font-mono">{product.part_number}</td>
                                     <td className="px-4 py-3 text-sm text-[#1A1D23]">{product.name}</td>
-                                    <td className="px-4 py-3 whitespace-nowrap text-[13px] text-[#6C757D]">{product.vehicle_model?.name || '-'}</td>
+                                    <td className="px-4 py-3 whitespace-nowrap text-[13px] text-[#6C757D]">
+                                        {product.vehicle_model
+                                            ? `${product.vehicle_model.brand} ${product.vehicle_model.name}${product.vehicle_model.suffix ? ' ' + product.vehicle_model.suffix : ''}`
+                                            : '-'}
+                                    </td>
                                     <td className="px-4 py-3 whitespace-nowrap text-[13px] text-[#6C757D]">{product.supplier?.name || '-'}</td>
                                     <td className="px-4 py-3 whitespace-nowrap text-[13px] text-[#6C757D]">{product.category?.name || '-'}</td>
                                     <td className="px-4 py-3 whitespace-nowrap text-[13px] text-[#6C757D]">

@@ -48,6 +48,8 @@ Route::middleware('auth')->group(function () {
 
     // Transaction routes
     Route::resource('racks', RackController::class);
+    Route::get('cycles/quick-receive', [CycleController::class, 'quickReceiveForm'])->name('cycles.quick-receive.form');
+    Route::post('cycles/quick-receive', [CycleController::class, 'quickReceiveStore'])->name('cycles.quick-receive.store');
     Route::resource('cycles', CycleController::class);
     Route::post('cycles/{cycle}/receive', [CycleController::class, 'receive'])->name('cycles.receive');
 

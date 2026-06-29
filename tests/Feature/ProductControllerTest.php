@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Product;
+use App\Models\Rack;
 use App\Models\Supplier;
 use App\Models\VehicleModel;
 use App\Models\ProductCategory;
@@ -218,6 +219,64 @@ class ProductControllerTest extends TestCase
         $response->assertSessionHasErrors([
             'part_number', 'name', 'vehicle_model_id',
             'supplier_id', 'category_id', 'unit',
+        ]);
+    }
+
+    public function test_create_passes_racks_to_view(): void
+    {
+        Rack::factory()->create(['code' => 'A-01']);
+
+        $response = $this->actingAs($this->user)->get(route('products.create'));
+
+        $response->assertStatus(200);
+        $response->assertSee('A-01');
+    }
+
+    public function test_store_saves_default_rack_id(): void
+    {
+        $rack = Rack::factory()->create();
+        $vehicleModel = VehicleModel::factory()->create();
+        $supplier = Supplier::factory()->create();
+        $category = ProductCategory::factory()->create();
+
+        $response = $this->actingAs($this->user)->post(route('products.store'), [
+            'part_number' => 'P-RACK-001',
+            'name' => 'Rack Test Part',
+            'vehicle_model_id' => $vehicleModel->id,
+            'supplier_id' => $supplier->id,
+            'category_id' => $category->id,
+            'unit' => 'pcs',
+            'default_rack_id' => $rack->id,
+        ]);
+
+        $this->assertDatabaseHas('products', [
+            'part_number' => 'P-RACK-001',
+            'default_rack_id' => $rack->id,
+        ]);
+        $response->assertRedirect(route('products.index'));
+    }
+
+    public function test_update_clears_default_rack_id_when_null(): void
+    {
+        $rack = Rack::factory()->create();
+        $product = Product::factory()->create(['default_rack_id' => $rack->id]);
+        $vehicleModel = VehicleModel::factory()->create();
+        $supplier = Supplier::factory()->create();
+        $category = ProductCategory::factory()->create();
+
+        $this->actingAs($this->user)->put(route('products.update', $product), [
+            'part_number' => $product->part_number,
+            'name' => $product->name,
+            'vehicle_model_id' => $vehicleModel->id,
+            'supplier_id' => $supplier->id,
+            'category_id' => $category->id,
+            'unit' => 'pcs',
+            'default_rack_id' => null,
+        ]);
+
+        $this->assertDatabaseHas('products', [
+            'id' => $product->id,
+            'default_rack_id' => null,
         ]);
     }
 }

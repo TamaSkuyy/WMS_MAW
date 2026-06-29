@@ -13,14 +13,9 @@ class VehicleModelFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->unique()->randomElement([
-                'Fortuner VRZ', 'Avanza G', 'Innova Zenix', 'Hilux',
-                'CR-V Turbo', 'HR-V SE', 'Civic RS',
-                'Xpander Cross', 'Pajero Sport', 'L300',
-            ]),
-            'brand' => $this->faker->randomElement([
-                'Toyota', 'Honda', 'Mitsubishi', 'Daihatsu', 'Suzuki',
-            ]),
+            'name'   => $this->faker->unique()->word(),
+            'brand'  => $this->faker->randomElement(['Toyota', 'Honda', 'Mitsubishi', 'Daihatsu']),
+            'suffix' => $this->faker->optional(0.6)->randomElement(['VRZ', 'SRZ', 'TRD', 'GR Sport', 'G', 'Cross']),
         ];
     }
 }

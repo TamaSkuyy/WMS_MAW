@@ -131,4 +131,99 @@ class CycleControllerTest extends TestCase
         $response = $this->actingAs($this->user)->post(route('cycles.store'), []);
         $response->assertSessionHasErrors(['supplier_id', 'cycle_number', 'items']);
     }
+
+    public function test_receive_saves_rack_id_to_cycle_item(): void
+    {
+        $rack = Rack::factory()->create();
+        $cycle = Cycle::factory()->create(['status' => 'draft']);
+        $product = Product::factory()->create();
+        $item = CycleItem::factory()->create([
+            'cycle_id' => $cycle->id,
+            'product_id' => $product->id,
+            'quantity' => 10,
+            'received_quantity' => 0,
+        ]);
+
+        $this->actingAs($this->user)->post(route('cycles.receive', $cycle), [
+            'items' => [[
+                'id' => $item->id,
+                'received_quantity' => 5,
+                'rack_id' => $rack->id,
+                'notes' => null,
+            ]],
+        ]);
+
+        $this->assertDatabaseHas('cycle_items', [
+            'id' => $item->id,
+            'rack_id' => $rack->id,
+        ]);
+    }
+
+    public function test_show_passes_last_used_racks(): void
+    {
+        $rack = Rack::factory()->create(['code' => 'H-01']);
+        $product = Product::factory()->create();
+
+        $priorCycle = Cycle::factory()->create(['status' => 'completed']);
+        CycleItem::factory()->create([
+            'cycle_id' => $priorCycle->id,
+            'product_id' => $product->id,
+            'rack_id' => $rack->id,
+            'received_quantity' => 5,
+        ]);
+
+        $cycle = Cycle::factory()->create(['status' => 'draft']);
+        CycleItem::factory()->create([
+            'cycle_id' => $cycle->id,
+            'product_id' => $product->id,
+            'quantity' => 10,
+        ]);
+
+        $response = $this->actingAs($this->user)->get(route('cycles.show', $cycle));
+
+        $response->assertStatus(200);
+    }
+
+    public function test_quick_receive_form_returns_200(): void
+    {
+        $response = $this->actingAs($this->user)->get(route('cycles.quick-receive.form'));
+        $response->assertStatus(200);
+    }
+
+    public function test_quick_receive_creates_cycle_and_updates_stock(): void
+    {
+        $supplier = Supplier::factory()->create();
+        $rack = Rack::factory()->create();
+        $product = Product::factory()->create();
+
+        $response = $this->actingAs($this->user)->post(route('cycles.quick-receive.store'), [
+            'supplier_id' => $supplier->id,
+            'items' => [
+                ['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 3],
+            ],
+        ]);
+
+        $this->assertDatabaseHas('cycles', [
+            'supplier_id' => $supplier->id,
+            'status' => 'completed',
+        ]);
+        $this->assertDatabaseHas('cycle_items', [
+            'product_id' => $product->id,
+            'quantity' => 3,
+            'received_quantity' => 3,
+            'rack_id' => $rack->id,
+        ]);
+        $this->assertDatabaseHas('stocks', [
+            'product_id' => $product->id,
+            'rack_id' => $rack->id,
+            'quantity' => 3,
+        ]);
+        $response->assertRedirect();
+    }
+
+    public function test_quick_receive_validates_required(): void
+    {
+        $response = $this->actingAs($this->user)->post(route('cycles.quick-receive.store'), []);
+        $response->assertSessionHasErrors(['supplier_id', 'items']);
+    }
 }

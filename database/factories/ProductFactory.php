@@ -25,6 +25,7 @@ class ProductFactory extends Factory
             'description' => $this->faker->optional()->sentence(),
             'base_price' => $this->faker->optional()->randomFloat(2, 5000, 5000000),
             'is_active' => true,
+            'default_rack_id' => null,
         ];
     }
 }

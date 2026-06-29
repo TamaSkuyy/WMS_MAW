@@ -29,8 +29,9 @@ class ShipmentController extends Controller
     public function create()
     {
         return Inertia::render('Transactions/Shipments/Create', [
-            'products' => Product::with(['vehicleModel', 'category'])->where('is_active', true)->orderBy('name')->get(),
-            'racks' => Rack::orderBy('zone')->orderBy('code')->get(),
+            'products'      => Product::with(['vehicleModel', 'stocks'])->where('is_active', true)->orderBy('name')->get(),
+            'racks'         => Rack::orderBy('zone')->orderBy('code')->get(),
+            'vehicleModels' => \App\Models\VehicleModel::orderBy('brand')->orderBy('name')->orderBy('suffix')->get(),
         ]);
     }
 
@@ -78,9 +79,10 @@ class ShipmentController extends Controller
         }
 
         return Inertia::render('Transactions/Shipments/Edit', [
-            'shipment' => $shipment->load('items.product'),
-            'products' => Product::with(['vehicleModel', 'category'])->where('is_active', true)->orderBy('name')->get(),
-            'racks' => Rack::orderBy('zone')->orderBy('code')->get(),
+            'shipment'      => $shipment->load('items.product.vehicleModel'),
+            'products'      => Product::with(['vehicleModel', 'stocks'])->where('is_active', true)->orderBy('name')->get(),
+            'racks'         => Rack::orderBy('zone')->orderBy('code')->get(),
+            'vehicleModels' => \App\Models\VehicleModel::orderBy('brand')->orderBy('name')->orderBy('suffix')->get(),
         ]);
     }
 

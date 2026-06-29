@@ -10,7 +10,7 @@ import Label from '../../../Tailadmin/components/form/Label';
 import SearchableSelect from '../../../Tailadmin/components/form/select/SearchableSelect';
 import { Link } from '@inertiajs/react';
 
-export default function Create({ vehicleModels, categories, suppliers }: any) {
+export default function Create({ vehicleModels, categories, suppliers, racks }: any) {
     const { data, setData, post, errors } = useForm({
         part_number: '',
         name: '',
@@ -21,6 +21,7 @@ export default function Create({ vehicleModels, categories, suppliers }: any) {
         description: '',
         base_price: '',
         is_active: true,
+        default_rack_id: '',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -59,7 +60,7 @@ export default function Create({ vehicleModels, categories, suppliers }: any) {
                             <div>
                                 <Label>Model Kendaraan *</Label>
                                 <SearchableSelect
-                                    options={vehicleModels.map((m: any) => ({ value: m.id, label: `${m.name} (${m.brand})` }))}
+                                    options={vehicleModels.map((m: any) => ({ value: m.id, label: `${m.brand} ${m.name}${m.suffix ? ' ' + m.suffix : ''}` }))}
                                     value={data.vehicle_model_id}
                                     onChange={(value) => setData('vehicle_model_id', value as string)}
                                 />
@@ -106,6 +107,19 @@ export default function Create({ vehicleModels, categories, suppliers }: any) {
                             <Label>Harga Dasar (Rp)</Label>
                             <Input type="number" value={data.base_price} onChange={(e) => setData('base_price', e.target.value)} placeholder="contoh: 150000" />
                             {errors.base_price && <p className="mt-1 text-sm text-red-500">{errors.base_price}</p>}
+                        </div>
+
+                        <div>
+                            <Label>Rack Default</Label>
+                            <SearchableSelect
+                                options={[
+                                    { value: '', label: 'Tidak ada (pilih saat receiving)' },
+                                    ...racks.map((r: any) => ({ value: r.id, label: `${r.code}${r.zone ? ' — ' + r.zone : ''}` })),
+                                ]}
+                                value={data.default_rack_id}
+                                onChange={(value) => setData('default_rack_id', value as string)}
+                            />
+                            {errors.default_rack_id && <p className="mt-1 text-sm text-red-500">{errors.default_rack_id}</p>}
                         </div>
 
                         <div>

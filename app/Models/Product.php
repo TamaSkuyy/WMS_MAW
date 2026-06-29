@@ -21,6 +21,7 @@ class Product extends Model
         'description',
         'base_price',
         'is_active',
+        'default_rack_id',
     ];
 
     protected function casts(): array
@@ -53,6 +54,11 @@ class Product extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(ProductCategory::class, 'category_id');
+    }
+
+    public function defaultRack(): BelongsTo
+    {
+        return $this->belongsTo(Rack::class, 'default_rack_id');
     }
 
     public function cycleItems(): HasMany
