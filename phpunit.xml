@@ -26,7 +26,7 @@
         <env name="DB_CONNECTION" value="mysql"/>
         <env name="DB_HOST" value="127.0.0.1"/>
         <env name="DB_PORT" value="3308"/>
-        <env name="DB_DATABASE" value="wms_maw"/>
+        <env name="DB_DATABASE" value="wms_maw_testing"/>
         <env name="DB_USERNAME" value="tama"/>
         <env name="DB_PASSWORD" value="tama1234"/>
         <env name="DB_URL" value=""/>

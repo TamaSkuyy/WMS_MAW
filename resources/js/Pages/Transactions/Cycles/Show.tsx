@@ -23,6 +23,7 @@ function beep() {
 
 export default function Show({ cycle, racks, lastUsedRacks }: any) {
     const [isReceiving, setIsReceiving] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
     const [items, setItems] = useState<any[]>(
         cycle.items.map((item: any) => {
             let rackId = '';
@@ -92,8 +93,11 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
 
     const handleReceive = (e: React.FormEvent) => {
         e.preventDefault();
+        if (submitting) return;
+        setSubmitting(true);
         router.post(route('cycles.receive', cycle.id), { items }, {
             onSuccess: () => setIsReceiving(false),
+            onFinish: () => setSubmitting(false),
         });
     };
 
@@ -169,8 +173,10 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
                                     </tbody>
                                 </table>
                                 <div className="mt-4 flex gap-3">
-                                    <Button type="submit">Selesaikan Penerimaan</Button>
-                                    <Button type="button" variant="outline" onClick={() => setIsReceiving(false)}>Batal</Button>
+                                    <Button type="submit" disabled={submitting}>
+                                        {submitting ? 'Menyimpan...' : 'Selesaikan Penerimaan'}
+                                    </Button>
+                                    <Button type="button" variant="outline" onClick={() => setIsReceiving(false)} disabled={submitting}>Batal</Button>
                                 </div>
                             </form>
                         </ComponentCard>

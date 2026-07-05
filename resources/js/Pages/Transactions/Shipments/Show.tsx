@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { PencilIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
@@ -7,6 +7,8 @@ import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
 
 export default function Show({ shipment }: any) {
+    const [submitting, setSubmitting] = useState(false);
+
     const statusColors: Record<string, string> = {
         draft: 'bg-gray-100 text-gray-800',
         shipped: 'bg-blue-100 text-blue-800',
@@ -14,8 +16,12 @@ export default function Show({ shipment }: any) {
     };
 
     const handleShip = () => {
+        if (submitting) return;
         if (confirm('Proses pengiriman ini? Stok akan dikurangi.')) {
-            router.post(route('shipments.ship', shipment.id));
+            setSubmitting(true);
+            router.post(route('shipments.ship', shipment.id), {}, {
+                onFinish: () => setSubmitting(false),
+            });
         }
     };
 
@@ -36,7 +42,9 @@ export default function Show({ shipment }: any) {
                         <div className="mt-6 flex gap-2 pt-4 border-t border-[#F1F3F5]">
                             {shipment.status === 'draft' && (
                                 <><Link href={route('shipments.edit', shipment.id)}><Button icon={<PencilIcon className="w-4 h-4" />} size="sm">Edit</Button></Link>
-                                <Button variant="outline" size="sm" onClick={handleShip}>Kirim Sekarang</Button></>
+                                <Button variant="outline" size="sm" onClick={handleShip} disabled={submitting}>
+                                    {submitting ? 'Memproses...' : 'Kirim Sekarang'}
+                                </Button></>
                             )}
                             <Link href={route('shipments.index')}><Button variant="outline" size="sm">Kembali</Button></Link>
                         </div>

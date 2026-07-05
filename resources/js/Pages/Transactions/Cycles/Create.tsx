@@ -11,7 +11,7 @@ import SearchableSelect from '../../../Tailadmin/components/form/select/Searchab
 import { Link } from '@inertiajs/react';
 
 export default function Create({ suppliers, products }: any) {
-    const { data, setData, post, errors } = useForm({
+    const { data, setData, post, errors, processing } = useForm({
         supplier_id: '',
         cycle_number: '',
         notes: '',
@@ -121,7 +121,9 @@ export default function Create({ suppliers, products }: any) {
                     </ComponentCard>
                 </div>
                 <div className="mt-4 flex gap-3">
-                    <Button type="submit" disabled={data.items.length === 0} icon={<CheckIcon className="w-4 h-4" />}>Simpan Cycle</Button>
+                    <Button type="submit" disabled={data.items.length === 0 || processing} icon={<CheckIcon className="w-4 h-4" />}>
+                        {processing ? 'Menyimpan...' : 'Simpan Cycle'}
+                    </Button>
                     <Button type="button" variant="outline" onClick={() => window.history.back()}>Batal</Button>
                 </div>
             </form>

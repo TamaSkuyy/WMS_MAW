@@ -156,4 +156,76 @@ class ShipmentControllerTest extends TestCase
 
         $response->assertStatus(200);
     }
+
+    public function test_store_merges_duplicate_product_and_rack_items(): void
+    {
+        $product = Product::factory()->create();
+        $rack = Rack::factory()->create();
+
+        $data = [
+            'partner_name' => 'PT Test Partner',
+            'shipment_date' => '2026-06-10',
+            'items' => [
+                ['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 5],
+                ['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 3],
+            ],
+        ];
+
+        $response = $this->actingAs($this->user)->post(route('shipments.store'), $data);
+
+        $response->assertRedirect();
+        $shipment = Shipment::first();
+        $this->assertCount(1, $shipment->items);
+        $this->assertDatabaseHas('shipment_items', [
+            'shipment_id' => $shipment->id,
+            'product_id' => $product->id,
+            'rack_id' => $rack->id,
+            'quantity' => 8,
+        ]);
+    }
+
+    public function test_store_keeps_same_product_different_rack_as_separate_items(): void
+    {
+        $product = Product::factory()->create();
+        $rackA = Rack::factory()->create();
+        $rackB = Rack::factory()->create();
+
+        $data = [
+            'partner_name' => 'PT Test Partner',
+            'shipment_date' => '2026-06-10',
+            'items' => [
+                ['product_id' => $product->id, 'rack_id' => $rackA->id, 'quantity' => 5],
+                ['product_id' => $product->id, 'rack_id' => $rackB->id, 'quantity' => 3],
+            ],
+        ];
+
+        $response = $this->actingAs($this->user)->post(route('shipments.store'), $data);
+
+        $response->assertRedirect();
+        $shipment = Shipment::first();
+        $this->assertCount(2, $shipment->items);
+    }
+
+    public function test_ship_second_call_is_rejected_and_stock_not_double_deducted(): void
+    {
+        $rack = Rack::factory()->create();
+        $product = Product::factory()->create();
+        Stock::create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 20]);
+
+        $shipment = Shipment::factory()->create(['status' => 'draft']);
+        $shipment->items()->create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 8]);
+
+        $first = $this->actingAs($this->user)->post(route('shipments.ship', $shipment));
+        $first->assertRedirect();
+
+        $second = $this->actingAs($this->user)->post(route('shipments.ship', $shipment));
+        $second->assertRedirect();
+        $second->assertSessionHas('error');
+
+        $this->assertDatabaseHas('stocks', [
+            'product_id' => $product->id,
+            'rack_id' => $rack->id,
+            'quantity' => 12,
+        ]);
+    }
 }

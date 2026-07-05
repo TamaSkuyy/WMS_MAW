@@ -226,4 +226,90 @@ class CycleControllerTest extends TestCase
         $response = $this->actingAs($this->user)->post(route('cycles.quick-receive.store'), []);
         $response->assertSessionHasErrors(['supplier_id', 'items']);
     }
+
+    public function test_store_merges_duplicate_product_items(): void
+    {
+        $supplier = Supplier::factory()->create();
+        $product = Product::factory()->create();
+
+        $data = [
+            'supplier_id' => $supplier->id,
+            'cycle_number' => 1,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 10],
+                ['product_id' => $product->id, 'quantity' => 5],
+            ],
+        ];
+
+        $response = $this->actingAs($this->user)->post(route('cycles.store'), $data);
+
+        $response->assertRedirect();
+        $cycle = Cycle::first();
+        $this->assertCount(1, $cycle->items);
+        $this->assertDatabaseHas('cycle_items', [
+            'cycle_id' => $cycle->id,
+            'product_id' => $product->id,
+            'quantity' => 15,
+        ]);
+    }
+
+    public function test_update_merges_duplicate_product_items(): void
+    {
+        $cycle = Cycle::factory()->create(['status' => 'draft']);
+        $product = Product::factory()->create();
+
+        $data = [
+            'supplier_id' => $cycle->supplier_id,
+            'cycle_number' => $cycle->cycle_number,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 4],
+                ['product_id' => $product->id, 'quantity' => 6],
+            ],
+        ];
+
+        $response = $this->actingAs($this->user)->put(route('cycles.update', $cycle), $data);
+
+        $response->assertRedirect();
+        $this->assertCount(1, $cycle->fresh()->items);
+        $this->assertDatabaseHas('cycle_items', [
+            'cycle_id' => $cycle->id,
+            'product_id' => $product->id,
+            'quantity' => 10,
+        ]);
+    }
+
+    public function test_receive_second_call_is_rejected_and_stock_not_doubled(): void
+    {
+        $rack = Rack::factory()->create();
+        $cycle = Cycle::factory()->create(['status' => 'draft']);
+        $product = Product::factory()->create();
+        $item = CycleItem::factory()->create([
+            'cycle_id' => $cycle->id,
+            'product_id' => $product->id,
+            'quantity' => 10,
+            'received_quantity' => 0,
+        ]);
+
+        $payload = [
+            'items' => [[
+                'id' => $item->id,
+                'received_quantity' => 10,
+                'rack_id' => $rack->id,
+                'notes' => null,
+            ]],
+        ];
+
+        $first = $this->actingAs($this->user)->post(route('cycles.receive', $cycle), $payload);
+        $first->assertRedirect();
+
+        $second = $this->actingAs($this->user)->post(route('cycles.receive', $cycle), $payload);
+        $second->assertRedirect();
+        $second->assertSessionHas('error');
+
+        $this->assertDatabaseHas('stocks', [
+            'product_id' => $product->id,
+            'rack_id' => $rack->id,
+            'quantity' => 10,
+        ]);
+    }
 }

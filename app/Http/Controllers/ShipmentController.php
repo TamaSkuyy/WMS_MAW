@@ -7,6 +7,7 @@ use App\Models\Rack;
 use App\Models\Shipment;
 use App\Models\Stock;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class ShipmentController extends Controller
@@ -35,6 +36,20 @@ class ShipmentController extends Controller
         ]);
     }
 
+    private function mergeDuplicateItems(array $items): array
+    {
+        $merged = [];
+        foreach ($items as $item) {
+            $key = $item['product_id'] . '-' . $item['rack_id'];
+            if (isset($merged[$key])) {
+                $merged[$key]['quantity'] += $item['quantity'];
+            } else {
+                $merged[$key] = $item;
+            }
+        }
+        return array_values($merged);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -46,6 +61,7 @@ class ShipmentController extends Controller
             'items.*.rack_id' => 'required|exists:racks,id',
             'items.*.quantity' => 'required|integer|min:1',
         ]);
+        $validated['items'] = $this->mergeDuplicateItems($validated['items']);
 
         $shipment = Shipment::create([
             'partner_name' => $validated['partner_name'],
@@ -101,6 +117,7 @@ class ShipmentController extends Controller
             'items.*.rack_id' => 'required|exists:racks,id',
             'items.*.quantity' => 'required|integer|min:1',
         ]);
+        $validated['items'] = $this->mergeDuplicateItems($validated['items']);
 
         $shipment->update([
             'partner_name' => $validated['partner_name'],
@@ -140,35 +157,51 @@ class ShipmentController extends Controller
             return back()->with('error', 'Cannot ship this shipment.');
         }
 
-        // Validate stock availability for each item
-        foreach ($shipment->items as $item) {
-            $stock = Stock::where('product_id', $item->product_id)
-                ->where('rack_id', $item->rack_id)
-                ->first();
+        $result = DB::transaction(function () use ($shipment) {
+            $lockedShipment = Shipment::where('id', $shipment->id)->lockForUpdate()->firstOrFail();
 
-            if (! $stock || $stock->quantity < $item->quantity) {
-                $productName = $item->product->name ?? 'Unknown';
-                $rackCode = $item->rack->code ?? '?';
-
-                return back()->with(
-                    'error',
-                    "Insufficient stock: {$productName} in rack {$rackCode}. Available: "
-                        . ($stock->quantity ?? 0)
-                        . ", Requested: {$item->quantity}"
-                );
+            if ($lockedShipment->status !== 'draft') {
+                return ['ok' => false, 'error' => 'Cannot ship this shipment.'];
             }
-        }
 
-        // Deduct from stock
-        foreach ($shipment->items as $item) {
-            $stock = Stock::where('product_id', $item->product_id)
-                ->where('rack_id', $item->rack_id)
-                ->first();
-            $stock->quantity -= $item->quantity;
-            $stock->save();
-        }
+            $items = $lockedShipment->items()->with('product', 'rack')->get();
+            $lockedStocks = [];
 
-        $shipment->update(['status' => 'shipped']);
+            foreach ($items as $item) {
+                $stock = Stock::where('product_id', $item->product_id)
+                    ->where('rack_id', $item->rack_id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $stock || $stock->quantity < $item->quantity) {
+                    $productName = $item->product->name ?? 'Unknown';
+                    $rackCode = $item->rack->code ?? '?';
+
+                    return [
+                        'ok' => false,
+                        'error' => "Insufficient stock: {$productName} in rack {$rackCode}. Available: "
+                            . ($stock->quantity ?? 0)
+                            . ", Requested: {$item->quantity}",
+                    ];
+                }
+
+                $lockedStocks[$item->id] = $stock;
+            }
+
+            foreach ($items as $item) {
+                $stock = $lockedStocks[$item->id];
+                $stock->quantity -= $item->quantity;
+                $stock->save();
+            }
+
+            $lockedShipment->update(['status' => 'shipped']);
+
+            return ['ok' => true];
+        });
+
+        if (! $result['ok']) {
+            return back()->with('error', $result['error']);
+        }
 
         return redirect()->route('shipments.show', $shipment)->with('success', 'Shipment processed. Stock deducted.');
     }

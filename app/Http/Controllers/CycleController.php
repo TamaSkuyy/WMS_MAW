@@ -38,6 +38,20 @@ class CycleController extends Controller
         ]);
     }
 
+    private function mergeDuplicateItems(array $items): array
+    {
+        $merged = [];
+        foreach ($items as $item) {
+            $key = $item['product_id'];
+            if (isset($merged[$key])) {
+                $merged[$key]['quantity'] += $item['quantity'];
+            } else {
+                $merged[$key] = $item;
+            }
+        }
+        return array_values($merged);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -48,6 +62,7 @@ class CycleController extends Controller
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
         ]);
+        $validated['items'] = $this->mergeDuplicateItems($validated['items']);
 
         $cycle = Cycle::create([
             'supplier_id' => $validated['supplier_id'],
@@ -112,6 +127,7 @@ class CycleController extends Controller
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
         ]);
+        $validated['items'] = $this->mergeDuplicateItems($validated['items']);
 
         $cycle->update([
             'supplier_id' => $validated['supplier_id'],
@@ -157,32 +173,53 @@ class CycleController extends Controller
             'items.*.notes' => 'nullable|string|max:200',
         ]);
 
-        // Update received quantities
-        foreach ($validated['items'] as $itemData) {
-            $item = CycleItem::where('id', $itemData['id'])
-                ->where('cycle_id', $cycle->id)
-                ->firstOrFail();
-            $item->update([
-                'received_quantity' => $itemData['received_quantity'],
-                'rack_id' => $itemData['rack_id'],
-                'notes' => $itemData['notes'] ?? null,
+        $ok = DB::transaction(function () use ($validated, $cycle) {
+            $lockedCycle = Cycle::where('id', $cycle->id)->lockForUpdate()->firstOrFail();
+
+            if ($lockedCycle->status !== 'draft' && $lockedCycle->status !== 'receiving') {
+                return false;
+            }
+
+            foreach ($validated['items'] as $itemData) {
+                $item = CycleItem::where('id', $itemData['id'])
+                    ->where('cycle_id', $lockedCycle->id)
+                    ->firstOrFail();
+                $item->update([
+                    'received_quantity' => $itemData['received_quantity'],
+                    'rack_id' => $itemData['rack_id'],
+                    'notes' => $itemData['notes'] ?? null,
+                ]);
+
+                if ($itemData['received_quantity'] > 0) {
+                    $stock = Stock::where('product_id', $item->product_id)
+                        ->where('rack_id', $itemData['rack_id'])
+                        ->lockForUpdate()
+                        ->first();
+
+                    if (! $stock) {
+                        $stock = Stock::create([
+                            'product_id' => $item->product_id,
+                            'rack_id' => $itemData['rack_id'],
+                            'quantity' => 0,
+                        ]);
+                    }
+
+                    $stock->quantity += $itemData['received_quantity'];
+                    $stock->save();
+                }
+            }
+
+            $lockedCycle->update([
+                'status' => 'completed',
+                'received_at' => now(),
             ]);
 
-            // Add to stock
-            if ($itemData['received_quantity'] > 0) {
-                $stock = Stock::firstOrNew([
-                    'product_id' => $item->product_id,
-                    'rack_id' => $itemData['rack_id'],
-                ]);
-                $stock->quantity += $itemData['received_quantity'];
-                $stock->save();
-            }
-        }
+            return true;
+        });
 
-        $cycle->update([
-            'status' => 'completed',
-            'received_at' => now(),
-        ]);
+        if (! $ok) {
+            return back()->with('error', 'Cannot receive this cycle.');
+        }
 
         return redirect()->route('cycles.show', $cycle)->with('success', 'Cycle completed. Stock updated.');
     }
@@ -225,10 +262,19 @@ class CycleController extends Controller
                     'rack_id'           => $item['rack_id'],
                 ]);
 
-                $stock = Stock::firstOrNew([
-                    'product_id' => $item['product_id'],
-                    'rack_id'    => $item['rack_id'],
-                ]);
+                $stock = Stock::where('product_id', $item['product_id'])
+                    ->where('rack_id', $item['rack_id'])
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $stock) {
+                    $stock = Stock::create([
+                        'product_id' => $item['product_id'],
+                        'rack_id'    => $item['rack_id'],
+                        'quantity'   => 0,
+                    ]);
+                }
+
                 $stock->quantity += $item['quantity'];
                 $stock->save();
             }

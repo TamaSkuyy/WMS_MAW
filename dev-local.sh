@@ -258,6 +258,16 @@ if [ "$INIT" = true ]; then
     sleep 2
   done
 
+  DB_NAME=$(get_env DB_DATABASE "wms_maw")
+  DB_USER=$(get_env DB_USERNAME "tama")
+  TEST_DB_NAME="${DB_NAME}_testing"
+  log "Membuat database testing terpisah (${TEST_DB_NAME}) agar 'php artisan test' tidak menimpa data dev di ${DB_NAME}..."
+  dc exec -T mysql mysql -uroot -p"${DB_PWD}" -e "
+    CREATE DATABASE IF NOT EXISTS \`${TEST_DB_NAME}\`;
+    GRANT ALL PRIVILEGES ON \`${TEST_DB_NAME}\`.* TO '${DB_USER}'@'%';
+    FLUSH PRIVILEGES;
+  "
+
   log "php artisan migrate"
   "${PHP_CMD}" artisan migrate
 
