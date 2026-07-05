@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Events\StockChanged;
 use App\Models\Product;
 use App\Models\Rack;
 use App\Models\Shipment;
@@ -9,6 +10,7 @@ use App\Models\Stock;
 use App\Models\User;
 use App\Models\VehicleModel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 class ShipmentControllerTest extends TestCase
@@ -227,5 +229,37 @@ class ShipmentControllerTest extends TestCase
             'rack_id' => $rack->id,
             'quantity' => 12,
         ]);
+    }
+
+    public function test_ship_dispatches_stock_changed_event(): void
+    {
+        Event::fake([StockChanged::class]);
+
+        $rack = Rack::factory()->create();
+        $product = Product::factory()->create();
+        Stock::create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 20]);
+
+        $shipment = Shipment::factory()->create(['status' => 'draft']);
+        $shipment->items()->create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 8]);
+
+        $this->actingAs($this->user)->post(route('shipments.ship', $shipment));
+
+        Event::assertDispatched(StockChanged::class);
+    }
+
+    public function test_ship_does_not_dispatch_stock_changed_event_when_insufficient_stock(): void
+    {
+        Event::fake([StockChanged::class]);
+
+        $rack = Rack::factory()->create();
+        $product = Product::factory()->create();
+        Stock::create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 3]);
+
+        $shipment = Shipment::factory()->create(['status' => 'draft']);
+        $shipment->items()->create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 10]);
+
+        $this->actingAs($this->user)->post(route('shipments.ship', $shipment));
+
+        Event::assertNotDispatched(StockChanged::class);
     }
 }

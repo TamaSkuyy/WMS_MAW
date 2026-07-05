@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\StockChanged;
 use App\Models\Cycle;
 use App\Models\CycleItem;
 use App\Models\Product;
@@ -221,6 +222,8 @@ class CycleController extends Controller
             return back()->with('error', 'Cannot receive this cycle.');
         }
 
+        event(new StockChanged());
+
         return redirect()->route('cycles.show', $cycle)->with('success', 'Cycle completed. Stock updated.');
     }
 
@@ -281,6 +284,8 @@ class CycleController extends Controller
 
             return $cycle;
         });
+
+        event(new StockChanged());
 
         return redirect()->route('cycles.show', $cycle)->with('success', 'Barang diterima. Stock diperbarui.');
     }

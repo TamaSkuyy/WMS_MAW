@@ -1,5 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap")
 layer(base);
+@import url("https://fonts.googleapis.com/css2?family=Oswald:wght@400..700&family=JetBrains+Mono:wght@400;500;600&display=swap")
+layer(base);
 
 @import "tailwindcss";
 
@@ -8,6 +10,8 @@ layer(base);
 @theme {
   --font-*: initial;
   --font-outfit: Outfit, sans-serif;
+  --font-oswald: Oswald, sans-serif;
+  --font-mono-tv: "JetBrains Mono", monospace;
 
   --breakpoint-*: initial;
   --breakpoint-2xsm: 375px;
@@ -789,4 +793,23 @@ span.flatpickr-weekday,
 
 .simplebar-scrollbar.simplebar-visible:before {
   @apply opacity-100;
+}
+
+@keyframes tv-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.tv-slide-grid {
+  animation: tv-fade-in 0.6s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tv-slide-grid {
+    animation: none;
+  }
 }

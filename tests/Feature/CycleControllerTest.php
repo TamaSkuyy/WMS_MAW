@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Events\StockChanged;
 use App\Models\Cycle;
 use App\Models\CycleItem;
 use App\Models\Product;
@@ -9,6 +10,7 @@ use App\Models\Rack;
 use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 class CycleControllerTest extends TestCase
@@ -311,5 +313,62 @@ class CycleControllerTest extends TestCase
             'rack_id' => $rack->id,
             'quantity' => 10,
         ]);
+    }
+
+    public function test_receive_dispatches_stock_changed_event(): void
+    {
+        Event::fake([StockChanged::class]);
+
+        $rack = Rack::factory()->create();
+        $cycle = Cycle::factory()->create(['status' => 'draft']);
+        $product = Product::factory()->create();
+        $item = CycleItem::factory()->create([
+            'cycle_id' => $cycle->id,
+            'product_id' => $product->id,
+            'quantity' => 10,
+            'received_quantity' => 0,
+        ]);
+
+        $this->actingAs($this->user)->post(route('cycles.receive', $cycle), [
+            'items' => [[
+                'id' => $item->id,
+                'received_quantity' => 10,
+                'rack_id' => $rack->id,
+                'notes' => null,
+            ]],
+        ]);
+
+        Event::assertDispatched(StockChanged::class);
+    }
+
+    public function test_receive_does_not_dispatch_stock_changed_event_when_rejected(): void
+    {
+        Event::fake([StockChanged::class]);
+
+        $cycle = Cycle::factory()->create(['status' => 'completed']);
+
+        $this->actingAs($this->user)->post(route('cycles.receive', $cycle), [
+            'items' => [],
+        ]);
+
+        Event::assertNotDispatched(StockChanged::class);
+    }
+
+    public function test_quick_receive_dispatches_stock_changed_event(): void
+    {
+        Event::fake([StockChanged::class]);
+
+        $supplier = Supplier::factory()->create();
+        $rack = Rack::factory()->create();
+        $product = Product::factory()->create();
+
+        $this->actingAs($this->user)->post(route('cycles.quick-receive.store'), [
+            'supplier_id' => $supplier->id,
+            'items' => [
+                ['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 3],
+            ],
+        ]);
+
+        Event::assertDispatched(StockChanged::class);
     }
 }

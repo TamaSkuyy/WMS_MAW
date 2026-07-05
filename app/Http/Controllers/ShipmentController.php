@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\StockChanged;
 use App\Models\Product;
 use App\Models\Rack;
 use App\Models\Shipment;
@@ -202,6 +203,8 @@ class ShipmentController extends Controller
         if (! $result['ok']) {
             return back()->with('error', $result['error']);
         }
+
+        event(new StockChanged());
 
         return redirect()->route('shipments.show', $shipment)->with('success', 'Shipment processed. Stock deducted.');
     }
