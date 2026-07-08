@@ -6,6 +6,7 @@ use App\Services\ImportExport\Contracts\Exportable;
 use App\Services\ImportExport\DTOs\ExportConfig;
 use App\Services\ImportExport\Enums\ExportFormat;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Response;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -18,7 +19,7 @@ abstract class BaseExporter implements Exportable
 
     abstract public function mapRow($model): array;
 
-    public function download(ExportConfig $config): BinaryFileResponse|StreamedResponse
+    public function download(ExportConfig $config): BinaryFileResponse|StreamedResponse|Response
     {
         return match ($config->format) {
             ExportFormat::Xlsx => $this->downloadXlsx($config),
@@ -62,7 +63,7 @@ abstract class BaseExporter implements Exportable
         return $response;
     }
 
-    private function downloadPdf(ExportConfig $config): BinaryFileResponse|StreamedResponse
+    private function downloadPdf(ExportConfig $config): Response
     {
         $rows = $this->buildRows();
 

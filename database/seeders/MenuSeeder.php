@@ -149,6 +149,32 @@ class MenuSeeder extends Seeder
             'group' => 'main',
         ]);
 
+        // === REPORT TRANSACTION (parent) ===
+        $reportTransaction = Menu::create([
+            'name' => 'Report Transaction',
+            'icon' => 'PieChartIcon',
+            'sort_order' => 21,
+            'group' => 'main',
+        ]);
+
+        Menu::create([
+            'name' => 'Receiving Report',
+            'icon' => 'TableIcon',
+            'path' => '/reports/receiving',
+            'parent_id' => $reportTransaction->id,
+            'sort_order' => 1,
+            'group' => 'main',
+        ]);
+
+        Menu::create([
+            'name' => 'Shipment Report',
+            'icon' => 'ListIcon',
+            'path' => '/reports/shipment',
+            'parent_id' => $reportTransaction->id,
+            'sort_order' => 2,
+            'group' => 'main',
+        ]);
+
         // === OTHERS group ===
         // Setup is the parent menu for menu management, user management, role management, and permission management
         $setupMenu = Menu::create([

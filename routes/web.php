@@ -58,6 +58,12 @@ Route::middleware('auth')->group(function () {
     Route::resource('shipments', ShipmentController::class);
     Route::post('shipments/{shipment}/ship', [ShipmentController::class, 'ship'])->name('shipments.ship');
     Route::resource('stocks', StockController::class)->only(['index']);
+
+    Route::get('reports/receiving', [App\Http\Controllers\ReportController::class, 'receiving'])->name('reports.receiving');
+    Route::get('reports/receiving/export', [App\Http\Controllers\ReportController::class, 'receivingExport'])->name('reports.receiving.export');
+    Route::get('reports/shipment', [App\Http\Controllers\ReportController::class, 'shipment'])->name('reports.shipment');
+    Route::get('reports/shipment/export', [App\Http\Controllers\ReportController::class, 'shipmentExport'])->name('reports.shipment.export');
+
     Route::resource('vehicle-models', VehicleModelController::class)->except(['show']);
     Route::resource('product-categories', ProductCategoryController::class)->except(['show']);
     Route::resource('job-positions', JobPositionController::class)->except(['show']);
