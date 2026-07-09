@@ -2,19 +2,22 @@ import React, { useState, useRef } from 'react';
 import Button from '../../Tailadmin/components/ui/button/Button';
 import ImportProgress from './ImportProgress';
 
+export interface ImportField {
+  key: string;
+  label: string;
+  required: boolean;
+}
+
 interface ImportModalProps {
   isOpen: boolean;
   onClose: () => void;
   onComplete?: () => void;
   importUrl: string;
   previewUrl: string;
+  templateUrl: string;
+  fields: ImportField[];
+  title: string;
 }
-
-const SYSTEM_FIELDS = [
-  { key: 'name', label: 'Name', required: true },
-  { key: 'email', label: 'Email', required: true },
-  { key: 'password', label: 'Password', required: true },
-];
 
 function getCsrfToken(): string {
   return (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '';
@@ -46,7 +49,7 @@ function extractError(text: string, status: number): string {
   return `Server error (HTTP ${status})`;
 }
 
-export default function ImportModal({ isOpen, onClose, onComplete, importUrl, previewUrl }: ImportModalProps) {
+export default function ImportModal({ isOpen, onClose, onComplete, importUrl, previewUrl, templateUrl, fields, title }: ImportModalProps) {
   const [step, setStep] = useState<'upload' | 'mapping' | 'importing'>('upload');
   const [file, setFile] = useState<File | null>(null);
   const [headers, setHeaders] = useState<string[]>([]);
@@ -93,7 +96,7 @@ export default function ImportModal({ isOpen, onClose, onComplete, importUrl, pr
       setTotalRows(data.total_rows);
 
       const autoMapping: Record<string, string> = {};
-      for (const field of SYSTEM_FIELDS) {
+      for (const field of fields) {
         const match = data.headers.find(
           (h: string) => typeof h === 'string' && h.toLowerCase().replace(/[^a-z]/g, '') === field.key.toLowerCase()
         );
@@ -163,7 +166,7 @@ export default function ImportModal({ isOpen, onClose, onComplete, importUrl, pr
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-              {step === 'upload' && 'Import Users'}
+              {step === 'upload' && `Import ${title}`}
               {step === 'mapping' && 'Map Columns'}
               {step === 'importing' && 'Importing...'}
             </h2>
@@ -190,7 +193,7 @@ export default function ImportModal({ isOpen, onClose, onComplete, importUrl, pr
               <p className="text-xs text-gray-400 mt-2 text-center">
                 Download template:{' '}
                 <a
-                  href="/examples/users-import-template.csv"
+                  href={`${templateUrl}?format=csv`}
                   className="text-brand-500 hover:text-brand-600 hover:underline transition-colors"
                   download
                 >
@@ -198,7 +201,7 @@ export default function ImportModal({ isOpen, onClose, onComplete, importUrl, pr
                 </a>
                 {' | '}
                 <a
-                  href="/examples/users-import-template.xlsx"
+                  href={`${templateUrl}?format=xlsx`}
                   className="text-brand-500 hover:text-brand-600 hover:underline transition-colors"
                   download
                 >
@@ -230,7 +233,7 @@ export default function ImportModal({ isOpen, onClose, onComplete, importUrl, pr
                   </tr>
                 </thead>
                 <tbody>
-                  {SYSTEM_FIELDS.map((field) => (
+                  {fields.map((field) => (
                     <tr key={field.key} className="border-b border-gray-100 dark:border-gray-800">
                       <td className="py-2">
                         {field.label}
@@ -258,7 +261,7 @@ export default function ImportModal({ isOpen, onClose, onComplete, importUrl, pr
                 <Button variant="outline" onClick={() => setStep('upload')} disabled={loading}>Back</Button>
                 <Button
                   onClick={handleImport}
-                  disabled={loading || SYSTEM_FIELDS.some((f) => f.required && !columnMapping[f.key])}
+                  disabled={loading || fields.some((f) => f.required && !columnMapping[f.key])}
                 >
                   {loading ? 'Starting...' : 'Start Import'}
                 </Button>

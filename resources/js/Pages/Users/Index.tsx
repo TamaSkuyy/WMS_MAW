@@ -83,6 +83,13 @@ export default function Index({ users, roles }: any) {
                 }}
                 importUrl={route('users.import')}
                 previewUrl={route('users.import.preview')}
+                templateUrl={route('users.import-template')}
+                title="Users"
+                fields={[
+                    { key: 'name', label: 'Name', required: true },
+                    { key: 'email', label: 'Email', required: true },
+                    { key: 'password', label: 'Password', required: true },
+                ]}
             />
 
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">

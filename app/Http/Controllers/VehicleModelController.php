@@ -1,11 +1,33 @@
 <?php
 namespace App\Http\Controllers;
+use App\Http\Controllers\Concerns\HasImportExport;
 use App\Models\VehicleModel;
+use App\Services\ImportExport\Base\BaseExporter;
+use App\Services\ImportExport\Base\BaseImporter;
+use App\Services\ImportExport\Exports\VehicleModelExporter;
+use App\Services\ImportExport\Imports\VehicleModelImporter;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class VehicleModelController extends Controller
 {
+    use HasImportExport;
+
+    protected function importer(): BaseImporter
+    {
+        return new VehicleModelImporter();
+    }
+
+    protected function exporter(): BaseExporter
+    {
+        return new VehicleModelExporter();
+    }
+
+    protected function exportFileName(): string
+    {
+        return 'vehicle-models-export';
+    }
+
     public function index(Request $request)
     {
         return Inertia::render('Master/VehicleModels/Index', [

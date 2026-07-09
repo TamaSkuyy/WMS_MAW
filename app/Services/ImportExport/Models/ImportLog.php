@@ -2,11 +2,14 @@
 
 namespace App\Services\ImportExport\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ImportLog extends Model
 {
+    use HasFactory;
+
     protected $table = 'import_logs';
 
     protected $fillable = [
@@ -36,5 +39,10 @@ class ImportLog extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(\App\Models\User::class);
+    }
+
+    protected static function newFactory()
+    {
+        return \Database\Factories\ImportLogFactory::new();
     }
 }

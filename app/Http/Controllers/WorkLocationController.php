@@ -2,12 +2,34 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\HasImportExport;
 use App\Models\WorkLocation;
+use App\Services\ImportExport\Base\BaseExporter;
+use App\Services\ImportExport\Base\BaseImporter;
+use App\Services\ImportExport\Exports\WorkLocationExporter;
+use App\Services\ImportExport\Imports\WorkLocationImporter;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class WorkLocationController extends Controller
 {
+    use HasImportExport;
+
+    protected function importer(): BaseImporter
+    {
+        return new WorkLocationImporter();
+    }
+
+    protected function exporter(): BaseExporter
+    {
+        return new WorkLocationExporter();
+    }
+
+    protected function exportFileName(): string
+    {
+        return 'work-locations-export';
+    }
+
     public function index(Request $request)
     {
         return Inertia::render('Master/WorkLocations/Index', [

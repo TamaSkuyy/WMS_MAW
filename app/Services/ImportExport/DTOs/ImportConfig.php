@@ -12,7 +12,8 @@ readonly class ImportConfig
         public string $modelType,
         public array $columnMapping,
         public array $validationRules,
-        public string $uniqueKey,
+        public string|array $uniqueKey,
+        public string $importerClass,
         public int $chunkSize = 500,
     ) {}
 }

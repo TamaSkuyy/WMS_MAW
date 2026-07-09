@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
@@ -7,8 +7,12 @@ import Button from '../../../Tailadmin/components/ui/button/Button';
 import SearchInput from '../../../Tailadmin/components/form/input/SearchInput';
 import TableActions from '../../../Tailadmin/components/common/TableActions';
 import EmptyState from '../../../Tailadmin/components/common/EmptyState';
+import ImportExportToolbar from '../../../Components/ImportExport/ImportExportToolbar';
+import ImportModal from '../../../Components/ImportExport/ImportModal';
 
 export default function Index({ employees, filters }: any) {
+    const [importModalOpen, setImportModalOpen] = useState(false);
+
     const handleDelete = (id: number) => {
         if (confirm('Hapus karyawan ini?')) {
             router.delete(route('employees.destroy', id));
@@ -27,7 +31,32 @@ export default function Index({ employees, filters }: any) {
                         routeName="employees.index"
                         filters={filters}
                     />
+                    <ImportExportToolbar
+                        importUrl={route('employees.import')}
+                        previewUrl={route('employees.import.preview')}
+                        exportUrl={route('employees.export')}
+                        onImportClick={() => setImportModalOpen(true)}
+                    />
                 </div>
+                <ImportModal
+                    isOpen={importModalOpen}
+                    onClose={() => setImportModalOpen(false)}
+                    onComplete={() => window.location.reload()}
+                    importUrl={route('employees.import')}
+                    previewUrl={route('employees.import.preview')}
+                    templateUrl={route('employees.import-template')}
+                    title="Karyawan"
+                    fields={[
+                        { key: 'name', label: 'Nama', required: true },
+                        { key: 'nik', label: 'NIK', required: false },
+                        { key: 'job_position', label: 'Jabatan', required: false },
+                        { key: 'work_location', label: 'Lokasi Kerja', required: false },
+                        { key: 'department', label: 'Departemen', required: false },
+                        { key: 'phone', label: 'Telepon', required: false },
+                        { key: 'email', label: 'Email', required: false },
+                        { key: 'status', label: 'Status (Aktif/Nonaktif)', required: true },
+                    ]}
+                />
                 {employees.data.length === 0 ? (
                     <EmptyState
                         icon="👤"

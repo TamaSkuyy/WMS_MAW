@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
@@ -7,8 +7,12 @@ import Button from '../../../Tailadmin/components/ui/button/Button';
 import SearchInput from '../../../Tailadmin/components/form/input/SearchInput';
 import TableActions from '../../../Tailadmin/components/common/TableActions';
 import EmptyState from '../../../Tailadmin/components/common/EmptyState';
+import ImportExportToolbar from '../../../Components/ImportExport/ImportExportToolbar';
+import ImportModal from '../../../Components/ImportExport/ImportModal';
 
 export default function Index({ suppliers, filters }: any) {
+    const [importModalOpen, setImportModalOpen] = useState(false);
+
     const handleDelete = (id: number) => {
         if (confirm('Yakin ingin menghapus supplier ini?')) {
             router.delete(route('suppliers.destroy', id));
@@ -30,7 +34,33 @@ export default function Index({ suppliers, filters }: any) {
                         routeName="suppliers.index"
                         filters={filters}
                     />
+                    <ImportExportToolbar
+                        importUrl={route('suppliers.import')}
+                        previewUrl={route('suppliers.import.preview')}
+                        exportUrl={route('suppliers.export')}
+                        onImportClick={() => setImportModalOpen(true)}
+                    />
                 </div>
+                <ImportModal
+                    isOpen={importModalOpen}
+                    onClose={() => setImportModalOpen(false)}
+                    onComplete={() => window.location.reload()}
+                    importUrl={route('suppliers.import')}
+                    previewUrl={route('suppliers.import.preview')}
+                    templateUrl={route('suppliers.import-template')}
+                    title="Supplier"
+                    fields={[
+                        { key: 'name', label: 'Nama', required: true },
+                        { key: 'contact_person', label: 'Kontak Person', required: false },
+                        { key: 'email', label: 'Email', required: true },
+                        { key: 'phone', label: 'Telepon', required: false },
+                        { key: 'street', label: 'Jalan', required: true },
+                        { key: 'city', label: 'Kota', required: true },
+                        { key: 'state', label: 'Provinsi', required: true },
+                        { key: 'postal_code', label: 'Kode Pos', required: true },
+                        { key: 'country', label: 'Negara', required: true },
+                    ]}
+                />
                 {suppliers.data.length === 0 ? (
                     <EmptyState
                         icon="📦"

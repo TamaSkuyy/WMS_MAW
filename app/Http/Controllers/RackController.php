@@ -2,12 +2,34 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\HasImportExport;
 use App\Models\Rack;
+use App\Services\ImportExport\Base\BaseExporter;
+use App\Services\ImportExport\Base\BaseImporter;
+use App\Services\ImportExport\Exports\RackExporter;
+use App\Services\ImportExport\Imports\RackImporter;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class RackController extends Controller
 {
+    use HasImportExport;
+
+    protected function importer(): BaseImporter
+    {
+        return new RackImporter();
+    }
+
+    protected function exporter(): BaseExporter
+    {
+        return new RackExporter();
+    }
+
+    protected function exportFileName(): string
+    {
+        return 'racks-export';
+    }
+
     public function index(Request $request)
     {
         return Inertia::render('Master/Racks/Index', [

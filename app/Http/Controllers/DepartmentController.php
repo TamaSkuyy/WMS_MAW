@@ -2,12 +2,34 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\HasImportExport;
 use App\Models\Department;
+use App\Services\ImportExport\Base\BaseExporter;
+use App\Services\ImportExport\Base\BaseImporter;
+use App\Services\ImportExport\Exports\DepartmentExporter;
+use App\Services\ImportExport\Imports\DepartmentImporter;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class DepartmentController extends Controller
 {
+    use HasImportExport;
+
+    protected function importer(): BaseImporter
+    {
+        return new DepartmentImporter();
+    }
+
+    protected function exporter(): BaseExporter
+    {
+        return new DepartmentExporter();
+    }
+
+    protected function exportFileName(): string
+    {
+        return 'departments-export';
+    }
+
     public function index(Request $request)
     {
         return Inertia::render('Master/Departments/Index', [

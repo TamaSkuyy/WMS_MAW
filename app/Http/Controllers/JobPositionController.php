@@ -2,12 +2,34 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\HasImportExport;
 use App\Models\JobPosition;
+use App\Services\ImportExport\Base\BaseExporter;
+use App\Services\ImportExport\Base\BaseImporter;
+use App\Services\ImportExport\Exports\JobPositionExporter;
+use App\Services\ImportExport\Imports\JobPositionImporter;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class JobPositionController extends Controller
 {
+    use HasImportExport;
+
+    protected function importer(): BaseImporter
+    {
+        return new JobPositionImporter();
+    }
+
+    protected function exporter(): BaseExporter
+    {
+        return new JobPositionExporter();
+    }
+
+    protected function exportFileName(): string
+    {
+        return 'job-positions-export';
+    }
+
     public function index(Request $request)
     {
         return Inertia::render('Master/JobPositions/Index', [

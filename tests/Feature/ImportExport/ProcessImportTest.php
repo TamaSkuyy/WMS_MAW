@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Services\ImportExport\DTOs\ImportConfig;
 use App\Services\ImportExport\Enums\ImportFormat;
 use App\Services\ImportExport\Enums\ImportStatus;
+use App\Services\ImportExport\Imports\UserImporter;
 use App\Services\ImportExport\Jobs\ProcessImport;
 use App\Services\ImportExport\Models\ImportLog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -44,6 +45,7 @@ class ProcessImportTest extends TestCase
                 'password' => ['required', 'string', 'min:8'],
             ],
             uniqueKey: 'email',
+            importerClass: UserImporter::class,
             chunkSize: 500,
         );
 
@@ -85,6 +87,7 @@ class ProcessImportTest extends TestCase
                 'password' => ['required', 'string', 'min:8'],
             ],
             uniqueKey: 'email',
+            importerClass: UserImporter::class,
             chunkSize: 500,
         );
 
@@ -123,6 +126,7 @@ class ProcessImportTest extends TestCase
                 'password' => ['required', 'string', 'min:8'],
             ],
             uniqueKey: 'email',
+            importerClass: UserImporter::class,
             chunkSize: 500,
         );
 

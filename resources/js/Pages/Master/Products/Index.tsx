@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
@@ -8,8 +8,12 @@ import Input from '../../../Tailadmin/components/form/input/InputField';
 import SearchableSelect from '../../../Tailadmin/components/form/select/SearchableSelect';
 import TableActions from '../../../Tailadmin/components/common/TableActions';
 import EmptyState from '../../../Tailadmin/components/common/EmptyState';
+import ImportExportToolbar from '../../../Components/ImportExport/ImportExportToolbar';
+import ImportModal from '../../../Components/ImportExport/ImportModal';
 
 export default function Index({ products, categories, suppliers, filters }: any) {
+    const [importModalOpen, setImportModalOpen] = useState(false);
+
     const handleDelete = (id: number) => {
         if (confirm('Yakin ingin menghapus produk ini?')) {
             router.delete(route('products.destroy', id));
@@ -71,11 +75,39 @@ export default function Index({ products, categories, suppliers, filters }: any)
                     </div>
                 </div>
 
-                <div className="mb-3">
+                <div className="mb-3 flex flex-wrap items-center gap-3">
                     <Link href={route('products.create')}>
                         <Button>Tambah Produk</Button>
                     </Link>
+                    <ImportExportToolbar
+                        importUrl={route('products.import')}
+                        previewUrl={route('products.import.preview')}
+                        exportUrl={route('products.export')}
+                        onImportClick={() => setImportModalOpen(true)}
+                    />
                 </div>
+                <ImportModal
+                    isOpen={importModalOpen}
+                    onClose={() => setImportModalOpen(false)}
+                    onComplete={() => window.location.reload()}
+                    importUrl={route('products.import')}
+                    previewUrl={route('products.import.preview')}
+                    templateUrl={route('products.import-template')}
+                    title="Produk"
+                    fields={[
+                        { key: 'part_number', label: 'Part Number', required: true },
+                        { key: 'name', label: 'Nama', required: true },
+                        { key: 'brand', label: 'Merek', required: true },
+                        { key: 'model_kendaraan', label: 'Model Kendaraan', required: true },
+                        { key: 'supplier', label: 'Supplier', required: true },
+                        { key: 'kategori', label: 'Kategori', required: true },
+                        { key: 'unit', label: 'Satuan', required: true },
+                        { key: 'description', label: 'Deskripsi', required: false },
+                        { key: 'base_price', label: 'Harga Dasar', required: false },
+                        { key: 'is_active', label: 'Aktif', required: false },
+                        { key: 'default_rack', label: 'Rak Default', required: false },
+                    ]}
+                />
 
                 {products.data.length === 0 ? (
                     <EmptyState

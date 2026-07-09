@@ -2,16 +2,38 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\HasImportExport;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\JobPosition;
 use App\Models\User;
 use App\Models\WorkLocation;
+use App\Services\ImportExport\Base\BaseExporter;
+use App\Services\ImportExport\Base\BaseImporter;
+use App\Services\ImportExport\Exports\EmployeeExporter;
+use App\Services\ImportExport\Imports\EmployeeImporter;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class EmployeeController extends Controller
 {
+    use HasImportExport;
+
+    protected function importer(): BaseImporter
+    {
+        return new EmployeeImporter();
+    }
+
+    protected function exporter(): BaseExporter
+    {
+        return new EmployeeExporter();
+    }
+
+    protected function exportFileName(): string
+    {
+        return 'employees-export';
+    }
+
     public function index(Request $request)
     {
         return Inertia::render('Master/Employees/Index', [

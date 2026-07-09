@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
@@ -7,8 +7,12 @@ import Button from '../../../Tailadmin/components/ui/button/Button';
 import SearchInput from '../../../Tailadmin/components/form/input/SearchInput';
 import TableActions from '../../../Tailadmin/components/common/TableActions';
 import EmptyState from '../../../Tailadmin/components/common/EmptyState';
+import ImportExportToolbar from '../../../Components/ImportExport/ImportExportToolbar';
+import ImportModal from '../../../Components/ImportExport/ImportModal';
 
 export default function Index({ locations, filters }: any) {
+    const [importModalOpen, setImportModalOpen] = useState(false);
+
     const handleDelete = (id: number) => {
         if (confirm('Hapus lokasi kerja ini?')) {
             router.delete(route('work-locations.destroy', id));
@@ -27,7 +31,25 @@ export default function Index({ locations, filters }: any) {
                         routeName="work-locations.index"
                         filters={filters}
                     />
+                    <ImportExportToolbar
+                        importUrl={route('work-locations.import')}
+                        previewUrl={route('work-locations.import.preview')}
+                        exportUrl={route('work-locations.export')}
+                        onImportClick={() => setImportModalOpen(true)}
+                    />
                 </div>
+                <ImportModal
+                    isOpen={importModalOpen}
+                    onClose={() => setImportModalOpen(false)}
+                    onComplete={() => window.location.reload()}
+                    importUrl={route('work-locations.import')}
+                    previewUrl={route('work-locations.import.preview')}
+                    templateUrl={route('work-locations.import-template')}
+                    title="Lokasi Kerja"
+                    fields={[
+                        { key: 'name', label: 'Nama', required: true },
+                    ]}
+                />
                 {locations.data.length === 0 ? (
                     <EmptyState
                         icon="📍"

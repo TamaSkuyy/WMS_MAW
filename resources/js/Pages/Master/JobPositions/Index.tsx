@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
@@ -7,8 +7,12 @@ import Button from '../../../Tailadmin/components/ui/button/Button';
 import SearchInput from '../../../Tailadmin/components/form/input/SearchInput';
 import TableActions from '../../../Tailadmin/components/common/TableActions';
 import EmptyState from '../../../Tailadmin/components/common/EmptyState';
+import ImportExportToolbar from '../../../Components/ImportExport/ImportExportToolbar';
+import ImportModal from '../../../Components/ImportExport/ImportModal';
 
 export default function Index({ positions, filters }: any) {
+    const [importModalOpen, setImportModalOpen] = useState(false);
+
     const handleDelete = (id: number) => {
         if (confirm('Hapus jabatan ini?')) {
             router.delete(route('job-positions.destroy', id));
@@ -27,7 +31,26 @@ export default function Index({ positions, filters }: any) {
                         routeName="job-positions.index"
                         filters={filters}
                     />
+                    <ImportExportToolbar
+                        importUrl={route('job-positions.import')}
+                        previewUrl={route('job-positions.import.preview')}
+                        exportUrl={route('job-positions.export')}
+                        onImportClick={() => setImportModalOpen(true)}
+                    />
                 </div>
+                <ImportModal
+                    isOpen={importModalOpen}
+                    onClose={() => setImportModalOpen(false)}
+                    onComplete={() => window.location.reload()}
+                    importUrl={route('job-positions.import')}
+                    previewUrl={route('job-positions.import.preview')}
+                    templateUrl={route('job-positions.import-template')}
+                    title="Jabatan"
+                    fields={[
+                        { key: 'name', label: 'Nama', required: true },
+                        { key: 'level', label: 'Level', required: false },
+                    ]}
+                />
                 {positions.data.length === 0 ? (
                     <EmptyState
                         icon="🪪"

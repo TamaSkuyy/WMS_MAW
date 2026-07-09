@@ -2,16 +2,38 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\HasImportExport;
 use App\Models\Product;
 use App\Models\Rack;
 use App\Models\Supplier;
 use App\Models\VehicleModel;
 use App\Models\ProductCategory;
+use App\Services\ImportExport\Base\BaseExporter;
+use App\Services\ImportExport\Base\BaseImporter;
+use App\Services\ImportExport\Exports\ProductExporter;
+use App\Services\ImportExport\Imports\ProductImporter;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class ProductController extends Controller
 {
+    use HasImportExport;
+
+    protected function importer(): BaseImporter
+    {
+        return new ProductImporter();
+    }
+
+    protected function exporter(): BaseExporter
+    {
+        return new ProductExporter();
+    }
+
+    protected function exportFileName(): string
+    {
+        return 'products-export';
+    }
+
     /**
      * Display a listing of products.
      */

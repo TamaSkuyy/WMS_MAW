@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
@@ -7,8 +7,12 @@ import Button from '../../../Tailadmin/components/ui/button/Button';
 import SearchInput from '../../../Tailadmin/components/form/input/SearchInput';
 import TableActions from '../../../Tailadmin/components/common/TableActions';
 import EmptyState from '../../../Tailadmin/components/common/EmptyState';
+import ImportExportToolbar from '../../../Components/ImportExport/ImportExportToolbar';
+import ImportModal from '../../../Components/ImportExport/ImportModal';
 
 export default function Index({ vehicleModels, filters }: any) {
+    const [importModalOpen, setImportModalOpen] = useState(false);
+
     const handleDelete = (id: number) => {
         if (confirm('Hapus model ini?')) {
             router.delete(route('vehicle-models.destroy', id));
@@ -27,7 +31,27 @@ export default function Index({ vehicleModels, filters }: any) {
                         routeName="vehicle-models.index"
                         filters={filters}
                     />
+                    <ImportExportToolbar
+                        importUrl={route('vehicle-models.import')}
+                        previewUrl={route('vehicle-models.import.preview')}
+                        exportUrl={route('vehicle-models.export')}
+                        onImportClick={() => setImportModalOpen(true)}
+                    />
                 </div>
+                <ImportModal
+                    isOpen={importModalOpen}
+                    onClose={() => setImportModalOpen(false)}
+                    onComplete={() => window.location.reload()}
+                    importUrl={route('vehicle-models.import')}
+                    previewUrl={route('vehicle-models.import.preview')}
+                    templateUrl={route('vehicle-models.import-template')}
+                    title="Model Kendaraan"
+                    fields={[
+                        { key: 'name', label: 'Nama', required: true },
+                        { key: 'brand', label: 'Merek', required: true },
+                        { key: 'suffix', label: 'Suffix', required: false },
+                    ]}
+                />
                 {vehicleModels.data.length === 0 ? (
                     <EmptyState
                         icon="🚗"

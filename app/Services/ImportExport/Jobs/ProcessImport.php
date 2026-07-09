@@ -4,7 +4,9 @@ namespace App\Services\ImportExport\Jobs;
 
 use App\Services\ImportExport\DTOs\ImportConfig;
 use App\Services\ImportExport\Enums\ImportStatus;
+use App\Services\ImportExport\Exceptions\RowTransformException;
 use App\Services\ImportExport\Models\ImportLog;
+use App\Services\ImportExport\Support\RawFileImport;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -31,11 +33,15 @@ class ProcessImport implements ShouldQueue
             'column_mapping' => $this->config->columnMapping,
         ]);
 
+        $importerClass = $this->config->importerClass;
+        $importer = new $importerClass();
+        $fixedFields = $importer->fixedFields($importLog->user_id);
+
         $errors = [];
         $processed = 0;
         $skipped = 0;
 
-        $rows = Excel::toCollection(null, $this->config->filePath)->first();
+        $rows = Excel::toCollection(new RawFileImport(), $this->config->filePath)->first();
 
         if ($rows->isEmpty()) {
             $importLog->update([
@@ -45,24 +51,45 @@ class ProcessImport implements ShouldQueue
             return;
         }
 
-        $headers = array_keys($rows->first()->toArray());
+        $headers = $rows->first()->toArray();
+        $dataRows = $rows->slice(1)->values();
 
-        $importLog->update(['total_rows' => $rows->count()]);
+        if ($dataRows->isEmpty()) {
+            $importLog->update([
+                'status' => ImportStatus::Completed->value,
+                'total_rows' => 0,
+            ]);
+            return;
+        }
 
-        $chunks = $rows->chunk($this->config->chunkSize);
+        $importLog->update(['total_rows' => $dataRows->count()]);
+
+        $chunks = $dataRows->chunk($this->config->chunkSize);
 
         foreach ($chunks as $chunkIndex => $chunk) {
             foreach ($chunk as $rowIndex => $row) {
+                $rowNumber = ($chunkIndex * $this->config->chunkSize) + $rowIndex + 1;
                 $rowArray = $row->toArray();
-                $mapped = $this->mapRow($rowArray, $headers);
+                $mapped = array_merge($this->mapRow($rowArray, $headers), $fixedFields);
 
-                $validator = Validator::make($mapped, $this->config->validationRules);
+                try {
+                    $transformed = $importer->transformRow($mapped);
+                } catch (RowTransformException $e) {
+                    $errors[] = [
+                        'row' => $rowNumber,
+                        'field' => 'system',
+                        'message' => $e->getMessage(),
+                    ];
+                    continue;
+                }
+
+                $validator = Validator::make($transformed, $this->config->validationRules);
 
                 if ($validator->fails()) {
                     foreach ($validator->errors()->toArray() as $field => $msgs) {
                         foreach ($msgs as $msg) {
                             $errors[] = [
-                                'row' => ($chunkIndex * $this->config->chunkSize) + $rowIndex + 1,
+                                'row' => $rowNumber,
                                 'field' => $field,
                                 'message' => $msg,
                             ];
@@ -71,12 +98,12 @@ class ProcessImport implements ShouldQueue
                     continue;
                 }
 
-                if ($this->isDuplicate($mapped)) {
+                if ($importer->isDuplicate($transformed)) {
                     $skipped++;
                     continue;
                 }
 
-                $this->insertRow($mapped);
+                $importer->insertRow($transformed);
                 $processed++;
             }
         }
@@ -112,26 +139,10 @@ class ProcessImport implements ShouldQueue
         foreach ($this->config->columnMapping as $field => $fileColumn) {
             $index = array_search($fileColumn, $headers);
             if ($index !== false) {
-                $mapped[$field] = $row[$fileColumn] ?? $row[$index] ?? null;
+                $value = $row[$fileColumn] ?? $row[$index] ?? null;
+                $mapped[$field] = (is_int($value) || is_float($value)) ? (string) $value : $value;
             }
         }
         return $mapped;
-    }
-
-    private function isDuplicate(array $data): bool
-    {
-        $key = $this->config->uniqueKey;
-        if (!isset($data[$key]) || empty($data[$key])) {
-            return false;
-        }
-
-        $modelClass = $this->config->modelType;
-        return $modelClass::where($key, $data[$key])->exists();
-    }
-
-    private function insertRow(array $data): void
-    {
-        $modelClass = $this->config->modelType;
-        $modelClass::create($data);
     }
 }

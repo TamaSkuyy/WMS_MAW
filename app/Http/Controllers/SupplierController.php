@@ -2,12 +2,34 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\HasImportExport;
 use App\Models\Supplier;
+use App\Services\ImportExport\Base\BaseExporter;
+use App\Services\ImportExport\Base\BaseImporter;
+use App\Services\ImportExport\Exports\SupplierExporter;
+use App\Services\ImportExport\Imports\SupplierImporter;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class SupplierController extends Controller
 {
+    use HasImportExport;
+
+    protected function importer(): BaseImporter
+    {
+        return new SupplierImporter();
+    }
+
+    protected function exporter(): BaseExporter
+    {
+        return new SupplierExporter();
+    }
+
+    protected function exportFileName(): string
+    {
+        return 'suppliers-export';
+    }
+
     /**
      * Display a listing of suppliers.
      */

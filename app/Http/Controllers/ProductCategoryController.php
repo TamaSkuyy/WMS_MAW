@@ -1,11 +1,33 @@
 <?php
 namespace App\Http\Controllers;
+use App\Http\Controllers\Concerns\HasImportExport;
 use App\Models\ProductCategory;
+use App\Services\ImportExport\Base\BaseExporter;
+use App\Services\ImportExport\Base\BaseImporter;
+use App\Services\ImportExport\Exports\ProductCategoryExporter;
+use App\Services\ImportExport\Imports\ProductCategoryImporter;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class ProductCategoryController extends Controller
 {
+    use HasImportExport;
+
+    protected function importer(): BaseImporter
+    {
+        return new ProductCategoryImporter();
+    }
+
+    protected function exporter(): BaseExporter
+    {
+        return new ProductCategoryExporter();
+    }
+
+    protected function exportFileName(): string
+    {
+        return 'product-categories-export';
+    }
+
     public function index(Request $request)
     {
         return Inertia::render('Master/ProductCategories/Index', [
