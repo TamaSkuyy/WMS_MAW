@@ -6,8 +6,8 @@ use App\Models\Cycle;
 use App\Models\CycleItem;
 use App\Models\Product;
 use App\Models\Rack;
-use App\Models\Shipment;
-use App\Models\ShipmentItem;
+use App\Models\Shopping;
+use App\Models\ShoppingItem;
 use App\Models\Stock;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -99,13 +99,13 @@ class TvDashboardControllerTest extends TestCase
         $this->assertNull($item['last_received']);
     }
 
-    public function test_index_includes_last_shipped_summary_for_product_with_shipped_shipment(): void
+    public function test_index_includes_last_shipped_summary_for_product_with_shipped_shopping(): void
     {
         $product = Product::factory()->create();
         $rack = Rack::factory()->create();
-        $shipment = Shipment::factory()->create(['status' => 'shipped']);
-        ShipmentItem::factory()->create([
-            'shipment_id' => $shipment->id,
+        $shopping = Shopping::factory()->create(['status' => 'shipped']);
+        ShoppingItem::factory()->create([
+            'shopping_id' => $shopping->id,
             'product_id' => $product->id,
             'rack_id' => $rack->id,
             'quantity' => 9,

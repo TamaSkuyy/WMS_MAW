@@ -6,8 +6,8 @@ use App\Models\Cycle;
 use App\Models\CycleItem;
 use App\Models\Product;
 use App\Models\Rack;
-use App\Models\Shipment;
-use App\Models\ShipmentItem;
+use App\Models\Shopping;
+use App\Models\ShoppingItem;
 use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -154,25 +154,25 @@ class ReportControllerTest extends TestCase
         $response->assertHeader('content-type', 'application/pdf');
     }
 
-    public function test_shipment_report_returns_200(): void
+    public function test_shopping_report_returns_200(): void
     {
-        $response = $this->actingAs($this->user)->get(route('reports.shipment'));
+        $response = $this->actingAs($this->user)->get(route('reports.shopping'));
 
         $response->assertStatus(200);
     }
 
-    public function test_shipment_report_filters_by_date_range(): void
+    public function test_shopping_report_filters_by_date_range(): void
     {
         $product = Product::factory()->create();
         $rack = Rack::factory()->create();
 
-        $inRange = Shipment::factory()->create(['status' => 'shipped', 'shipment_date' => '2026-06-15']);
-        ShipmentItem::factory()->create(['shipment_id' => $inRange->id, 'product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 6]);
+        $inRange = Shopping::factory()->create(['status' => 'shipped', 'shopping_date' => '2026-06-15']);
+        ShoppingItem::factory()->create(['shopping_id' => $inRange->id, 'product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 6]);
 
-        $outOfRange = Shipment::factory()->create(['status' => 'shipped', 'shipment_date' => '2026-05-01']);
-        ShipmentItem::factory()->create(['shipment_id' => $outOfRange->id, 'product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 8]);
+        $outOfRange = Shopping::factory()->create(['status' => 'shipped', 'shopping_date' => '2026-05-01']);
+        ShoppingItem::factory()->create(['shopping_id' => $outOfRange->id, 'product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 8]);
 
-        $response = $this->actingAs($this->user)->get(route('reports.shipment', [
+        $response = $this->actingAs($this->user)->get(route('reports.shopping', [
             'date_from' => '2026-06-01',
             'date_to' => '2026-06-30',
         ]));
@@ -183,18 +183,18 @@ class ReportControllerTest extends TestCase
         $this->assertSame(6, $rows[0]['quantity']);
     }
 
-    public function test_shipment_report_filters_by_partner_text_search(): void
+    public function test_shopping_report_filters_by_partner_text_search(): void
     {
         $product = Product::factory()->create();
         $rack = Rack::factory()->create();
 
-        $matching = Shipment::factory()->create(['status' => 'shipped', 'partner_name' => 'PT Maju Jaya']);
-        ShipmentItem::factory()->create(['shipment_id' => $matching->id, 'product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 4]);
+        $matching = Shopping::factory()->create(['status' => 'shipped', 'partner_name' => 'PT Maju Jaya']);
+        ShoppingItem::factory()->create(['shopping_id' => $matching->id, 'product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 4]);
 
-        $other = Shipment::factory()->create(['status' => 'shipped', 'partner_name' => 'CV Sentosa']);
-        ShipmentItem::factory()->create(['shipment_id' => $other->id, 'product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 2]);
+        $other = Shopping::factory()->create(['status' => 'shipped', 'partner_name' => 'CV Sentosa']);
+        ShoppingItem::factory()->create(['shopping_id' => $other->id, 'product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 2]);
 
-        $response = $this->actingAs($this->user)->get(route('reports.shipment', ['partner' => 'Maju']));
+        $response = $this->actingAs($this->user)->get(route('reports.shopping', ['partner' => 'Maju']));
 
         $rows = $this->pageProps($response)['items']['data'];
 
@@ -202,18 +202,18 @@ class ReportControllerTest extends TestCase
         $this->assertSame(4, $rows[0]['quantity']);
     }
 
-    public function test_shipment_report_filters_by_status(): void
+    public function test_shopping_report_filters_by_status(): void
     {
         $product = Product::factory()->create();
         $rack = Rack::factory()->create();
 
-        $draft = Shipment::factory()->create(['status' => 'draft']);
-        ShipmentItem::factory()->create(['shipment_id' => $draft->id, 'product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 1]);
+        $draft = Shopping::factory()->create(['status' => 'draft']);
+        ShoppingItem::factory()->create(['shopping_id' => $draft->id, 'product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 1]);
 
-        $shipped = Shipment::factory()->create(['status' => 'shipped']);
-        ShipmentItem::factory()->create(['shipment_id' => $shipped->id, 'product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 5]);
+        $shipped = Shopping::factory()->create(['status' => 'shipped']);
+        ShoppingItem::factory()->create(['shopping_id' => $shipped->id, 'product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 5]);
 
-        $response = $this->actingAs($this->user)->get(route('reports.shipment', ['status' => 'shipped']));
+        $response = $this->actingAs($this->user)->get(route('reports.shopping', ['status' => 'shipped']));
 
         $rows = $this->pageProps($response)['items']['data'];
 
@@ -221,20 +221,20 @@ class ReportControllerTest extends TestCase
         $this->assertSame(5, $rows[0]['quantity']);
     }
 
-    public function test_shipment_report_summary_totals(): void
+    public function test_shopping_report_summary_totals(): void
     {
         $productA = Product::factory()->create();
         $productB = Product::factory()->create();
         $rack = Rack::factory()->create();
 
-        $shipment1 = Shipment::factory()->create(['status' => 'shipped']);
-        ShipmentItem::factory()->create(['shipment_id' => $shipment1->id, 'product_id' => $productA->id, 'rack_id' => $rack->id, 'quantity' => 5]);
-        ShipmentItem::factory()->create(['shipment_id' => $shipment1->id, 'product_id' => $productB->id, 'rack_id' => $rack->id, 'quantity' => 3]);
+        $shopping1 = Shopping::factory()->create(['status' => 'shipped']);
+        ShoppingItem::factory()->create(['shopping_id' => $shopping1->id, 'product_id' => $productA->id, 'rack_id' => $rack->id, 'quantity' => 5]);
+        ShoppingItem::factory()->create(['shopping_id' => $shopping1->id, 'product_id' => $productB->id, 'rack_id' => $rack->id, 'quantity' => 3]);
 
-        $shipment2 = Shipment::factory()->create(['status' => 'shipped']);
-        ShipmentItem::factory()->create(['shipment_id' => $shipment2->id, 'product_id' => $productA->id, 'rack_id' => $rack->id, 'quantity' => 2]);
+        $shopping2 = Shopping::factory()->create(['status' => 'shipped']);
+        ShoppingItem::factory()->create(['shopping_id' => $shopping2->id, 'product_id' => $productA->id, 'rack_id' => $rack->id, 'quantity' => 2]);
 
-        $response = $this->actingAs($this->user)->get(route('reports.shipment'));
+        $response = $this->actingAs($this->user)->get(route('reports.shopping'));
 
         $summary = $this->pageProps($response)['summary'];
 
@@ -243,27 +243,27 @@ class ReportControllerTest extends TestCase
         $this->assertSame(2, $summary['unique_products']);
     }
 
-    public function test_shipment_report_export_xlsx_returns_success(): void
+    public function test_shopping_report_export_xlsx_returns_success(): void
     {
         $product = Product::factory()->create();
         $rack = Rack::factory()->create();
-        $shipment = Shipment::factory()->create(['status' => 'shipped']);
-        ShipmentItem::factory()->create(['shipment_id' => $shipment->id, 'product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 3]);
+        $shopping = Shopping::factory()->create(['status' => 'shipped']);
+        ShoppingItem::factory()->create(['shopping_id' => $shopping->id, 'product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 3]);
 
-        $response = $this->actingAs($this->user)->get(route('reports.shipment.export', ['format' => 'xlsx']));
+        $response = $this->actingAs($this->user)->get(route('reports.shopping.export', ['format' => 'xlsx']));
 
         $response->assertSuccessful();
         $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     }
 
-    public function test_shipment_report_export_pdf_returns_success(): void
+    public function test_shopping_report_export_pdf_returns_success(): void
     {
         $product = Product::factory()->create();
         $rack = Rack::factory()->create();
-        $shipment = Shipment::factory()->create(['status' => 'shipped']);
-        ShipmentItem::factory()->create(['shipment_id' => $shipment->id, 'product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 3]);
+        $shopping = Shopping::factory()->create(['status' => 'shipped']);
+        ShoppingItem::factory()->create(['shopping_id' => $shopping->id, 'product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 3]);
 
-        $response = $this->actingAs($this->user)->get(route('reports.shipment.export', ['format' => 'pdf']));
+        $response = $this->actingAs($this->user)->get(route('reports.shopping.export', ['format' => 'pdf']));
 
         $response->assertSuccessful();
         $response->assertHeader('content-type', 'application/pdf');

@@ -8,14 +8,14 @@ import Input from '../../Tailadmin/components/form/input/InputField';
 import SearchableSelect from '../../Tailadmin/components/form/select/SearchableSelect';
 import EmptyState from '../../Tailadmin/components/common/EmptyState';
 
-export default function Shipment({ items, summary, filters }: any) {
+export default function Shopping({ items, summary, filters }: any) {
     const updateFilter = (key: string, value: string) => {
-        router.get(route('reports.shipment'), { ...filters, [key]: value }, { preserveState: true, replace: true });
+        router.get(route('reports.shopping'), { ...filters, [key]: value }, { preserveState: true, replace: true });
     };
 
     const exportUrl = (format: 'xlsx' | 'pdf') => {
         const params = new URLSearchParams({ ...filters, format }).toString();
-        return `${route('reports.shipment.export')}?${params}`;
+        return `${route('reports.shopping.export')}?${params}`;
     };
 
     const statusColors: Record<string, string> = {
@@ -26,8 +26,8 @@ export default function Shipment({ items, summary, filters }: any) {
 
     return (
         <AppLayout>
-            <Head title="Shipment Report" />
-            <PageBreadcrumb pageTitle="Shipment Report" />
+            <Head title="Shopping Report" />
+            <PageBreadcrumb pageTitle="Shopping Report" />
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-6">
                 <ComponentCard title="Total Transaksi">
@@ -41,7 +41,7 @@ export default function Shipment({ items, summary, filters }: any) {
                 </ComponentCard>
             </div>
 
-            <ComponentCard title="Detail Transaksi Shipment">
+            <ComponentCard title="Detail Transaksi Shopping">
                 <div className="mb-4 flex gap-3 flex-wrap items-end">
                     <div>
                         <label className="block text-xs font-medium text-gray-500 mb-1">Dari Tanggal</label>
@@ -75,7 +75,7 @@ export default function Shipment({ items, summary, filters }: any) {
                 </div>
 
                 {items.data.length === 0 ? (
-                    <EmptyState icon="📄" title="Tidak ada data" message="Tidak ada transaksi shipment yang cocok dengan filter ini." />
+                    <EmptyState icon="📄" title="Tidak ada data" message="Tidak ada transaksi shopping yang cocok dengan filter ini." />
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -93,15 +93,15 @@ export default function Shipment({ items, summary, filters }: any) {
                                 {items.data.map((item: any) => (
                                     <tr key={item.id}>
                                         <td className="px-4 py-3 text-sm whitespace-nowrap">
-                                            {item.shipment?.shipment_date ? new Date(item.shipment.shipment_date).toLocaleDateString('id-ID') : '-'}
+                                            {item.shopping?.shopping_date ? new Date(item.shopping.shopping_date).toLocaleDateString('id-ID') : '-'}
                                         </td>
-                                        <td className="px-4 py-3 text-sm whitespace-nowrap">{item.shipment?.partner_name}</td>
+                                        <td className="px-4 py-3 text-sm whitespace-nowrap">{item.shopping?.partner_name}</td>
                                         <td className="px-4 py-3 text-sm whitespace-nowrap">{item.product?.part_number} — {item.product?.name}</td>
                                         <td className="px-4 py-3 text-sm whitespace-nowrap">{item.rack?.code}</td>
                                         <td className="px-4 py-3 text-sm whitespace-nowrap">{item.quantity}</td>
                                         <td className="px-4 py-3 whitespace-nowrap">
-                                            <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[item.shipment?.status] || ''}`}>
-                                                {item.shipment?.status}
+                                            <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[item.shopping?.status] || ''}`}>
+                                                {item.shopping?.status}
                                             </span>
                                         </td>
                                     </tr>

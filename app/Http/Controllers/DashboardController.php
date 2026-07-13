@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Cycle;
 use App\Models\Product;
-use App\Models\Shipment;
+use App\Models\Shopping;
 use App\Models\Stock;
 use Inertia\Inertia;
 
@@ -44,7 +44,7 @@ class DashboardController extends Controller
                 'created_at' => $c->created_at->format('d M Y'),
             ]);
 
-        $todayShipments = Shipment::withCount('items')
+        $todayShoppings = Shopping::withCount('items')
             ->where('status', 'draft')
             ->orderBy('created_at', 'desc')
             ->limit(5)
@@ -52,7 +52,7 @@ class DashboardController extends Controller
             ->map(fn($s) => [
                 'id' => $s->id,
                 'partner_name' => $s->partner_name,
-                'shipment_date' => $s->shipment_date->format('d M Y'),
+                'shopping_date' => $s->shopping_date->format('d M Y'),
                 'items_count' => $s->items_count,
                 'status' => $s->status,
             ]);
@@ -65,14 +65,14 @@ class DashboardController extends Controller
                 'total_stock' => $totalStock,
                 'low_stock_count' => $lowStockCount,
                 'pending_cycles' => Cycle::where('status', 'draft')->count(),
-                'pending_shipments' => Shipment::where('status', 'draft')->count(),
+                'pending_shoppings' => Shopping::where('status', 'draft')->count(),
                 'completed_cycles_today' => Cycle::where('status', 'completed')
                     ->whereDate('received_at', today())
                     ->count(),
             ],
             'lowStockItems' => $lowStockItems,
             'pendingCycles' => $pendingCycles,
-            'todayShipments' => $todayShipments,
+            'todayShoppings' => $todayShoppings,
         ]);
     }
 }

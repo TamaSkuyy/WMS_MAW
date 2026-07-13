@@ -6,7 +6,7 @@ import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb'
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
 
-export default function Show({ shipment }: any) {
+export default function Show({ shopping }: any) {
     const [submitting, setSubmitting] = useState(false);
 
     const statusColors: Record<string, string> = {
@@ -19,7 +19,7 @@ export default function Show({ shipment }: any) {
         if (submitting) return;
         if (confirm('Proses pengiriman ini? Stok akan dikurangi.')) {
             setSubmitting(true);
-            router.post(route('shipments.ship', shipment.id), {}, {
+            router.post(route('shoppings.ship', shopping.id), {}, {
                 onFinish: () => setSubmitting(false),
             });
         }
@@ -27,26 +27,26 @@ export default function Show({ shipment }: any) {
 
     return (
         <AppLayout>
-            <Head title={`Pengiriman ke ${shipment.partner_name}`} />
-            <PageBreadcrumb pageTitle={`Detail: ${shipment.partner_name}`} />
+            <Head title={`Pengiriman ke ${shopping.partner_name}`} />
+            <PageBreadcrumb pageTitle={`Detail: ${shopping.partner_name}`} />
 
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
                 <div className="xl:col-span-1">
-                    <ComponentCard title="Info Shipment" desc="Detail pengiriman barang">
+                    <ComponentCard title="Info Shopping" desc="Detail pengiriman barang">
                         <dl className="space-y-4">
-                            <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Mitra</dt><dd className="text-sm text-[#1A1D23]">{shipment.partner_name}</dd></div>
-                            <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Tanggal</dt><dd className="text-sm text-[#1A1D23]">{shipment.shipment_date}</dd></div>
-                            <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Status</dt><dd><span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[shipment.status]}`}>{shipment.status}</span></dd></div>
-                            {shipment.notes && <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Catatan</dt><dd className="text-sm text-[#1A1D23]">{shipment.notes}</dd></div>}
+                            <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Mitra</dt><dd className="text-sm text-[#1A1D23]">{shopping.partner_name}</dd></div>
+                            <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Tanggal</dt><dd className="text-sm text-[#1A1D23]">{shopping.shopping_date}</dd></div>
+                            <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Status</dt><dd><span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[shopping.status]}`}>{shopping.status}</span></dd></div>
+                            {shopping.notes && <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Catatan</dt><dd className="text-sm text-[#1A1D23]">{shopping.notes}</dd></div>}
                         </dl>
                         <div className="mt-6 flex gap-2 pt-4 border-t border-[#F1F3F5]">
-                            {shipment.status === 'draft' && (
-                                <><Link href={route('shipments.edit', shipment.id)}><Button icon={<PencilIcon className="w-4 h-4" />} size="sm">Edit</Button></Link>
+                            {shopping.status === 'draft' && (
+                                <><Link href={route('shoppings.edit', shopping.id)}><Button icon={<PencilIcon className="w-4 h-4" />} size="sm">Edit</Button></Link>
                                 <Button variant="outline" size="sm" onClick={handleShip} disabled={submitting}>
                                     {submitting ? 'Memproses...' : 'Kirim Sekarang'}
                                 </Button></>
                             )}
-                            <Link href={route('shipments.index')}><Button variant="outline" size="sm">Kembali</Button></Link>
+                            <Link href={route('shoppings.index')}><Button variant="outline" size="sm">Kembali</Button></Link>
                         </div>
                     </ComponentCard>
                 </div>
@@ -64,7 +64,7 @@ export default function Show({ shipment }: any) {
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
-                                    {shipment.items.map((item: any) => (
+                                    {shopping.items.map((item: any) => (
                                         <tr key={item.id}>
                                             <td className="px-3 py-2 text-sm font-mono">{item.product?.part_number}</td>
                                             <td className="px-3 py-2 text-sm">{item.product?.name}</td>

@@ -52,6 +52,7 @@ export default function Index({ employees, filters }: any) {
                         { key: 'job_position', label: 'Jabatan', required: false },
                         { key: 'work_location', label: 'Lokasi Kerja', required: false },
                         { key: 'department', label: 'Departemen', required: false },
+                        { key: 'shift', label: 'Shift', required: false },
                         { key: 'phone', label: 'Telepon', required: false },
                         { key: 'email', label: 'Email', required: false },
                         { key: 'status', label: 'Status (Aktif/Nonaktif)', required: true },
@@ -75,6 +76,7 @@ export default function Index({ employees, filters }: any) {
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Jabatan</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Lokasi Kerja</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Departemen</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Shift</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Status</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">User</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider w-24">Aksi</th>
@@ -92,6 +94,7 @@ export default function Index({ employees, filters }: any) {
                                     <td className="px-4 py-3 text-[13px] text-[#6C757D]">{e.job_position?.name || '-'}</td>
                                     <td className="px-4 py-3 text-[13px] text-[#6C757D]">{e.work_location?.name || '-'}</td>
                                     <td className="px-4 py-3 text-[13px] text-[#6C757D]">{e.department?.name || '-'}</td>
+                                    <td className="px-4 py-3 text-[13px] text-[#6C757D]">{e.shift?.name || '-'}</td>
                                     <td className="px-4 py-3 text-sm">
                                         <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${e.status === 'Aktif' ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'}`}>
                                             {e.status}

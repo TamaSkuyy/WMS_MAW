@@ -11,13 +11,14 @@ import SearchableSelect from '../../../Tailadmin/components/form/select/Searchab
 import Select from '../../../Tailadmin/components/form/Select';
 import { Link } from '@inertiajs/react';
 
-export default function Edit({ employee, jobPositions, workLocations, departments, users }: any) {
+export default function Edit({ employee, jobPositions, workLocations, departments, shifts, users }: any) {
     const { data, setData, put, errors } = useForm({
         name: employee.name,
         nik: employee.nik || '',
         job_position_id: employee.job_position_id || '',
         work_location_id: employee.work_location_id || '',
         department_id: employee.department_id || '',
+        shift_id: employee.shift_id || '',
         user_id: employee.user_id || '',
         phone: employee.phone || '',
         email: employee.email || '',
@@ -84,6 +85,16 @@ export default function Edit({ employee, jobPositions, workLocations, department
                                 placeholder="Cari departemen..."
                             />
                             {errors.department_id && <p className="mt-1 text-sm text-red-500">{errors.department_id}</p>}
+                        </div>
+                        <div>
+                            <Label>Shift</Label>
+                            <SearchableSelect
+                                options={shifts.map((s: any) => ({ value: s.id, label: s.name }))}
+                                value={data.shift_id}
+                                onChange={(val) => setData('shift_id', val)}
+                                placeholder="Cari shift..."
+                            />
+                            {errors.shift_id && <p className="mt-1 text-sm text-red-500">{errors.shift_id}</p>}
                         </div>
                         <div>
                             <Label>User / Login</Label>

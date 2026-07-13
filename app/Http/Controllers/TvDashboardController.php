@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CycleItem;
 use App\Models\Product;
-use App\Models\ShipmentItem;
+use App\Models\ShoppingItem;
 use App\Models\Stock;
 use Inertia\Inertia;
 
@@ -27,9 +27,9 @@ class TvDashboardController extends Controller
                 ->orderByDesc('updated_at')
                 ->first();
 
-            $lastShippedItem = ShipmentItem::where('product_id', $product->id)
-                ->whereHas('shipment', fn ($q) => $q->where('status', 'shipped'))
-                ->with('shipment')
+            $lastShippedItem = ShoppingItem::where('product_id', $product->id)
+                ->whereHas('shopping', fn ($q) => $q->where('status', 'shipped'))
+                ->with('shopping')
                 ->orderByDesc('updated_at')
                 ->first();
 
@@ -49,7 +49,7 @@ class TvDashboardController extends Controller
                 ] : null,
                 'last_shipped' => $lastShippedItem ? [
                     'quantity' => $lastShippedItem->quantity,
-                    'date' => $lastShippedItem->shipment->updated_at->toIso8601String(),
+                    'date' => $lastShippedItem->shopping->updated_at->toIso8601String(),
                 ] : null,
             ];
         });

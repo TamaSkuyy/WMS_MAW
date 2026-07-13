@@ -6,15 +6,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class ShipmentItem extends Model
+class ShoppingItem extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['shipment_id', 'product_id', 'rack_id', 'quantity'];
+    protected $fillable = ['shopping_id', 'product_id', 'rack_id', 'quantity'];
 
-    public function shipment(): BelongsTo
+    public function shopping(): BelongsTo
     {
-        return $this->belongsTo(Shipment::class);
+        return $this->belongsTo(Shopping::class);
     }
 
     public function product(): BelongsTo

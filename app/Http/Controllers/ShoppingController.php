@@ -5,32 +5,32 @@ namespace App\Http\Controllers;
 use App\Events\StockChanged;
 use App\Models\Product;
 use App\Models\Rack;
-use App\Models\Shipment;
+use App\Models\Shopping;
 use App\Models\Stock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
-class ShipmentController extends Controller
+class ShoppingController extends Controller
 {
     public function index(Request $request)
     {
-        $shipments = Shipment::withCount('items')
+        $shoppings = Shopping::withCount('items')
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->search, fn ($q, $s) => $q->where('partner_name', 'like', "%{$s}%"))
             ->latest()
             ->paginate(10)
             ->withQueryString();
 
-        return Inertia::render('Transactions/Shipments/Index', [
-            'shipments' => $shipments,
+        return Inertia::render('Transactions/Shopping/Index', [
+            'shoppings' => $shoppings,
             'filters' => $request->only(['status', 'search']),
         ]);
     }
 
     public function create()
     {
-        return Inertia::render('Transactions/Shipments/Create', [
+        return Inertia::render('Transactions/Shopping/Create', [
             'products'      => Product::with(['vehicleModel', 'stocks'])->where('is_active', true)->orderBy('name')->get(),
             'racks'         => Rack::orderBy('zone')->orderBy('code')->get(),
             'vehicleModels' => \App\Models\VehicleModel::orderBy('brand')->orderBy('name')->orderBy('suffix')->get(),
@@ -55,7 +55,7 @@ class ShipmentController extends Controller
     {
         $validated = $request->validate([
             'partner_name' => 'required|string|max:255',
-            'shipment_date' => 'required|date',
+            'shopping_date' => 'required|date',
             'notes' => 'nullable|string|max:500',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
@@ -64,54 +64,54 @@ class ShipmentController extends Controller
         ]);
         $validated['items'] = $this->mergeDuplicateItems($validated['items']);
 
-        $shipment = Shipment::create([
+        $shopping = Shopping::create([
             'partner_name' => $validated['partner_name'],
-            'shipment_date' => $validated['shipment_date'],
+            'shopping_date' => $validated['shopping_date'],
             'status' => 'draft',
             'notes' => $validated['notes'] ?? null,
         ]);
 
         foreach ($validated['items'] as $item) {
-            $shipment->items()->create([
+            $shopping->items()->create([
                 'product_id' => $item['product_id'],
                 'rack_id' => $item['rack_id'],
                 'quantity' => $item['quantity'],
             ]);
         }
 
-        return redirect()->route('shipments.show', $shipment)->with('success', 'Shipment created.');
+        return redirect()->route('shoppings.show', $shopping)->with('success', 'Shopping created.');
     }
 
-    public function show(Shipment $shipment)
+    public function show(Shopping $shopping)
     {
-        return Inertia::render('Transactions/Shipments/Show', [
-            'shipment' => $shipment->load('items.product.vehicleModel', 'items.rack'),
+        return Inertia::render('Transactions/Shopping/Show', [
+            'shopping' => $shopping->load('items.product.vehicleModel', 'items.rack'),
         ]);
     }
 
-    public function edit(Shipment $shipment)
+    public function edit(Shopping $shopping)
     {
-        if ($shipment->status !== 'draft') {
-            return back()->with('error', 'Only draft shipments can be edited.');
+        if ($shopping->status !== 'draft') {
+            return back()->with('error', 'Only draft shopping records can be edited.');
         }
 
-        return Inertia::render('Transactions/Shipments/Edit', [
-            'shipment'      => $shipment->load('items.product.vehicleModel'),
+        return Inertia::render('Transactions/Shopping/Edit', [
+            'shopping'      => $shopping->load('items.product.vehicleModel'),
             'products'      => Product::with(['vehicleModel', 'stocks'])->where('is_active', true)->orderBy('name')->get(),
             'racks'         => Rack::orderBy('zone')->orderBy('code')->get(),
             'vehicleModels' => \App\Models\VehicleModel::orderBy('brand')->orderBy('name')->orderBy('suffix')->get(),
         ]);
     }
 
-    public function update(Request $request, Shipment $shipment)
+    public function update(Request $request, Shopping $shopping)
     {
-        if ($shipment->status !== 'draft') {
-            return back()->with('error', 'Only draft shipments can be edited.');
+        if ($shopping->status !== 'draft') {
+            return back()->with('error', 'Only draft shopping records can be edited.');
         }
 
         $validated = $request->validate([
             'partner_name' => 'required|string|max:255',
-            'shipment_date' => 'required|date',
+            'shopping_date' => 'required|date',
             'notes' => 'nullable|string|max:500',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
@@ -120,52 +120,52 @@ class ShipmentController extends Controller
         ]);
         $validated['items'] = $this->mergeDuplicateItems($validated['items']);
 
-        $shipment->update([
+        $shopping->update([
             'partner_name' => $validated['partner_name'],
-            'shipment_date' => $validated['shipment_date'],
+            'shopping_date' => $validated['shopping_date'],
             'notes' => $validated['notes'] ?? null,
         ]);
 
-        $shipment->items()->delete();
+        $shopping->items()->delete();
         foreach ($validated['items'] as $item) {
-            $shipment->items()->create([
+            $shopping->items()->create([
                 'product_id' => $item['product_id'],
                 'rack_id' => $item['rack_id'],
                 'quantity' => $item['quantity'],
             ]);
         }
 
-        return redirect()->route('shipments.show', $shipment)->with('success', 'Shipment updated.');
+        return redirect()->route('shoppings.show', $shopping)->with('success', 'Shopping updated.');
     }
 
-    public function destroy(Shipment $shipment)
+    public function destroy(Shopping $shopping)
     {
-        if ($shipment->status !== 'draft') {
-            return back()->with('error', 'Only draft shipments can be deleted.');
+        if ($shopping->status !== 'draft') {
+            return back()->with('error', 'Only draft shopping records can be deleted.');
         }
 
-        $shipment->delete();
+        $shopping->delete();
 
-        return redirect()->route('shipments.index')->with('success', 'Shipment deleted.');
+        return redirect()->route('shoppings.index')->with('success', 'Shopping deleted.');
     }
 
     /**
      * Ship the items — deduct from stock.
      */
-    public function ship(Request $request, Shipment $shipment)
+    public function ship(Request $request, Shopping $shopping)
     {
-        if ($shipment->status !== 'draft') {
-            return back()->with('error', 'Cannot ship this shipment.');
+        if ($shopping->status !== 'draft') {
+            return back()->with('error', 'Cannot ship this shopping record.');
         }
 
-        $result = DB::transaction(function () use ($shipment) {
-            $lockedShipment = Shipment::where('id', $shipment->id)->lockForUpdate()->firstOrFail();
+        $result = DB::transaction(function () use ($shopping) {
+            $lockedShopping = Shopping::where('id', $shopping->id)->lockForUpdate()->firstOrFail();
 
-            if ($lockedShipment->status !== 'draft') {
-                return ['ok' => false, 'error' => 'Cannot ship this shipment.'];
+            if ($lockedShopping->status !== 'draft') {
+                return ['ok' => false, 'error' => 'Cannot ship this shopping record.'];
             }
 
-            $items = $lockedShipment->items()->with('product', 'rack')->get();
+            $items = $lockedShopping->items()->with('product', 'rack')->get();
             $lockedStocks = [];
 
             foreach ($items as $item) {
@@ -195,7 +195,7 @@ class ShipmentController extends Controller
                 $stock->save();
             }
 
-            $lockedShipment->update(['status' => 'shipped']);
+            $lockedShopping->update(['status' => 'shipped']);
 
             return ['ok' => true];
         });
@@ -206,6 +206,6 @@ class ShipmentController extends Controller
 
         event(new StockChanged());
 
-        return redirect()->route('shipments.show', $shipment)->with('success', 'Shipment processed. Stock deducted.');
+        return redirect()->route('shoppings.show', $shopping)->with('success', 'Shopping processed. Stock deducted.');
     }
 }

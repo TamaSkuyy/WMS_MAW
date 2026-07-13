@@ -2,21 +2,21 @@
 
 namespace Database\Factories;
 
-use App\Models\Shipment;
+use App\Models\Shopping;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<Shipment>
+ * @extends Factory<Shopping>
  */
-class ShipmentFactory extends Factory
+class ShoppingFactory extends Factory
 {
-    protected $model = Shipment::class;
+    protected $model = Shopping::class;
 
     public function definition(): array
     {
         return [
             'partner_name' => $this->faker->company(),
-            'shipment_date' => $this->faker->date(),
+            'shopping_date' => $this->faker->date(),
             'status' => 'draft',
             'notes' => $this->faker->optional()->sentence(),
         ];

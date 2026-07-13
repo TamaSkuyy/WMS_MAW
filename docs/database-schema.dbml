@@ -16,7 +16,7 @@
 // 2. STORAGE  — Stok tersimpan per produk per rak.
 //              Bisa dicek real-time.
 //
-// 3. OUTBOUND — Buat Shipment ke Mitra → Pilih produk dari Rak
+// 3. OUTBOUND — Buat Shopping ke Mitra → Pilih produk dari Rak
 //              → Validasi stok cukup → Ship (Stok--)
 //
 // ════════════════════════════════════════════════════════════
@@ -161,23 +161,23 @@ Table stocks {
 
 // ─── 📤 OUTBOUND — Barang Keluar ───────────────────────────
 
-Table shipments {
+Table shoppings {
   id bigint [pk, increment]
   partner_name varchar(255) [not null, note: 'Nama mitra / client, e.g. PT Maju Jaya']
-  shipment_date date [not null, note: 'Tanggal pengiriman']
+  shopping_date date [not null, note: 'Tanggal pengiriman']
   status enum('draft','shipped','completed') [default: 'draft', note: 'draft → shipped → completed']
   notes text [note: 'Catatan']
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
 
   indexes {
-    status [name: 'idx_shipments_status']
+    status [name: 'idx_shoppings_status']
   }
 }
 
-Table shipment_items {
+Table shopping_items {
   id bigint [pk, increment]
-  shipment_id bigint [ref: > shipments.id, not null, note: 'FK — CASCADE delete']
+  shopping_id bigint [ref: > shoppings.id, not null, note: 'FK — CASCADE delete']
   product_id bigint [ref: > products.id, not null, note: 'FK — RESTRICT']
   rack_id bigint [ref: > racks.id, not null, note: 'FK — RESTRICT']
   quantity int [default: 0, note: 'Qty yang dikirim']
@@ -185,7 +185,7 @@ Table shipment_items {
   updated_at timestamp [default: `now()`]
 
   indexes {
-    shipment_id [name: 'idx_si_shipment_id']
+    shopping_id [name: 'idx_si_shopping_id']
     product_id [name: 'idx_si_product_id']
   }
 }
@@ -256,8 +256,8 @@ Table menus {
 // }
 //
 // TableGroup "📤 Outbound — Barang Keluar" {
-//   shipments
-//   shipment_items
+//   shoppings
+//   shopping_items
 // }
 //
 // TableGroup "🔧 System" {
@@ -271,13 +271,13 @@ Table menus {
 // ════════════════════════════════════════════════════════════
 //
 // INBOUND:  suppliers → cycles → cycle_items → stocks (qty++)
-// OUTBOUND: shipments → shipment_items → stocks (qty-- validated)
+// OUTBOUND: shoppings → shopping_items → stocks (qty-- validated)
 //
 // LIFECYCLE:
 //   Cycle:    draft → receiving → completed
-//   Shipment: draft → shipped → completed
+//   Shopping: draft → shipped → completed
 //
 // DELETE RULES:
-//   CASCADE:  supplier_addresses, cycle_items, shipment_items
+//   CASCADE:  supplier_addresses, cycle_items, shopping_items
 //   RESTRICT: products, cycles (supplier_id), stocks
 // ════════════════════════════════════════════════════════════

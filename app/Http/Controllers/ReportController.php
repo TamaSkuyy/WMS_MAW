@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\CycleItem;
-use App\Models\ShipmentItem;
+use App\Models\ShoppingItem;
 use App\Models\Supplier;
 use App\Services\ImportExport\DTOs\ExportConfig;
 use App\Services\ImportExport\Enums\ExportFormat;
 use App\Services\ImportExport\Exports\ReceivingReportExporter;
-use App\Services\ImportExport\Exports\ShipmentReportExporter;
+use App\Services\ImportExport\Exports\ShoppingReportExporter;
 use App\Services\ImportExport\Managers\ExportManager;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -80,47 +80,47 @@ class ReportController extends Controller
         ];
     }
 
-    public function shipment(Request $request)
+    public function shopping(Request $request)
     {
         $filters = $request->only(['date_from', 'date_to', 'partner', 'status']);
 
-        $items = $this->shipmentQuery($filters)->paginate(15)->withQueryString();
+        $items = $this->shoppingQuery($filters)->paginate(15)->withQueryString();
 
-        return Inertia::render('Reports/Shipment', [
+        return Inertia::render('Reports/Shopping', [
             'items' => $items,
-            'summary' => $this->shipmentSummary($filters),
+            'summary' => $this->shoppingSummary($filters),
             'filters' => $filters,
         ]);
     }
 
-    public function shipmentExport(Request $request)
+    public function shoppingExport(Request $request)
     {
         $filters = $request->only(['date_from', 'date_to', 'partner', 'status']);
         $format = ExportFormat::from($request->query('format', 'xlsx'));
 
-        $exporter = new ShipmentReportExporter($filters);
+        $exporter = new ShoppingReportExporter($filters);
 
         $config = new ExportConfig(
             format: $format,
-            fileName: 'shipment-report-' . now()->format('Y-m-d-His'),
+            fileName: 'shopping-report-' . now()->format('Y-m-d-His'),
             headings: $exporter->headings(),
             columns: [],
-            exportableClass: ShipmentReportExporter::class,
+            exportableClass: ShoppingReportExporter::class,
         );
 
         return app(ExportManager::class)->download($exporter, $config);
     }
 
-    private function shipmentQuery(array $filters): Builder
+    private function shoppingQuery(array $filters): Builder
     {
-        return ShipmentItem::query()
-            ->with(['shipment', 'product', 'rack'])
-            ->whereHas('shipment', function ($q) use ($filters) {
+        return ShoppingItem::query()
+            ->with(['shopping', 'product', 'rack'])
+            ->whereHas('shopping', function ($q) use ($filters) {
                 if (! empty($filters['date_from'])) {
-                    $q->whereDate('shipment_date', '>=', $filters['date_from']);
+                    $q->whereDate('shopping_date', '>=', $filters['date_from']);
                 }
                 if (! empty($filters['date_to'])) {
-                    $q->whereDate('shipment_date', '<=', $filters['date_to']);
+                    $q->whereDate('shopping_date', '<=', $filters['date_to']);
                 }
                 if (! empty($filters['partner'])) {
                     $q->where('partner_name', 'like', '%' . $filters['partner'] . '%');
@@ -132,12 +132,12 @@ class ReportController extends Controller
             ->latest('id');
     }
 
-    private function shipmentSummary(array $filters): array
+    private function shoppingSummary(array $filters): array
     {
-        $items = $this->shipmentQuery($filters)->get();
+        $items = $this->shoppingQuery($filters)->get();
 
         return [
-            'total_transactions' => $items->pluck('shipment_id')->unique()->count(),
+            'total_transactions' => $items->pluck('shopping_id')->unique()->count(),
             'total_quantity' => (int) $items->sum('quantity'),
             'unique_products' => $items->pluck('product_id')->unique()->count(),
         ];

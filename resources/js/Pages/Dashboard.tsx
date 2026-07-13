@@ -3,7 +3,7 @@ import { Head, Link } from '@inertiajs/react';
 import { BoxCubeIcon, ArrowUpIcon, AlertIcon, ArrowDownIcon } from '../Tailadmin/icons';
 import MetricCard from './Dashboard/MetricCard';
 
-export default function Dashboard({ metrics, lowStockItems, pendingCycles, todayShipments }: any) {
+export default function Dashboard({ metrics, lowStockItems, pendingCycles, todayShoppings }: any) {
     return (
         <AppLayout>
             <Head title="Dashboard - MAW Warehouse System" />
@@ -139,34 +139,34 @@ export default function Dashboard({ metrics, lowStockItems, pendingCycles, today
                     </div>
                 </div>
 
-                {/* Shipments Today */}
+                {/* Shopping Today */}
                 <div className="col-span-12">
                     <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
                         <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
                             <h3 className="text-base font-medium text-gray-800 dark:text-white/90">
-                                📤 Shipment Siap Kirim
+                                📤 Shopping Siap Kirim
                             </h3>
-                            <Link href={route('shipments.index')} className="text-sm text-brand-500 hover:text-brand-600">
+                            <Link href={route('shoppings.index')} className="text-sm text-brand-500 hover:text-brand-600">
                                 Lihat Semua →
                             </Link>
                         </div>
                         <div className="p-6">
-                            {todayShipments?.length > 0 ? (
+                            {todayShoppings?.length > 0 ? (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {todayShipments.map((shipment: any, i: number) => (
+                                    {todayShoppings.map((shopping: any, i: number) => (
                                         <Link
                                             key={i}
-                                            href={route('shipments.show', shipment.id)}
+                                            href={route('shoppings.show', shopping.id)}
                                             className="block p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                                         >
                                             <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                                                {shipment.partner_name}
+                                                {shopping.partner_name}
                                             </p>
                                             <p className="text-xs text-gray-500 mt-1">
-                                                {shipment.items_count} item · {shipment.shipment_date}
+                                                {shopping.items_count} item · {shopping.shopping_date}
                                             </p>
                                             <span className="inline-flex mt-2 items-center px-2 py-1 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400">
-                                                {shipment.status}
+                                                {shopping.status}
                                             </span>
                                         </Link>
                                     ))}
@@ -174,7 +174,7 @@ export default function Dashboard({ metrics, lowStockItems, pendingCycles, today
                             ) : (
                                 <div className="text-center py-8">
                                     <div className="text-3xl mb-2">📭</div>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">Tidak ada shipment pending</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Tidak ada shopping pending</p>
                                 </div>
                             )}
                         </div>

@@ -9,10 +9,10 @@ import SearchableSelect from '../../../Tailadmin/components/form/select/Searchab
 import TableActions from '../../../Tailadmin/components/common/TableActions';
 import EmptyState from '../../../Tailadmin/components/common/EmptyState';
 
-export default function Index({ shipments, filters }: any) {
+export default function Index({ shoppings, filters }: any) {
     const handleDelete = (id: number) => {
-        if (confirm('Hapus shipment ini?')) {
-            router.delete(route('shipments.destroy', id));
+        if (confirm('Hapus shopping ini?')) {
+            router.delete(route('shoppings.destroy', id));
         }
     };
 
@@ -24,9 +24,9 @@ export default function Index({ shipments, filters }: any) {
 
     return (
         <AppLayout>
-            <Head title="Shipment" />
-            <PageBreadcrumb pageTitle="Shipment" />
-            <ComponentCard title="Daftar Shipment">
+            <Head title="Shopping" />
+            <PageBreadcrumb pageTitle="Shopping" />
+            <ComponentCard title="Daftar Shopping">
                 <div className="mb-4 flex gap-3 flex-wrap items-end">
                     <div className="min-w-[200px]">
                         <label className="block text-xs font-medium text-gray-500 mb-1">Cari Mitra</label>
@@ -34,7 +34,7 @@ export default function Index({ shipments, filters }: any) {
                             type="text"
                             defaultValue={filters?.search || ''}
                             placeholder="Nama mitra..."
-                            onChange={(e) => router.get(route('shipments.index'), { ...filters, search: e.target.value }, { preserveState: true, replace: true })}
+                            onChange={(e) => router.get(route('shoppings.index'), { ...filters, search: e.target.value }, { preserveState: true, replace: true })}
                         />
                     </div>
                     <div className="min-w-[160px]">
@@ -47,20 +47,20 @@ export default function Index({ shipments, filters }: any) {
                                 { value: 'completed', label: 'Completed' },
                             ]}
                             value={filters?.status || ''}
-                            onChange={(v) => router.get(route('shipments.index'), { ...filters, status: v as string }, { preserveState: true, replace: true })}
+                            onChange={(v) => router.get(route('shoppings.index'), { ...filters, status: v as string }, { preserveState: true, replace: true })}
                         />
                     </div>
                 </div>
                 <div className="mb-3">
-                    <Link href={route('shipments.create')}><Button>Shipment Baru</Button></Link>
+                    <Link href={route('shoppings.create')}><Button>Shopping Baru</Button></Link>
                 </div>
-                {shipments.data.length === 0 ? (
+                {shoppings.data.length === 0 ? (
                     <EmptyState
                         icon="📤"
-                        title="Belum ada shipment"
-                        message="Buat shipment pengiriman barang ke mitra."
-                        actionLabel="Buat Shipment"
-                        actionRoute={route('shipments.create')}
+                        title="Belum ada shopping"
+                        message="Buat shopping pengiriman barang ke mitra."
+                        actionLabel="Buat Shopping"
+                        actionRoute={route('shoppings.create')}
                     />
                 ) : (
                 <div className="overflow-x-auto">
@@ -75,10 +75,10 @@ export default function Index({ shipments, filters }: any) {
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
-                            {shipments.data.map((s: any) => (
+                            {shoppings.data.map((s: any) => (
                                 <tr key={s.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                     <td className="px-4 py-3 whitespace-nowrap text-sm">{s.partner_name}</td>
-                                    <td className="px-4 py-3 whitespace-nowrap text-sm">{s.shipment_date}</td>
+                                    <td className="px-4 py-3 whitespace-nowrap text-sm">{s.shopping_date}</td>
                                     <td className="px-4 py-3 whitespace-nowrap">
                                         <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[s.status]}`}>{s.status}</span>
                                     </td>
@@ -86,12 +86,12 @@ export default function Index({ shipments, filters }: any) {
                                     <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
                                         <div className="flex items-center gap-0.5">
                                             <TableActions
-                                                viewRoute={route('shipments.show', s.id)}
+                                                viewRoute={route('shoppings.show', s.id)}
                                             />
                                             {s.status === 'draft' && (
                                                 <>
                                                     <Link
-                                                        href={route('shipments.edit', s.id)}
+                                                        href={route('shoppings.edit', s.id)}
                                                         className="group relative inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/20 transition-colors"
                                                         title="Edit"
                                                     >
@@ -124,18 +124,18 @@ export default function Index({ shipments, filters }: any) {
                     </table>
                 </div>
                 )}
-                {shipments.total > shipments.per_page && (
+                {shoppings.total > shoppings.per_page && (
                     <div className="mt-4 flex justify-between items-center">
-                        <div className="text-sm text-gray-500">Menampilkan {shipments.from || 0} sampai {shipments.to || 0} dari {shipments.total}</div>
+                        <div className="text-sm text-gray-500">Menampilkan {shoppings.from || 0} sampai {shoppings.to || 0} dari {shoppings.total}</div>
                         <div className="flex gap-2">
-                            {shipments.prev_page_url ? (
-                                <Link href={shipments.prev_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Sebelumnya</Link>
+                            {shoppings.prev_page_url ? (
+                                <Link href={shoppings.prev_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Sebelumnya</Link>
                             ) : (
                                 <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Sebelumnya</span>
                             )}
-                            <span className="px-3 py-1 text-sm">Halaman {shipments.current_page} dari {shipments.last_page}</span>
-                            {shipments.next_page_url ? (
-                                <Link href={shipments.next_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Berikutnya</Link>
+                            <span className="px-3 py-1 text-sm">Halaman {shoppings.current_page} dari {shoppings.last_page}</span>
+                            {shoppings.next_page_url ? (
+                                <Link href={shoppings.next_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Berikutnya</Link>
                             ) : (
                                 <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Berikutnya</span>
                             )}

@@ -12,7 +12,7 @@ class Employee extends Model
 
     protected $fillable = [
         'name', 'nik', 'job_position_id', 'work_location_id',
-        'department_id', 'user_id', 'phone', 'email', 'status',
+        'department_id', 'shift_id', 'user_id', 'phone', 'email', 'status',
         'created_by', 'updated_by',
     ];
 
@@ -29,6 +29,11 @@ class Employee extends Model
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function shift(): BelongsTo
+    {
+        return $this->belongsTo(Shift::class);
     }
 
     public function user(): BelongsTo

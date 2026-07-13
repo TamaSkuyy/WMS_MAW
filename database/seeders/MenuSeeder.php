@@ -114,6 +114,15 @@ class MenuSeeder extends Seeder
             'group' => 'main',
         ]);
 
+        Menu::create([
+            'name' => 'Shift',
+            'icon' => 'CalenderIcon',
+            'path' => '/shifts',
+            'parent_id' => $masterData->id,
+            'sort_order' => 10,
+            'group' => 'main',
+        ]);
+
         // === TRANSACTIONS (parent) ===
         $transactions = Menu::create([
             'name' => 'Transactions',
@@ -143,7 +152,7 @@ class MenuSeeder extends Seeder
         Menu::create([
             'name' => 'Shopping',
             'icon' => 'UploadIcon',
-            'path' => '/shipments',
+            'path' => '/shoppings',
             'parent_id' => $transactions->id,
             'sort_order' => 3,
             'group' => 'main',
@@ -167,9 +176,9 @@ class MenuSeeder extends Seeder
         ]);
 
         Menu::create([
-            'name' => 'Shipment Report',
+            'name' => 'Shopping Report',
             'icon' => 'ListIcon',
-            'path' => '/reports/shipment',
+            'path' => '/reports/shopping',
             'parent_id' => $reportTransaction->id,
             'sort_order' => 2,
             'group' => 'main',

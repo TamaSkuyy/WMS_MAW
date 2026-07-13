@@ -254,7 +254,7 @@ return [
         'rules'                    => 'aturan',
         'second'                   => 'detik',
         'sex'                      => 'jenis kelamin',
-        'shipment'                 => 'pengiriman',
+        'shopping'                 => 'pengiriman',
         'short_text'               => 'teks pendek',
         'size'                     => 'ukuran',
         'skills'                   => 'keterampilan',

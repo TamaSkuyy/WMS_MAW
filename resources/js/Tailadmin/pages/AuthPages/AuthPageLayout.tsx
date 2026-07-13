@@ -41,13 +41,17 @@ export default function AuthLayout({
           <div className="relative flex items-center justify-center z-1">
             <GridShape />
             <div className="flex flex-col items-center max-w-md px-8">
-              <Link href="/" className="block mb-6">
+              <Link href="/" className="flex flex-col items-center mb-6">
                 <img
-                  width={231}
-                  height={48}
-                  src="/images/tailadmin/logo/auth-logo.svg"
-                  alt="Logo"
+                  width={64}
+                  height={64}
+                  src="/images/maw/logo-icon.png"
+                  alt="Mitra Adhi Wasana"
+                  className="mb-3"
                 />
+                <span className="text-lg font-bold text-white tracking-wide">
+                  Mitra Adhi Wasana
+                </span>
               </Link>
 
               <h2 className="mb-3 text-2xl font-semibold text-white">

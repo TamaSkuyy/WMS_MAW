@@ -41,6 +41,10 @@ export default function Show({ employee }: any) {
                                 <dd className="text-sm text-[#1A1D23]">{employee.department?.name || '-'}</dd>
                             </div>
                             <div>
+                                <dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Shift</dt>
+                                <dd className="text-sm text-[#1A1D23]">{employee.shift?.name || '-'}</dd>
+                            </div>
+                            <div>
                                 <dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Telepon</dt>
                                 <dd className="text-sm text-[#1A1D23]">{employee.phone || '-'}</dd>
                             </div>

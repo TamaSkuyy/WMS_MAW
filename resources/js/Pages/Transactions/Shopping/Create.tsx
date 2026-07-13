@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { ArrowLeftIcon, CheckIcon } from '@heroicons/react/24/outline';
@@ -30,12 +30,12 @@ function beep() {
     } catch (_) {}
 }
 
-export default function Edit({ shipment, products, racks, vehicleModels }: any) {
+export default function Create({ products, racks, vehicleModels }: any) {
     const pageErrors = ((usePage().props as any).errors ?? {}) as Record<string, string>;
 
-    const [partnerName, setPartnerName] = useState(shipment.partner_name || '');
-    const [shipmentDate, setShipmentDate] = useState(shipment.shipment_date || '');
-    const [notes, setNotes] = useState(shipment.notes || '');
+    const [partnerName, setPartnerName] = useState('');
+    const [shoppingDate, setShoppingDate] = useState(new Date().toISOString().split('T')[0]);
+    const [notes, setNotes] = useState('');
     const [submitting, setSubmitting] = useState(false);
 
     const [selUnit, setSelUnit] = useState('');
@@ -44,26 +44,6 @@ export default function Edit({ shipment, products, racks, vehicleModels }: any) 
     const [scannerOpen, setScannerOpen] = useState(false);
     const [lastScan, setLastScan] = useState('');
     const [lastScanStatus, setLastScanStatus] = useState<'ok' | 'unknown' | 'no_stock' | null>(null);
-
-    // Built once from initial prop value — used only on first table populate
-    const savedItemsMap = useMemo<Record<number, { qty: number; rack_id: string }>>(() =>
-        Object.fromEntries(
-            (shipment.items ?? []).map((i: any) => [i.product_id, { qty: i.quantity, rack_id: String(i.rack_id) }])
-        ),
-        [] // eslint-disable-line react-hooks/exhaustive-deps
-    );
-    const isFirstPopulate = useRef(true);
-
-    // Pre-select Unit + Suffix from first existing item on mount
-    useEffect(() => {
-        if (!shipment.items?.length) return;
-        const firstItem = shipment.items[0];
-        const prod = products.find((p: any) => p.id === firstItem.product_id);
-        if (!prod?.vehicle_model) return;
-        const vm = prod.vehicle_model;
-        setSelUnit(`${vm.brand} ${vm.name}`);
-        setSelSuffix(vm.suffix ?? '');
-    }, []);
 
     const units = useMemo(() =>
         [...new Map(vehicleModels.map((m: any) => [`${m.brand} ${m.name}`, m])).values()]
@@ -88,10 +68,6 @@ export default function Edit({ shipment, products, racks, vehicleModels }: any) 
     useEffect(() => {
         if (!activeVehicleModelId) { setTableItems([]); return; }
         const filtered = products.filter((p: any) => p.vehicle_model_id === activeVehicleModelId);
-        // Only use saved quantities on first populate (from mount pre-select)
-        // Subsequent populates (user changed Unit/Suffix) start fresh at qty=0
-        const useMap: Record<number, { qty: number; rack_id: string }> = isFirstPopulate.current ? savedItemsMap : {};
-        if (isFirstPopulate.current) isFirstPopulate.current = false;
         setTableItems(filtered.map((p: any) => ({
             product_id: p.id,
             part_number: p.part_number,
@@ -99,8 +75,8 @@ export default function Edit({ shipment, products, racks, vehicleModels }: any) 
             stock: p.default_rack_id
                 ? (p.stocks.find((s: any) => s.rack_id === p.default_rack_id)?.quantity ?? 0)
                 : p.stocks.reduce((sum: number, s: any) => sum + s.quantity, 0),
-            rack_id: useMap[p.id]?.rack_id ?? (p.default_rack_id ? String(p.default_rack_id) : ''),
-            quantity: useMap[p.id]?.qty ?? 0,
+            rack_id: p.default_rack_id ? String(p.default_rack_id) : '',
+            quantity: 0,
         })));
     }, [activeVehicleModelId]);
 
@@ -128,9 +104,9 @@ export default function Edit({ shipment, products, racks, vehicleModels }: any) 
         e.preventDefault();
         if (!hasActiveItems || submitting) return;
         setSubmitting(true);
-        router.put(route('shipments.update', shipment.id), {
+        router.post(route('shoppings.store'), {
             partner_name: partnerName,
-            shipment_date: shipmentDate,
+            shopping_date: shoppingDate,
             notes,
             items: tableItems
                 .filter(i => i.quantity > 0)
@@ -140,16 +116,16 @@ export default function Edit({ shipment, products, racks, vehicleModels }: any) 
 
     return (
         <AppLayout>
-            <Head title="Edit Shipment" />
-            <PageBreadcrumb pageTitle={`Edit: ${shipment.partner_name}`} />
+            <Head title="Shopping Baru" />
+            <PageBreadcrumb pageTitle="Tambah Shopping" />
 
             <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
                     <ComponentCard
-                        title="Info Shipment"
-                        desc="Perbarui data pengiriman"
+                        title="Info Shopping"
+                        desc="Data pengiriman barang"
                         action={
-                            <Link href={route('shipments.index')}>
+                            <Link href={route('shoppings.index')}>
                                 <Button variant="outline" size="sm" icon={<ArrowLeftIcon className="w-4 h-4" />}>Kembali</Button>
                             </Link>
                         }
@@ -157,13 +133,13 @@ export default function Edit({ shipment, products, racks, vehicleModels }: any) 
                         <div className="space-y-5">
                             <div>
                                 <Label>Nama Mitra *</Label>
-                                <Input type="text" value={partnerName} onChange={(e) => setPartnerName(e.target.value)} />
+                                <Input type="text" value={partnerName} onChange={(e) => setPartnerName(e.target.value)} placeholder="contoh: PT Maju Jaya" />
                                 {pageErrors.partner_name && <p className="mt-1 text-sm text-red-500">{pageErrors.partner_name}</p>}
                             </div>
                             <div>
                                 <Label>Tanggal Kirim *</Label>
-                                <Input type="date" value={shipmentDate} onChange={(e) => setShipmentDate(e.target.value)} />
-                                {pageErrors.shipment_date && <p className="mt-1 text-sm text-red-500">{pageErrors.shipment_date}</p>}
+                                <Input type="date" value={shoppingDate} onChange={(e) => setShoppingDate(e.target.value)} />
+                                {pageErrors.shopping_date && <p className="mt-1 text-sm text-red-500">{pageErrors.shopping_date}</p>}
                             </div>
                             <div>
                                 <Label>Catatan</Label>
@@ -289,7 +265,7 @@ export default function Edit({ shipment, products, racks, vehicleModels }: any) 
                         disabled={!hasActiveItems || submitting}
                         icon={<CheckIcon className="w-4 h-4" />}
                     >
-                        {submitting ? 'Menyimpan...' : 'Update Shipment'}
+                        {submitting ? 'Menyimpan...' : 'Simpan Shopping'}
                     </Button>
                     <Button type="button" variant="outline" onClick={() => window.history.back()}>Batal</Button>
                 </div>

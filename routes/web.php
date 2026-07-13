@@ -9,7 +9,7 @@ use App\Http\Controllers\CycleController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RackController;
 use App\Http\Controllers\SupplierController;
-use App\Http\Controllers\ShipmentController;
+use App\Http\Controllers\ShoppingController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\VehicleModelController;
 use App\Http\Controllers\ProductCategoryController;
@@ -18,6 +18,7 @@ use App\Http\Controllers\JobPositionController;
 use App\Http\Controllers\WorkLocationController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\ShiftController;
 use App\Notifications\TestRealtimeNotification;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -68,14 +69,14 @@ Route::middleware('auth')->group(function () {
     Route::resource('cycles', CycleController::class);
     Route::post('cycles/{cycle}/receive', [CycleController::class, 'receive'])->name('cycles.receive');
 
-    Route::resource('shipments', ShipmentController::class);
-    Route::post('shipments/{shipment}/ship', [ShipmentController::class, 'ship'])->name('shipments.ship');
+    Route::resource('shoppings', ShoppingController::class);
+    Route::post('shoppings/{shopping}/ship', [ShoppingController::class, 'ship'])->name('shoppings.ship');
     Route::resource('stocks', StockController::class)->only(['index']);
 
     Route::get('reports/receiving', [App\Http\Controllers\ReportController::class, 'receiving'])->name('reports.receiving');
     Route::get('reports/receiving/export', [App\Http\Controllers\ReportController::class, 'receivingExport'])->name('reports.receiving.export');
-    Route::get('reports/shipment', [App\Http\Controllers\ReportController::class, 'shipment'])->name('reports.shipment');
-    Route::get('reports/shipment/export', [App\Http\Controllers\ReportController::class, 'shipmentExport'])->name('reports.shipment.export');
+    Route::get('reports/shopping', [App\Http\Controllers\ReportController::class, 'shopping'])->name('reports.shopping');
+    Route::get('reports/shopping/export', [App\Http\Controllers\ReportController::class, 'shoppingExport'])->name('reports.shopping.export');
 
     Route::post('vehicle-models/import/preview', [VehicleModelController::class, 'importPreview'])->name('vehicle-models.import.preview');
     Route::post('vehicle-models/import', [VehicleModelController::class, 'import'])->name('vehicle-models.import');
@@ -107,6 +108,11 @@ Route::middleware('auth')->group(function () {
     Route::get('employees/export', [EmployeeController::class, 'export'])->name('employees.export');
     Route::get('employees/import-template', [EmployeeController::class, 'importTemplate'])->name('employees.import-template');
     Route::resource('employees', EmployeeController::class);
+    Route::post('shifts/import/preview', [ShiftController::class, 'importPreview'])->name('shifts.import.preview');
+    Route::post('shifts/import', [ShiftController::class, 'import'])->name('shifts.import');
+    Route::get('shifts/export', [ShiftController::class, 'export'])->name('shifts.export');
+    Route::get('shifts/import-template', [ShiftController::class, 'importTemplate'])->name('shifts.import-template');
+    Route::resource('shifts', ShiftController::class)->except(['show']);
 
     Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAllRead');
     Route::post('/notifications/{id}/mark-read', [NotificationController::class, 'markAsRead'])->name('notifications.markRead');

@@ -38,8 +38,8 @@ Sistem ini mengelola **gudang suku cadang otomotif** secara end-to-end: dari bar
 | 7 | `cycles` | Inbound | Dokumen penerimaan barang per supplier per cycle |
 | 8 | `cycle_items` | Inbound | Detail part yang diterima dalam satu cycle |
 | 9 | `stocks` | Inventory | Stok real-time per produk per rak |
-| 10 | `shipments` | Outbound | Dokumen pengiriman barang ke mitra |
-| 11 | `shipment_items` | Outbound | Detail part yang dikirim dalam satu shipment |
+| 10 | `shoppings` | Outbound | Dokumen pengiriman barang ke mitra |
+| 11 | `shopping_items` | Outbound | Detail part yang dikirim dalam satu shopping |
 | 12 | `users` | System | User / pengguna sistem |
 | 13 | `menus` | System | Navigasi sidebar (dinamis) |
 | 14 | `import_logs` | System | Log import data dari Excel |
@@ -52,7 +52,7 @@ Sistem ini mengelola **gudang suku cadang otomotif** secara end-to-end: dari bar
 INBOUND                          STORAGE                     OUTBOUND
 =======                          =======                     ========
 
-Supplier kirim barang            Stok tersimpan              Buat shipment ke mitra
+Supplier kirim barang            Stok tersimpan              Buat shopping ke mitra
        │                         per produk                  (draft)
        ▼                         per rak                          │
   Cycle dibuat (draft)                │                     Pilih produk & rak
@@ -77,10 +77,10 @@ Supplier kirim barang            Stok tersimpan              Buat shipment ke mi
 Supplier mengirim barang. Staff membuat dokumen **Cycle** yang berisi daftar part dan jumlah yang dikirim. Saat barang tiba, staff memverifikasi dan mencatat jumlah aktual yang diterima (`received_quantity` bisa berbeda dari `quantity` di dokumen — misalnya ada yang rusak). Barang lalu disimpan ke **Rak** tertentu, dan **Stok** otomatis bertambah.
 
 **2. Penyimpanan (Inventory)**
-Stok dilacak per produk per rak. Satu produk bisa disimpan di beberapa rak berbeda. Stok selalu real-time: bertambah dari Cycle (inbound) dan berkurang dari Shipment (outbound).
+Stok dilacak per produk per rak. Satu produk bisa disimpan di beberapa rak berbeda. Stok selalu real-time: bertambah dari Cycle (inbound) dan berkurang dari Shopping (outbound).
 
 **3. Barang Keluar (Outbound)**
-Staff membuat dokumen **Shipment** untuk mengirim barang ke mitra. Sistem memvalidasi stok cukup sebelum memproses. Saat shipment diproses, stok otomatis berkurang.
+Staff membuat dokumen **Shopping** untuk mengirim barang ke mitra. Sistem memvalidasi stok cukup sebelum memproses. Saat shopping diproses, stok otomatis berkurang.
 
 ---
 
@@ -157,7 +157,7 @@ Staff membuat dokumen **Shipment** untuk mengirim barang ke mitra. Sistem memval
 | `created_at` | TIMESTAMP | Tanggal dibuat |
 | `updated_at` | TIMESTAMP | Tanggal diupdate |
 
-> **Hapus:** Produk tidak bisa dihapus jika masih direferensi oleh Cycle, Stock, atau Shipment (RESTRICT). Gunakan `is_active = false` untuk menonaktifkan.
+> **Hapus:** Produk tidak bisa dihapus jika masih direferensi oleh Cycle, Stock, atau Shopping (RESTRICT). Gunakan `is_active = false` untuk menonaktifkan.
 
 #### `racks` — Rak Penyimpanan
 
@@ -221,38 +221,38 @@ Staff membuat dokumen **Shipment** untuk mengirim barang ke mitra. Sistem memval
 | `updated_at` | TIMESTAMP | Tanggal diupdate |
 
 > **Aturan:** Satu produk + satu rak = satu baris stok (`product_id` + `rack_id` = UNIQUE).  
-> **Update:** `quantity` bertambah saat cycle selesai, berkurang saat shipment diproses.  
+> **Update:** `quantity` bertambah saat cycle selesai, berkurang saat shopping diproses.  
 > **Hapus:** Tidak bisa dihapus jika produk/rak masih ada (RESTRICT).
 
 ---
 
 ### 4. Outbound — Barang Keluar
 
-#### `shipments` — Dokumen Pengiriman
+#### `shoppings` — Dokumen Pengiriman
 
 | Kolom | Tipe | Keterangan |
 |-------|------|------------|
 | `id` | BIGINT (PK) | ID unik |
 | `partner_name` | VARCHAR(255) | Nama mitra / client |
-| `shipment_date` | DATE | Tanggal pengiriman |
+| `shopping_date` | DATE | Tanggal pengiriman |
 | `status` | ENUM | `draft` → `shipped` → `completed` |
 | `notes` | TEXT | Catatan |
 | `created_at` | TIMESTAMP | Tanggal dibuat |
 | `updated_at` | TIMESTAMP | Tanggal diupdate |
 
-#### `shipment_items` — Detail Item per Shipment
+#### `shopping_items` — Detail Item per Shopping
 
 | Kolom | Tipe | Keterangan |
 |-------|------|------------|
 | `id` | BIGINT (PK) | ID unik |
-| `shipment_id` | BIGINT (FK) | ID shipment |
+| `shopping_id` | BIGINT (FK) | ID shopping |
 | `product_id` | BIGINT (FK) | Produk yang dikirim |
 | `rack_id` | BIGINT (FK) | Rak asal pengambilan |
 | `quantity` | INT | Jumlah yang dikirim |
 | `created_at` | TIMESTAMP | Tanggal dibuat |
 | `updated_at` | TIMESTAMP | Tanggal diupdate |
 
-> **Hapus:** Kalau shipment dihapus → item ikut terhapus (CASCADE).
+> **Hapus:** Kalau shopping dihapus → item ikut terhapus (CASCADE).
 
 ---
 
@@ -312,7 +312,7 @@ Staff membuat dokumen **Shipment** untuk mengirim barang ke mitra. Sistem memval
 suppliers ──┬── supplier_addresses  (1 supplier punya N alamat)
             ├── products            (1 supplier supply N produk)
             ├── cycles              (1 supplier punya N cycle)
-            └── [shipments]         (tidak terkait langsung)
+            └── [shoppings]         (tidak terkait langsung)
 
 vehicle_models ──── products        (1 model punya N produk)
 
@@ -320,14 +320,14 @@ product_categories ──── products    (1 kategori punya N produk)
 
 products ──┬── cycle_items          (1 produk muncul di N cycle)
             ├── stocks              (1 produk disimpan di N rak)
-            └── shipment_items      (1 produk dikirim di N shipment)
+            └── shopping_items      (1 produk dikirim di N shopping)
 
 racks ──┬── stocks                  (1 rak simpan N produk)
-         └── shipment_items         (1 rak jadi sumber N pengiriman)
+         └── shopping_items         (1 rak jadi sumber N pengiriman)
 
 cycles ──── cycle_items             (1 cycle punya N item)
 
-shipments ──── shipment_items       (1 shipment punya N item)
+shoppings ──── shopping_items       (1 shopping punya N item)
 ```
 
 ---
@@ -345,13 +345,13 @@ shipments ──── shipment_items       (1 shipment punya N item)
                    (bisa direceive)
 ```
 
-### Shipment (Pengiriman)
+### Shopping (Pengiriman)
 
 ```
   ┌────────┐       ┌──────────┐       ┌───────────┐
   │ DRAFT  │  ───> │ SHIPPED  │  ───> │ COMPLETED │
   └────────┘       └──────────┘       └───────────┘
-  Shipment dibuat  Barang dikirim     Mitra terima
+  Shopping dibuat  Barang dikirim     Mitra terima
   (bisa diedit)    → stok berkurang
 ```
 
@@ -363,7 +363,7 @@ shipments ──── shipment_items       (1 shipment punya N item)
 |--------|-------|------------|
 | **CASCADE** | `supplier_addresses` | Hapus supplier → alamat ikut terhapus |
 | **CASCADE** | `cycle_items` | Hapus cycle → item ikut terhapus |
-| **CASCADE** | `shipment_items` | Hapus shipment → item ikut terhapus |
+| **CASCADE** | `shopping_items` | Hapus shopping → item ikut terhapus |
 | **RESTRICT** | `products` (FK ke categories/models/suppliers) | Tidak bisa hapus model/kategori/supplier jika masih ada produk terkait |
 | **RESTRICT** | `cycles` (FK ke suppliers) | Tidak bisa hapus supplier jika masih ada cycle |
 | **RESTRICT** | `stocks` (FK ke products/racks) | Tidak bisa hapus produk/rak jika masih ada stok |

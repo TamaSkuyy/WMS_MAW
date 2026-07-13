@@ -10,12 +10,12 @@ class EmployeeExporter extends BaseExporter
 {
     public function headings(): array
     {
-        return ['Nama', 'NIK', 'Jabatan', 'Lokasi', 'Departemen', 'Telepon', 'Email', 'Status'];
+        return ['Nama', 'NIK', 'Jabatan', 'Lokasi', 'Departemen', 'Shift', 'Telepon', 'Email', 'Status'];
     }
 
     public function exportQuery(): Builder
     {
-        return Employee::query()->with(['jobPosition', 'workLocation', 'department'])->orderBy('name');
+        return Employee::query()->with(['jobPosition', 'workLocation', 'department', 'shift'])->orderBy('name');
     }
 
     public function mapRow($model): array
@@ -26,6 +26,7 @@ class EmployeeExporter extends BaseExporter
             $model->jobPosition->name ?? '-',
             $model->workLocation->name ?? '-',
             $model->department->name ?? '-',
+            $model->shift->name ?? '-',
             $model->phone,
             $model->email,
             $model->status,

@@ -5,6 +5,7 @@ namespace Tests\Feature\ImportExport;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\JobPosition;
+use App\Models\Shift;
 use App\Models\User;
 use App\Models\WorkLocation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -55,11 +56,12 @@ class EmployeeImportExportTest extends TestCase
         $position = JobPosition::factory()->create(['name' => 'Staff Gudang']);
         $location = WorkLocation::factory()->create(['name' => 'Gudang Utama']);
         $department = Department::factory()->create(['name' => 'Logistik']);
+        $shift = Shift::factory()->create(['name' => 'Shift Pagi']);
 
         $file = UploadedFile::fake()->createWithContent(
             'employees.csv',
-            "Nama,NIK,Jabatan,Lokasi,Departemen,Telepon,Email,Status\n"
-            . "Andi Saputra,NIK-0001,Staff Gudang,Gudang Utama,Logistik,08123456789,andi@wms.test,Aktif"
+            "Nama,NIK,Jabatan,Lokasi,Departemen,Shift,Telepon,Email,Status\n"
+            . "Andi Saputra,NIK-0001,Staff Gudang,Gudang Utama,Logistik,Shift Pagi,08123456789,andi@wms.test,Aktif"
         );
 
         $response = $this->post(route('employees.import'), [
@@ -70,6 +72,7 @@ class EmployeeImportExportTest extends TestCase
                 'job_position' => 'Jabatan',
                 'work_location' => 'Lokasi',
                 'department' => 'Departemen',
+                'shift' => 'Shift',
                 'phone' => 'Telepon',
                 'email' => 'Email',
                 'status' => 'Status',
@@ -82,6 +85,7 @@ class EmployeeImportExportTest extends TestCase
             'job_position_id' => $position->id,
             'work_location_id' => $location->id,
             'department_id' => $department->id,
+            'shift_id' => $shift->id,
             'created_by' => $user->id,
             'updated_by' => $user->id,
         ]);
@@ -94,8 +98,8 @@ class EmployeeImportExportTest extends TestCase
 
         $file = UploadedFile::fake()->createWithContent(
             'employees.csv',
-            "Nama,NIK,Jabatan,Lokasi,Departemen,Telepon,Email,Status\n"
-            . "Budi Santoso,NIK-0002,Jabatan Tidak Ada,,,08123456780,budi@wms.test,Aktif"
+            "Nama,NIK,Jabatan,Lokasi,Departemen,Shift,Telepon,Email,Status\n"
+            . "Budi Santoso,NIK-0002,Jabatan Tidak Ada,,,,08123456780,budi@wms.test,Aktif"
         );
 
         $response = $this->post(route('employees.import'), [
@@ -106,6 +110,7 @@ class EmployeeImportExportTest extends TestCase
                 'job_position' => 'Jabatan',
                 'work_location' => 'Lokasi',
                 'department' => 'Departemen',
+                'shift' => 'Shift',
                 'phone' => 'Telepon',
                 'email' => 'Email',
                 'status' => 'Status',
@@ -118,6 +123,7 @@ class EmployeeImportExportTest extends TestCase
             'job_position_id' => null,
             'work_location_id' => null,
             'department_id' => null,
+            'shift_id' => null,
         ]);
     }
 

@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\Events\StockChanged;
 use App\Models\Product;
 use App\Models\Rack;
-use App\Models\Shipment;
+use App\Models\Shopping;
 use App\Models\Stock;
 use App\Models\User;
 use App\Models\VehicleModel;
@@ -13,7 +13,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
-class ShipmentControllerTest extends TestCase
+class ShoppingControllerTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -25,38 +25,38 @@ class ShipmentControllerTest extends TestCase
         $this->user = User::factory()->create();
     }
 
-    public function test_index_displays_shipments(): void
+    public function test_index_displays_shoppings(): void
     {
-        Shipment::factory(3)->create();
+        Shopping::factory(3)->create();
 
-        $response = $this->actingAs($this->user)->get(route('shipments.index'));
+        $response = $this->actingAs($this->user)->get(route('shoppings.index'));
 
         $response->assertStatus(200);
     }
 
     public function test_create_shows_form(): void
     {
-        $response = $this->actingAs($this->user)->get(route('shipments.create'));
+        $response = $this->actingAs($this->user)->get(route('shoppings.create'));
 
         $response->assertStatus(200);
     }
 
-    public function test_store_creates_shipment(): void
+    public function test_store_creates_shopping(): void
     {
         $product = Product::factory()->create();
         $rack = Rack::factory()->create();
 
         $data = [
             'partner_name' => 'PT Test Partner',
-            'shipment_date' => '2026-06-10',
+            'shopping_date' => '2026-06-10',
             'items' => [
                 ['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 5],
             ],
         ];
 
-        $response = $this->actingAs($this->user)->post(route('shipments.store'), $data);
+        $response = $this->actingAs($this->user)->post(route('shoppings.store'), $data);
 
-        $this->assertDatabaseHas('shipments', [
+        $this->assertDatabaseHas('shoppings', [
             'partner_name' => 'PT Test Partner',
             'status' => 'draft',
         ]);
@@ -67,17 +67,17 @@ class ShipmentControllerTest extends TestCase
     {
         \App\Models\VehicleModel::factory()->create(['name' => 'Fortuner', 'brand' => 'Toyota', 'suffix' => 'VRZ']);
 
-        $response = $this->actingAs($this->user)->get(route('shipments.create'));
+        $response = $this->actingAs($this->user)->get(route('shoppings.create'));
 
         $response->assertStatus(200);
         $response->assertSee('Fortuner');
     }
 
-    public function test_show_displays_shipment(): void
+    public function test_show_displays_shopping(): void
     {
-        $shipment = Shipment::factory()->create();
+        $shopping = Shopping::factory()->create();
 
-        $response = $this->actingAs($this->user)->get(route('shipments.show', $shipment));
+        $response = $this->actingAs($this->user)->get(route('shoppings.show', $shopping));
 
         $response->assertStatus(200);
     }
@@ -90,12 +90,12 @@ class ShipmentControllerTest extends TestCase
         // Seed stock
         Stock::create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 20]);
 
-        $shipment = Shipment::factory()->create(['status' => 'draft']);
-        $shipment->items()->create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 8]);
+        $shopping = Shopping::factory()->create(['status' => 'draft']);
+        $shopping->items()->create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 8]);
 
-        $response = $this->actingAs($this->user)->post(route('shipments.ship', $shipment));
+        $response = $this->actingAs($this->user)->post(route('shoppings.ship', $shopping));
 
-        $this->assertDatabaseHas('shipments', ['id' => $shipment->id, 'status' => 'shipped']);
+        $this->assertDatabaseHas('shoppings', ['id' => $shopping->id, 'status' => 'shipped']);
         $this->assertDatabaseHas('stocks', ['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 12]);
         $response->assertRedirect();
     }
@@ -106,30 +106,30 @@ class ShipmentControllerTest extends TestCase
         $product = Product::factory()->create();
         Stock::create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 3]);
 
-        $shipment = Shipment::factory()->create(['status' => 'draft']);
-        $shipment->items()->create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 10]);
+        $shopping = Shopping::factory()->create(['status' => 'draft']);
+        $shopping->items()->create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 10]);
 
-        $response = $this->actingAs($this->user)->post(route('shipments.ship', $shipment));
+        $response = $this->actingAs($this->user)->post(route('shoppings.ship', $shopping));
 
         $response->assertRedirect();
-        $this->assertDatabaseHas('shipments', ['id' => $shipment->id, 'status' => 'draft']); // unchanged
+        $this->assertDatabaseHas('shoppings', ['id' => $shopping->id, 'status' => 'draft']); // unchanged
         $this->assertDatabaseHas('stocks', ['product_id' => $product->id, 'quantity' => 3]); // unchanged
     }
 
     public function test_destroy_deletes_draft_only(): void
     {
-        $shipment = Shipment::factory()->create(['status' => 'draft']);
+        $shopping = Shopping::factory()->create(['status' => 'draft']);
 
-        $response = $this->actingAs($this->user)->delete(route('shipments.destroy', $shipment));
+        $response = $this->actingAs($this->user)->delete(route('shoppings.destroy', $shopping));
 
-        $this->assertDatabaseMissing('shipments', ['id' => $shipment->id]);
+        $this->assertDatabaseMissing('shoppings', ['id' => $shopping->id]);
     }
 
     public function test_store_validates_required(): void
     {
-        $response = $this->actingAs($this->user)->post(route('shipments.store'), []);
+        $response = $this->actingAs($this->user)->post(route('shoppings.store'), []);
 
-        $response->assertSessionHasErrors(['partner_name', 'shipment_date', 'items']);
+        $response->assertSessionHasErrors(['partner_name', 'shopping_date', 'items']);
     }
 
     public function test_create_passes_products_with_stocks_to_view(): void
@@ -139,7 +139,7 @@ class ShipmentControllerTest extends TestCase
         $product = Product::factory()->create(['vehicle_model_id' => $vm->id, 'default_rack_id' => $rack->id]);
         Stock::create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 7]);
 
-        $response = $this->actingAs($this->user)->get(route('shipments.create'));
+        $response = $this->actingAs($this->user)->get(route('shoppings.create'));
 
         $response->assertStatus(200);
         $response->assertSee($product->part_number);
@@ -151,10 +151,10 @@ class ShipmentControllerTest extends TestCase
         $rack = Rack::factory()->create();
         $product = Product::factory()->create(['vehicle_model_id' => $vm->id, 'default_rack_id' => $rack->id]);
         Stock::create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 5]);
-        $shipment = Shipment::factory()->create(['status' => 'draft']);
-        $shipment->items()->create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 2]);
+        $shopping = Shopping::factory()->create(['status' => 'draft']);
+        $shopping->items()->create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 2]);
 
-        $response = $this->actingAs($this->user)->get(route('shipments.edit', $shipment));
+        $response = $this->actingAs($this->user)->get(route('shoppings.edit', $shopping));
 
         $response->assertStatus(200);
     }
@@ -166,20 +166,20 @@ class ShipmentControllerTest extends TestCase
 
         $data = [
             'partner_name' => 'PT Test Partner',
-            'shipment_date' => '2026-06-10',
+            'shopping_date' => '2026-06-10',
             'items' => [
                 ['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 5],
                 ['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 3],
             ],
         ];
 
-        $response = $this->actingAs($this->user)->post(route('shipments.store'), $data);
+        $response = $this->actingAs($this->user)->post(route('shoppings.store'), $data);
 
         $response->assertRedirect();
-        $shipment = Shipment::first();
-        $this->assertCount(1, $shipment->items);
-        $this->assertDatabaseHas('shipment_items', [
-            'shipment_id' => $shipment->id,
+        $shopping = Shopping::first();
+        $this->assertCount(1, $shopping->items);
+        $this->assertDatabaseHas('shopping_items', [
+            'shopping_id' => $shopping->id,
             'product_id' => $product->id,
             'rack_id' => $rack->id,
             'quantity' => 8,
@@ -194,18 +194,18 @@ class ShipmentControllerTest extends TestCase
 
         $data = [
             'partner_name' => 'PT Test Partner',
-            'shipment_date' => '2026-06-10',
+            'shopping_date' => '2026-06-10',
             'items' => [
                 ['product_id' => $product->id, 'rack_id' => $rackA->id, 'quantity' => 5],
                 ['product_id' => $product->id, 'rack_id' => $rackB->id, 'quantity' => 3],
             ],
         ];
 
-        $response = $this->actingAs($this->user)->post(route('shipments.store'), $data);
+        $response = $this->actingAs($this->user)->post(route('shoppings.store'), $data);
 
         $response->assertRedirect();
-        $shipment = Shipment::first();
-        $this->assertCount(2, $shipment->items);
+        $shopping = Shopping::first();
+        $this->assertCount(2, $shopping->items);
     }
 
     public function test_ship_second_call_is_rejected_and_stock_not_double_deducted(): void
@@ -214,13 +214,13 @@ class ShipmentControllerTest extends TestCase
         $product = Product::factory()->create();
         Stock::create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 20]);
 
-        $shipment = Shipment::factory()->create(['status' => 'draft']);
-        $shipment->items()->create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 8]);
+        $shopping = Shopping::factory()->create(['status' => 'draft']);
+        $shopping->items()->create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 8]);
 
-        $first = $this->actingAs($this->user)->post(route('shipments.ship', $shipment));
+        $first = $this->actingAs($this->user)->post(route('shoppings.ship', $shopping));
         $first->assertRedirect();
 
-        $second = $this->actingAs($this->user)->post(route('shipments.ship', $shipment));
+        $second = $this->actingAs($this->user)->post(route('shoppings.ship', $shopping));
         $second->assertRedirect();
         $second->assertSessionHas('error');
 
@@ -239,10 +239,10 @@ class ShipmentControllerTest extends TestCase
         $product = Product::factory()->create();
         Stock::create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 20]);
 
-        $shipment = Shipment::factory()->create(['status' => 'draft']);
-        $shipment->items()->create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 8]);
+        $shopping = Shopping::factory()->create(['status' => 'draft']);
+        $shopping->items()->create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 8]);
 
-        $this->actingAs($this->user)->post(route('shipments.ship', $shipment));
+        $this->actingAs($this->user)->post(route('shoppings.ship', $shopping));
 
         Event::assertDispatched(StockChanged::class);
     }
@@ -255,10 +255,10 @@ class ShipmentControllerTest extends TestCase
         $product = Product::factory()->create();
         Stock::create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 3]);
 
-        $shipment = Shipment::factory()->create(['status' => 'draft']);
-        $shipment->items()->create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 10]);
+        $shopping = Shopping::factory()->create(['status' => 'draft']);
+        $shopping->items()->create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 10]);
 
-        $this->actingAs($this->user)->post(route('shipments.ship', $shipment));
+        $this->actingAs($this->user)->post(route('shoppings.ship', $shopping));
 
         Event::assertNotDispatched(StockChanged::class);
     }

@@ -33,7 +33,7 @@ class WmsRoleSeeder extends Seeder
             // Transactions
             'view cycles', 'create cycles', 'edit cycles', 'delete cycles', 'receive cycles',
             'view stocks',
-            'view shipments', 'create shipments', 'edit shipments', 'delete shipments', 'ship shipments',
+            'view shoppings', 'create shoppings', 'edit shoppings', 'delete shoppings', 'ship shoppings',
 
             // System
             'view users', 'manage users',
@@ -58,7 +58,7 @@ class WmsRoleSeeder extends Seeder
             'manage users', 'manage roles', 'manage permissions',
         ])->get());
 
-        // 3. Kepala Gudang — view semua + approve cycles & shipments
+        // 3. Kepala Gudang — view semua + approve cycles & shopping
         $kepalaGudang = Role::firstOrCreate(['name' => 'Kepala Gudang', 'guard_name' => 'web']);
         $kepalaGudang->givePermissionTo([
             'view dashboard',
@@ -69,7 +69,7 @@ class WmsRoleSeeder extends Seeder
             // View & approve transactions
             'view cycles', 'create cycles', 'edit cycles', 'delete cycles', 'receive cycles',
             'view stocks',
-            'view shipments', 'create shipments', 'edit shipments', 'delete shipments', 'ship shipments',
+            'view shoppings', 'create shoppings', 'edit shoppings', 'delete shoppings', 'ship shoppings',
         ]);
 
         // 4. Staff Gudang — operasional dasar
@@ -82,7 +82,7 @@ class WmsRoleSeeder extends Seeder
             // Operasional
             'view cycles', 'create cycles', 'edit cycles', 'receive cycles',
             'view stocks',
-            'view shipments', 'create shipments', 'edit shipments', 'ship shipments',
+            'view shoppings', 'create shoppings', 'edit shoppings', 'ship shoppings',
         ]);
     }
 }
