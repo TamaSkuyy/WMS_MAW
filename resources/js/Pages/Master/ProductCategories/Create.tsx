@@ -10,7 +10,7 @@ import Label from '../../../Tailadmin/components/form/Label';
 export default function Create() {
     const { data, setData, post, errors } = useForm({ name: '', description: '' });
     return (
-        <AppLayout>
+        <>
             <Head title="Tambah Kategori" />
             <PageBreadcrumb pageTitle="Tambah Kategori" />
             <ComponentCard title="Kategori Baru">
@@ -31,6 +31,8 @@ export default function Create() {
                     </div>
                 </form>
             </ComponentCard>
-        </AppLayout>
+        </>
     );
 }
+
+Create.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

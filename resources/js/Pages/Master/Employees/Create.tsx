@@ -31,7 +31,7 @@ export default function Create({ jobPositions, workLocations, departments, shift
     ];
 
     return (
-        <AppLayout>
+        <>
             <Head title="Tambah Karyawan" />
             <PageBreadcrumb pageTitle="Tambah Karyawan" />
 
@@ -128,6 +128,8 @@ export default function Create({ jobPositions, workLocations, departments, shift
                     </form>
                 </ComponentCard>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Create.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

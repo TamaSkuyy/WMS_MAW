@@ -7,7 +7,7 @@ import EmptyState from '../../../Tailadmin/components/common/EmptyState';
 
 export default function Index({ stocks }: any) {
     return (
-        <AppLayout>
+        <>
             <Head title="Inventori Stok" />
             <PageBreadcrumb pageTitle="Inventori Stok" />
             <ComponentCard title="Stok Saat Ini">
@@ -62,6 +62,8 @@ export default function Index({ stocks }: any) {
                     </div>
                 )}
             </ComponentCard>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

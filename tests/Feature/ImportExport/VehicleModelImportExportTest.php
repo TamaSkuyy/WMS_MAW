@@ -60,7 +60,9 @@ class VehicleModelImportExportTest extends TestCase
         ]);
 
         $response->assertOk();
-        $this->assertDatabaseHas('vehicle_models', ['name' => 'Avanza', 'brand' => 'Toyota', 'suffix' => 'Veloz']);
+        $model = VehicleModel::where('name', 'Avanza')->where('brand', 'Toyota')->first();
+        $this->assertNotNull($model);
+        $this->assertSame('VELOZ', $model->suffix);
     }
 
     public function test_import_skips_duplicate_name_and_brand_combination(): void

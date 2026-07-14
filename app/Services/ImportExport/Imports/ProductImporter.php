@@ -33,7 +33,6 @@ class ProductImporter extends BaseImporter implements Importable
             'category_id' => ['required', 'exists:product_categories,id'],
             'unit' => ['required', 'string', 'max:20'],
             'description' => ['nullable', 'string', 'max:1000'],
-            'base_price' => ['nullable', 'numeric', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
             'default_rack_id' => ['nullable', 'exists:racks,id'],
         ];
@@ -41,7 +40,7 @@ class ProductImporter extends BaseImporter implements Importable
 
     public function templateHeadings(): array
     {
-        return ['PartNumber', 'Nama', 'Merek', 'Model', 'Supplier', 'Kategori', 'Satuan', 'Deskripsi', 'Harga', 'Aktif', 'Rak'];
+        return ['PartNumber', 'Nama', 'Merek', 'Model', 'Supplier', 'Kategori', 'Satuan', 'Deskripsi', 'Aktif', 'Rak'];
     }
 
     public function transformRow(array $mapped): array

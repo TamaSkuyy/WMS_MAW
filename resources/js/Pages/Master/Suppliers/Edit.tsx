@@ -30,7 +30,7 @@ export default function Edit({ supplier }: any) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Edit Supplier - ${supplier.name}`} />
             <PageBreadcrumb pageTitle={`Edit: ${supplier.name}`} />
 
@@ -106,6 +106,8 @@ export default function Edit({ supplier }: any) {
                     </form>
                 </ComponentCard>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Edit.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

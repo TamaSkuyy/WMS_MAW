@@ -31,7 +31,7 @@ export default function Edit({ employee, jobPositions, workLocations, department
     ];
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Edit Karyawan - ${employee.name}`} />
             <PageBreadcrumb pageTitle={`Edit: ${employee.name}`} />
 
@@ -128,6 +128,8 @@ export default function Edit({ employee, jobPositions, workLocations, department
                     </form>
                 </ComponentCard>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Edit.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

@@ -40,19 +40,24 @@ const AppSidebar: React.FC = () => {
       const currentUrl = url.split("?")[0];
       const cleanUrl = currentUrl.endsWith("/") && currentUrl.length > 1 ? currentUrl.slice(0, -1) : currentUrl;
       const cleanPath = path.endsWith("/") && path.length > 1 ? path.slice(0, -1) : path;
-      return cleanUrl === cleanPath;
+      return cleanUrl === cleanPath || cleanUrl.startsWith(cleanPath + "/");
     },
     [url]
   );
 
   useEffect(() => {
+    const currentUrl = url.split("?")[0];
+    const cleanUrl = currentUrl.endsWith("/") && currentUrl.length > 1 ? currentUrl.slice(0, -1) : currentUrl;
+
     let submenuMatched = false;
     ["main", "others"].forEach((menuType) => {
       const items = menuType === "main" ? navItems : othersItems;
       items.forEach((nav, index) => {
         if (nav.sub_menus && nav.sub_menus.length > 0) {
           nav.sub_menus.forEach((subItem) => {
-            if (subItem.path && subItem.path === url) {
+            if (!subItem.path) return;
+            const cleanPath = subItem.path.endsWith("/") && subItem.path.length > 1 ? subItem.path.slice(0, -1) : subItem.path;
+            if (cleanUrl === cleanPath || cleanUrl.startsWith(cleanPath + "/")) {
               setOpenSubmenu({
                 type: menuType as "main" | "others",
                 index,

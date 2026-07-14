@@ -25,7 +25,7 @@ export default function SearchableSelect({ options, value, onChange, placeholder
                 option.label.toLowerCase().indexOf(query.toLowerCase()) !== -1
             )
 
-    const selectedOption = options.find((opt) => opt.value === value) || null;
+    const selectedOption = options.find((opt) => String(opt.value) === String(value)) || null;
 
     return (
         <div className={`relative ${className}`}>

@@ -10,7 +10,7 @@ class ProductExporter extends BaseExporter
 {
     public function headings(): array
     {
-        return ['Part Number', 'Nama', 'Model Kendaraan', 'Supplier', 'Kategori', 'Satuan', 'Harga', 'Aktif'];
+        return ['Part Number', 'Nama', 'Model Kendaraan', 'Supplier', 'Kategori', 'Satuan', 'Aktif'];
     }
 
     public function exportQuery(): Builder
@@ -27,7 +27,6 @@ class ProductExporter extends BaseExporter
             $model->supplier->name ?? '-',
             $model->category->name ?? '-',
             $model->unit,
-            $model->base_price,
             $model->is_active ? 'Ya' : 'Tidak',
         ];
     }

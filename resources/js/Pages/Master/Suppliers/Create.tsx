@@ -28,7 +28,7 @@ export default function Create() {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Tambah Supplier" />
             <PageBreadcrumb pageTitle="Tambah Supplier" />
 
@@ -104,6 +104,8 @@ export default function Create() {
                     </form>
                 </ComponentCard>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Create.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

@@ -12,7 +12,7 @@ import { Link } from '@inertiajs/react';
 export default function Edit({ department }: any) {
     const { data, setData, put, errors } = useForm({ name: department.name });
     return (
-        <AppLayout>
+        <>
             <Head title={`Edit Departemen - ${department.name}`} />
             <PageBreadcrumb pageTitle={`Edit: ${department.name}`} />
 
@@ -39,6 +39,8 @@ export default function Edit({ department }: any) {
                     </form>
                 </ComponentCard>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Edit.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

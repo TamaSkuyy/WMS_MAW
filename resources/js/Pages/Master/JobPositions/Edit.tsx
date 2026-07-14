@@ -25,7 +25,7 @@ export default function Edit({ position }: any) {
     ];
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Edit Jabatan - ${position.name}`} />
             <PageBreadcrumb pageTitle={`Edit: ${position.name}`} />
 
@@ -57,6 +57,8 @@ export default function Edit({ position }: any) {
                     </form>
                 </ComponentCard>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Edit.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

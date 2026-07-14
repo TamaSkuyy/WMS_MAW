@@ -102,7 +102,7 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Cycle #${cycle.cycle_number}`} />
             <PageBreadcrumb pageTitle={`${cycle.supplier?.name} — Cycle #${cycle.cycle_number}`} />
 
@@ -215,6 +215,8 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
                 autoClose={false}
                 feedback={scanFeedback}
             />
-        </AppLayout>
+        </>
     );
 }
+
+Show.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

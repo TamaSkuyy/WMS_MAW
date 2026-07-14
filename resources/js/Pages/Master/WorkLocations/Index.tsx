@@ -20,7 +20,7 @@ export default function Index({ locations, filters }: any) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Lokasi Kerja" />
             <PageBreadcrumb pageTitle="Lokasi Kerja" />
             <ComponentCard title="Daftar Lokasi Kerja">
@@ -94,6 +94,8 @@ export default function Index({ locations, filters }: any) {
                     </div>
                 )}
             </ComponentCard>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

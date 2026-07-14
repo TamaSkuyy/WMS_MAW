@@ -88,7 +88,6 @@ class ProductController extends Controller
             'category_id' => 'required|exists:product_categories,id',
             'unit' => 'required|string|max:20',
             'description' => 'nullable|string|max:1000',
-            'base_price' => 'nullable|numeric|min:0',
             'is_active' => 'boolean',
             'default_rack_id' => 'nullable|exists:racks,id',
         ]);
@@ -136,7 +135,6 @@ class ProductController extends Controller
             'category_id' => 'required|exists:product_categories,id',
             'unit' => 'required|string|max:20',
             'description' => 'nullable|string|max:1000',
-            'base_price' => 'nullable|numeric|min:0',
             'is_active' => 'boolean',
             'default_rack_id' => 'nullable|exists:racks,id',
         ]);

@@ -20,7 +20,7 @@ export default function Index({ vehicleModels, filters }: any) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Model Kendaraan" />
             <PageBreadcrumb pageTitle="Model Kendaraan" />
             <ComponentCard title="Daftar Model Kendaraan">
@@ -100,6 +100,8 @@ export default function Index({ vehicleModels, filters }: any) {
                     </div>
                 )}
             </ComponentCard>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

@@ -12,7 +12,7 @@ import { Link } from '@inertiajs/react';
 export default function Create() {
     const { data, setData, post, errors } = useForm({ name: '' });
     return (
-        <AppLayout>
+        <>
             <Head title="Tambah Departemen" />
             <PageBreadcrumb pageTitle="Tambah Departemen" />
 
@@ -39,6 +39,8 @@ export default function Create() {
                     </form>
                 </ComponentCard>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Create.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

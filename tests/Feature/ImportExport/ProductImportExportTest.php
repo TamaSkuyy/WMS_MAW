@@ -60,8 +60,8 @@ class ProductImportExportTest extends TestCase
 
         $file = UploadedFile::fake()->createWithContent(
             'products.csv',
-            "PartNumber,Nama,Merek,Model,Supplier,Kategori,Satuan,Deskripsi,Harga,Aktif,Rak\n"
-            . "P0001-AVZ,Bumper Depan,Toyota,Avanza,PT Onderdil Jaya,Body Parts,pcs,Bumper original,250000,1,A-01"
+            "PartNumber,Nama,Merek,Model,Supplier,Kategori,Satuan,Deskripsi,Aktif,Rak\n"
+            . "P0001-AVZ,Bumper Depan,Toyota,Avanza,PT Onderdil Jaya,Body Parts,pcs,Bumper original,1,A-01"
         );
 
         $response = $this->post(route('products.import'), [
@@ -75,7 +75,6 @@ class ProductImportExportTest extends TestCase
                 'kategori' => 'Kategori',
                 'unit' => 'Satuan',
                 'description' => 'Deskripsi',
-                'base_price' => 'Harga',
                 'is_active' => 'Aktif',
                 'default_rack' => 'Rak',
             ],

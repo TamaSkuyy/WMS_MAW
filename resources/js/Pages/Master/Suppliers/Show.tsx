@@ -8,7 +8,7 @@ import Button from '../../../Tailadmin/components/ui/button/Button';
 
 export default function Show({ supplier }: any) {
     return (
-        <AppLayout>
+        <>
             <Head title={`Supplier - ${supplier.name}`} />
             <PageBreadcrumb pageTitle={`Detail: ${supplier.name}`} />
 
@@ -66,6 +66,8 @@ export default function Show({ supplier }: any) {
                     </ComponentCard>
                 </div>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Show.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

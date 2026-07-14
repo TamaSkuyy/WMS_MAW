@@ -8,7 +8,7 @@ import Button from '../../../Tailadmin/components/ui/button/Button';
 
 export default function Show({ product }: any) {
     return (
-        <AppLayout>
+        <>
             <Head title={`Produk - ${product.part_number}`} />
             <PageBreadcrumb pageTitle={`Detail: ${product.part_number}`} />
 
@@ -39,10 +39,6 @@ export default function Show({ product }: any) {
                             <div>
                                 <dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Satuan</dt>
                                 <dd className="text-sm text-[#1A1D23]">{product.unit}</dd>
-                            </div>
-                            <div>
-                                <dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Harga Dasar</dt>
-                                <dd className="text-sm text-[#1A1D23]">{product.base_price ? `Rp ${Number(product.base_price).toLocaleString('id-ID')}` : '-'}</dd>
                             </div>
                             <div>
                                 <dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Status</dt>
@@ -110,6 +106,8 @@ export default function Show({ product }: any) {
                     </ComponentCard>
                 </div>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Show.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

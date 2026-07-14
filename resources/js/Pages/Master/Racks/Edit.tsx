@@ -18,7 +18,7 @@ export default function Edit({ rack }: any) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Edit Rak - ${rack.code}`} />
             <PageBreadcrumb pageTitle={`Edit: ${rack.code}`} />
 
@@ -50,6 +50,8 @@ export default function Edit({ rack }: any) {
                     </form>
                 </ComponentCard>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Edit.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

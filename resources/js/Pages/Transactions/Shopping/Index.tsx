@@ -23,7 +23,7 @@ export default function Index({ shoppings, filters }: any) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Shopping" />
             <PageBreadcrumb pageTitle="Shopping" />
             <ComponentCard title="Daftar Shopping">
@@ -143,6 +143,8 @@ export default function Index({ shoppings, filters }: any) {
                     </div>
                 )}
             </ComponentCard>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

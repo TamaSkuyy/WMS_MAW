@@ -113,7 +113,7 @@ export default function QuickReceive({ suppliers, products, racks }: any) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Terima Cepat" />
             <PageBreadcrumb pageTitle="Terima Cepat (Scan QR)" />
 
@@ -315,6 +315,8 @@ export default function QuickReceive({ suppliers, products, racks }: any) {
                 onClose={() => setScannerOpen(false)}
                 onScan={handleScan}
             />
-        </AppLayout>
+        </>
     );
 }
+
+QuickReceive.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

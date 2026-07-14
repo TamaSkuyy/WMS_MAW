@@ -5,7 +5,7 @@ import MetricCard from './Dashboard/MetricCard';
 
 export default function Dashboard({ metrics, lowStockItems, pendingCycles, todayShoppings }: any) {
     return (
-        <AppLayout>
+        <>
             <Head title="Dashboard - MAW Warehouse System" />
 
             <div className="flex items-center gap-3 mb-6">
@@ -181,6 +181,8 @@ export default function Dashboard({ metrics, lowStockItems, pendingCycles, today
                     </div>
                 </div>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Dashboard.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

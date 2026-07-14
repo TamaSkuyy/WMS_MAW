@@ -14,7 +14,7 @@ export default function Edit({ vehicleModel }: any) {
         suffix: vehicleModel.suffix || '',
     });
     return (
-        <AppLayout>
+        <>
             <Head title={`Edit Model - ${vehicleModel.name}`} />
             <PageBreadcrumb pageTitle={`Edit: ${vehicleModel.brand} ${vehicleModel.name}${vehicleModel.suffix ? ' ' + vehicleModel.suffix : ''}`} />
             <ComponentCard title="Edit Model">
@@ -31,7 +31,7 @@ export default function Edit({ vehicleModel }: any) {
                     </div>
                     <div>
                         <Label>Suffix (Varian)</Label>
-                        <Input type="text" value={data.suffix} onChange={(e) => setData('suffix', e.target.value)} placeholder="contoh: VRZ, TRD, SRZ (kosongkan jika tidak ada)" />
+                        <Input type="text" value={data.suffix} onChange={(e) => setData('suffix', e.target.value.toUpperCase())} placeholder="contoh: VRZ, TRD, SRZ (kosongkan jika tidak ada)" />
                         {errors.suffix && <p className="mt-1 text-sm text-red-500">{errors.suffix}</p>}
                     </div>
                     <div className="flex gap-2">
@@ -40,6 +40,8 @@ export default function Edit({ vehicleModel }: any) {
                     </div>
                 </form>
             </ComponentCard>
-        </AppLayout>
+        </>
     );
 }
+
+Edit.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

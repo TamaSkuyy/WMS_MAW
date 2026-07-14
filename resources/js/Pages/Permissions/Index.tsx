@@ -53,7 +53,7 @@ export default function Index({ permissions }: any) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Permission Management" />
             <PageBreadcrumb pageTitle="Permission Management" />
 
@@ -123,6 +123,8 @@ export default function Index({ permissions }: any) {
                     </ComponentCard>
                 </div>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

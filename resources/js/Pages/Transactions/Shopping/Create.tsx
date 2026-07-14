@@ -115,7 +115,7 @@ export default function Create({ products, racks, vehicleModels }: any) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Shopping Baru" />
             <PageBreadcrumb pageTitle="Tambah Shopping" />
 
@@ -276,6 +276,8 @@ export default function Create({ products, racks, vehicleModels }: any) {
                 onClose={() => setScannerOpen(false)}
                 onScan={handleScan}
             />
-        </AppLayout>
+        </>
     );
 }
+
+Create.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

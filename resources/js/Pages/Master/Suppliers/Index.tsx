@@ -20,7 +20,7 @@ export default function Index({ suppliers, filters }: any) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Supplier" />
             <PageBreadcrumb pageTitle="Supplier" />
 
@@ -125,6 +125,8 @@ export default function Index({ suppliers, filters }: any) {
                     </div>
                 )}
             </ComponentCard>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

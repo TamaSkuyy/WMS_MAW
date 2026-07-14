@@ -18,7 +18,7 @@ export default function Create() {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Tambah Rak" />
             <PageBreadcrumb pageTitle="Tambah Rak" />
 
@@ -50,6 +50,8 @@ export default function Create() {
                     </form>
                 </ComponentCard>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Create.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

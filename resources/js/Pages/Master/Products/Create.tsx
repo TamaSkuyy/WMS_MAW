@@ -19,7 +19,6 @@ export default function Create({ vehicleModels, categories, suppliers, racks }: 
         category_id: '',
         unit: 'pcs',
         description: '',
-        base_price: '',
         is_active: true,
         default_rack_id: '',
     });
@@ -30,7 +29,7 @@ export default function Create({ vehicleModels, categories, suppliers, racks }: 
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Tambah Produk" />
             <PageBreadcrumb pageTitle="Tambah Produk" />
 
@@ -104,12 +103,6 @@ export default function Create({ vehicleModels, categories, suppliers, racks }: 
                         </div>
 
                         <div>
-                            <Label>Harga Dasar (Rp)</Label>
-                            <Input type="number" value={data.base_price} onChange={(e) => setData('base_price', e.target.value)} placeholder="contoh: 150000" />
-                            {errors.base_price && <p className="mt-1 text-sm text-red-500">{errors.base_price}</p>}
-                        </div>
-
-                        <div>
                             <Label>Rack Default</Label>
                             <SearchableSelect
                                 options={[
@@ -141,6 +134,8 @@ export default function Create({ vehicleModels, categories, suppliers, racks }: 
                     </form>
                 </ComponentCard>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Create.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

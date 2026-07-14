@@ -99,7 +99,6 @@ class ProductControllerTest extends TestCase
             'supplier_id' => $supplier->id,
             'category_id' => $category->id,
             'unit' => 'pcs',
-            'base_price' => 150000,
             'description' => 'Original Toyota part',
             'is_active' => true,
         ];
@@ -158,7 +157,6 @@ class ProductControllerTest extends TestCase
             'supplier_id' => $supplier->id,
             'category_id' => $category->id,
             'unit' => 'set',
-            'base_price' => 250000,
             'description' => 'Updated description',
             'is_active' => true,
         ];

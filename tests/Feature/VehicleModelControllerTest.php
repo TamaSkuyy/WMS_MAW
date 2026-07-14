@@ -75,6 +75,36 @@ class VehicleModelControllerTest extends TestCase
         $response->assertRedirect(route('vehicle-models.index'));
     }
 
+    public function test_store_uppercases_suffix(): void
+    {
+        $response = $this->actingAs($this->user)->post(route('vehicle-models.store'), [
+            'name'   => 'Rush',
+            'brand'  => 'Toyota',
+            'suffix' => 'sd12',
+        ]);
+
+        $this->assertDatabaseHas('vehicle_models', [
+            'name'   => 'Rush',
+            'brand'  => 'Toyota',
+            'suffix' => 'SD12',
+        ]);
+        $response->assertRedirect(route('vehicle-models.index'));
+    }
+
+    public function test_update_uppercases_suffix(): void
+    {
+        $model = VehicleModel::factory()->create(['name' => 'Fortuner', 'brand' => 'Toyota', 'suffix' => 'VRZ']);
+
+        $response = $this->actingAs($this->user)->put(route('vehicle-models.update', $model), [
+            'name'   => 'Fortuner',
+            'brand'  => 'Toyota',
+            'suffix' => 'asRT2a',
+        ]);
+
+        $this->assertDatabaseHas('vehicle_models', ['id' => $model->id, 'suffix' => 'ASRT2A']);
+        $response->assertRedirect(route('vehicle-models.index'));
+    }
+
     public function test_update_modifies_suffix(): void
     {
         $model = VehicleModel::factory()->create(['name' => 'Fortuner', 'brand' => 'Toyota', 'suffix' => 'VRZ']);

@@ -66,7 +66,7 @@ export default function Index({ menuItems, permissions, parentMenus }: any) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Menu Management" />
             <PageBreadcrumb pageTitle="Menu Management" />
 
@@ -198,6 +198,8 @@ export default function Index({ menuItems, permissions, parentMenus }: any) {
                     </ComponentCard>
                 </div>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

@@ -21,7 +21,7 @@ export default function Index({ products, categories, suppliers, filters }: any)
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Produk" />
             <PageBreadcrumb pageTitle="Produk" />
 
@@ -103,7 +103,6 @@ export default function Index({ products, categories, suppliers, filters }: any)
                         { key: 'kategori', label: 'Kategori', required: true },
                         { key: 'unit', label: 'Satuan', required: true },
                         { key: 'description', label: 'Deskripsi', required: false },
-                        { key: 'base_price', label: 'Harga Dasar', required: false },
                         { key: 'is_active', label: 'Aktif', required: false },
                         { key: 'default_rack', label: 'Rak Default', required: false },
                     ]}
@@ -127,7 +126,6 @@ export default function Index({ products, categories, suppliers, filters }: any)
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Model Kendaraan</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Supplier</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Kategori</th>
-                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Harga</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider w-24">Aksi</th>
                             </tr>
                         </thead>
@@ -143,9 +141,6 @@ export default function Index({ products, categories, suppliers, filters }: any)
                                     </td>
                                     <td className="px-4 py-3 whitespace-nowrap text-[13px] text-[#6C757D]">{product.supplier?.name || '-'}</td>
                                     <td className="px-4 py-3 whitespace-nowrap text-[13px] text-[#6C757D]">{product.category?.name || '-'}</td>
-                                    <td className="px-4 py-3 whitespace-nowrap text-[13px] text-[#6C757D]">
-                                        {product.base_price ? `Rp ${Number(product.base_price).toLocaleString('id-ID')}` : '-'}
-                                    </td>
                                     <td className="px-4 py-3 whitespace-nowrap text-sm text-[#1A1D23]">
                                         <TableActions
                                             viewRoute={route('products.show', product.id)}
@@ -181,6 +176,8 @@ export default function Index({ products, categories, suppliers, filters }: any)
                     </div>
                 )}
             </ComponentCard>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

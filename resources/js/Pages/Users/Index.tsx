@@ -62,7 +62,7 @@ export default function Index({ users, roles }: any) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="User Management" />
             <PageBreadcrumb pageTitle="User Management" />
 
@@ -194,6 +194,8 @@ export default function Index({ users, roles }: any) {
                     </ComponentCard>
                 </div>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

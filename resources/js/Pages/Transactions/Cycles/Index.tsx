@@ -22,7 +22,7 @@ export default function Index({ cycles, suppliers, filters }: any) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Cycle" />
             <PageBreadcrumb pageTitle="Cycle" />
             <ComponentCard title="Daftar Cycle">
@@ -144,6 +144,8 @@ export default function Index({ cycles, suppliers, filters }: any) {
                     </div>
                 )}
             </ComponentCard>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

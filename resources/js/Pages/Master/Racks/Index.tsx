@@ -20,7 +20,7 @@ export default function Index({ racks, filters }: any) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Rak" />
             <PageBreadcrumb pageTitle="Rak" />
             <ComponentCard title="Daftar Rak">
@@ -102,6 +102,8 @@ export default function Index({ racks, filters }: any) {
                     </div>
                 )}
             </ComponentCard>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

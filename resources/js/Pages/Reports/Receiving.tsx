@@ -7,6 +7,8 @@ import Button from '../../Tailadmin/components/ui/button/Button';
 import Input from '../../Tailadmin/components/form/input/InputField';
 import SearchableSelect from '../../Tailadmin/components/form/select/SearchableSelect';
 import EmptyState from '../../Tailadmin/components/common/EmptyState';
+import MetricCard from '../Dashboard/MetricCard';
+import { ListIcon, ArrowDownIcon, BoxCubeIcon } from '../../Tailadmin/icons';
 
 export default function Receiving({ items, summary, filters, suppliers }: any) {
     const updateFilter = (key: string, value: string) => {
@@ -25,20 +27,32 @@ export default function Receiving({ items, summary, filters, suppliers }: any) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Receiving Report" />
             <PageBreadcrumb pageTitle="Receiving Report" />
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-6">
-                <ComponentCard title="Total Transaksi">
-                    <div className="text-3xl font-semibold">{summary.total_transactions}</div>
-                </ComponentCard>
-                <ComponentCard title="Total Qty Diterima">
-                    <div className="text-3xl font-semibold">{summary.total_quantity}</div>
-                </ComponentCard>
-                <ComponentCard title="Produk Unik">
-                    <div className="text-3xl font-semibold">{summary.unique_products}</div>
-                </ComponentCard>
+                <MetricCard
+                    title="Total Transaksi"
+                    value={summary.total_transactions.toLocaleString()}
+                    icon={<ListIcon className="text-brand-500" />}
+                    accentBar="bg-brand-500"
+                    iconBg="bg-brand-50 dark:bg-brand-500/20"
+                />
+                <MetricCard
+                    title="Total Qty Diterima"
+                    value={summary.total_quantity.toLocaleString()}
+                    icon={<ArrowDownIcon className="text-success-500" />}
+                    accentBar="bg-success-500"
+                    iconBg="bg-success-50 dark:bg-success-500/20"
+                />
+                <MetricCard
+                    title="Produk Unik"
+                    value={summary.unique_products.toLocaleString()}
+                    icon={<BoxCubeIcon className="text-warning-500" />}
+                    accentBar="bg-warning-500"
+                    iconBg="bg-warning-50 dark:bg-warning-500/20"
+                />
             </div>
 
             <ComponentCard title="Detail Transaksi Receiving">
@@ -136,6 +150,8 @@ export default function Receiving({ items, summary, filters, suppliers }: any) {
                     </div>
                 )}
             </ComponentCard>
-        </AppLayout>
+        </>
     );
 }
+
+Receiving.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

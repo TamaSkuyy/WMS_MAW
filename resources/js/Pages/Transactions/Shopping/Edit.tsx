@@ -139,7 +139,7 @@ export default function Edit({ shopping, products, racks, vehicleModels }: any) 
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Edit Shopping" />
             <PageBreadcrumb pageTitle={`Edit: ${shopping.partner_name}`} />
 
@@ -300,6 +300,8 @@ export default function Edit({ shopping, products, racks, vehicleModels }: any) 
                 onClose={() => setScannerOpen(false)}
                 onScan={handleScan}
             />
-        </AppLayout>
+        </>
     );
 }
+
+Edit.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

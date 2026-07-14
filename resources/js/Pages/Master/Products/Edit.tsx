@@ -19,7 +19,6 @@ export default function Edit({ product, vehicleModels, categories, suppliers, ra
         category_id: product.category_id || '',
         unit: product.unit || 'pcs',
         description: product.description || '',
-        base_price: product.base_price || '',
         is_active: product.is_active,
         default_rack_id: product.default_rack_id ? String(product.default_rack_id) : '',
     });
@@ -30,7 +29,7 @@ export default function Edit({ product, vehicleModels, categories, suppliers, ra
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Edit Produk - ${product.part_number}`} />
             <PageBreadcrumb pageTitle={`Edit: ${product.part_number}`} />
 
@@ -104,12 +103,6 @@ export default function Edit({ product, vehicleModels, categories, suppliers, ra
                         </div>
 
                         <div>
-                            <Label>Harga Dasar (Rp)</Label>
-                            <Input type="number" value={data.base_price} onChange={(e) => setData('base_price', e.target.value)} />
-                            {errors.base_price && <p className="mt-1 text-sm text-red-500">{errors.base_price}</p>}
-                        </div>
-
-                        <div>
                             <Label>Rack Default</Label>
                             <SearchableSelect
                                 options={[
@@ -140,6 +133,8 @@ export default function Edit({ product, vehicleModels, categories, suppliers, ra
                     </form>
                 </ComponentCard>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Edit.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

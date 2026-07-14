@@ -39,7 +39,7 @@ export default function Edit({ cycle, suppliers, products }: any) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Edit Cycle #${cycle.cycle_number}`} />
             <PageBreadcrumb pageTitle={`Edit: Cycle #${cycle.cycle_number}`} />
 
@@ -99,6 +99,8 @@ export default function Edit({ cycle, suppliers, products }: any) {
                     <Button type="button" variant="outline" onClick={() => window.history.back()}>Batal</Button>
                 </div>
             </form>
-        </AppLayout>
+        </>
     );
 }
+
+Edit.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

@@ -23,7 +23,6 @@ class ProductFactory extends Factory
             'category_id' => fn () => ProductCategory::inRandomOrder()->value('id') ?? ProductCategory::factory(),
             'unit' => $this->faker->randomElement(['pcs', 'set', 'box', 'unit']),
             'description' => $this->faker->optional()->sentence(),
-            'base_price' => $this->faker->optional()->randomFloat(2, 5000, 5000000),
             'is_active' => true,
             'default_rack_id' => null,
         ];

@@ -26,7 +26,7 @@ export default function Show({ shopping }: any) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Pengiriman ke ${shopping.partner_name}`} />
             <PageBreadcrumb pageTitle={`Detail: ${shopping.partner_name}`} />
 
@@ -79,6 +79,8 @@ export default function Show({ shopping }: any) {
                     </ComponentCard>
                 </div>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Show.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

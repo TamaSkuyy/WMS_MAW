@@ -20,7 +20,7 @@ export default function Index({ shifts, filters }: any) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Shift" />
             <PageBreadcrumb pageTitle="Shift" />
             <ComponentCard title="Daftar Shift">
@@ -110,6 +110,8 @@ export default function Index({ shifts, filters }: any) {
                     </div>
                 )}
             </ComponentCard>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

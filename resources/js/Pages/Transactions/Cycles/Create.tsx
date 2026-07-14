@@ -42,7 +42,7 @@ export default function Create({ suppliers, products }: any) {
     };
 
     return (
-        <AppLayout>
+        <>
             <Head title="Cycle Baru" />
             <PageBreadcrumb pageTitle="Tambah Cycle" />
 
@@ -127,6 +127,8 @@ export default function Create({ suppliers, products }: any) {
                     <Button type="button" variant="outline" onClick={() => window.history.back()}>Batal</Button>
                 </div>
             </form>
-        </AppLayout>
+        </>
     );
 }
+
+Create.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

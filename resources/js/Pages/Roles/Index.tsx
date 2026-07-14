@@ -72,7 +72,7 @@ export default function Index({ roles, permissions }: any) {
     const isSuperAdmin = isEditing && data.name === 'Super Admin';
 
     return (
-        <AppLayout>
+        <>
             <Head title="Role Management" />
             <PageBreadcrumb pageTitle="Role Management" />
 
@@ -182,6 +182,8 @@ export default function Index({ roles, permissions }: any) {
                     </ComponentCard>
                 </div>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Index.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

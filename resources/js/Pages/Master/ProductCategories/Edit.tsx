@@ -10,7 +10,7 @@ import Label from '../../../Tailadmin/components/form/Label';
 export default function Edit({ category }: any) {
     const { data, setData, put, errors } = useForm({ name: category.name, description: category.description || '' });
     return (
-        <AppLayout>
+        <>
             <Head title={`Edit Kategori - ${category.name}`} />
             <PageBreadcrumb pageTitle={`Edit: ${category.name}`} />
             <ComponentCard title="Edit Kategori">
@@ -31,6 +31,8 @@ export default function Edit({ category }: any) {
                     </div>
                 </form>
             </ComponentCard>
-        </AppLayout>
+        </>
     );
 }
+
+Edit.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

@@ -25,7 +25,7 @@ export default function Edit({ shift }: any) {
     ];
 
     return (
-        <AppLayout>
+        <>
             <Head title={`Edit Shift - ${shift.name}`} />
             <PageBreadcrumb pageTitle={`Edit: ${shift.name}`} />
 
@@ -73,6 +73,8 @@ export default function Edit({ shift }: any) {
                     </form>
                 </ComponentCard>
             </div>
-        </AppLayout>
+        </>
     );
 }
+
+Edit.layout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;
