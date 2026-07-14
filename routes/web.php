@@ -31,6 +31,7 @@ Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'inde
     ->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/tv-dashboard', [App\Http\Controllers\TvDashboardController::class, 'index'])->name('tv-dashboard');
+Route::get('/delivery-monitor', [App\Http\Controllers\DeliveryMonitorController::class, 'index'])->name('delivery-monitor');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
