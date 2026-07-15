@@ -75,17 +75,18 @@ class CycleControllerTest extends TestCase
 
     public function test_update_modifies_draft_cycle(): void
     {
-        $cycle = Cycle::factory()->create(['status' => 'draft']);
+        $cycle = Cycle::factory()->create(['status' => 'draft', 'cycle_number' => 3]);
         $product = Product::factory()->create();
 
         $data = [
             'supplier_id' => $cycle->supplier_id,
-            'cycle_number' => 5,
+            'notes' => 'Updated notes',
             'items' => [['product_id' => $product->id, 'quantity' => 20]],
         ];
 
         $response = $this->actingAs($this->user)->put(route('cycles.update', $cycle), $data);
-        $this->assertDatabaseHas('cycles', ['id' => $cycle->id, 'cycle_number' => 5]);
+        // cycle_number is server-assigned and never editable, so it stays unchanged.
+        $this->assertDatabaseHas('cycles', ['id' => $cycle->id, 'cycle_number' => 3, 'notes' => 'Updated notes']);
         $response->assertRedirect();
     }
 
@@ -131,7 +132,7 @@ class CycleControllerTest extends TestCase
     public function test_store_validates_required_fields(): void
     {
         $response = $this->actingAs($this->user)->post(route('cycles.store'), []);
-        $response->assertSessionHasErrors(['supplier_id', 'cycle_number', 'items']);
+        $response->assertSessionHasErrors(['supplier_id', 'items']);
     }
 
     public function test_receive_saves_rack_id_to_cycle_item(): void
@@ -229,6 +230,40 @@ class CycleControllerTest extends TestCase
         $response->assertSessionHasErrors(['supplier_id', 'items']);
     }
 
+    public function test_store_auto_generates_sequential_cycle_number(): void
+    {
+        $supplier = Supplier::factory()->create();
+        $product = Product::factory()->create();
+
+        $data = [
+            'supplier_id' => $supplier->id,
+            'items' => [['product_id' => $product->id, 'quantity' => 10]],
+        ];
+
+        $this->actingAs($this->user)->post(route('cycles.store'), $data);
+        $this->actingAs($this->user)->post(route('cycles.store'), $data);
+
+        $cycleNumbers = Cycle::where('supplier_id', $supplier->id)->orderBy('cycle_number')->pluck('cycle_number')->all();
+        $this->assertSame([1, 2], $cycleNumbers);
+    }
+
+    public function test_store_ignores_client_supplied_cycle_number(): void
+    {
+        $supplier = Supplier::factory()->create();
+        $product = Product::factory()->create();
+
+        $data = [
+            'supplier_id' => $supplier->id,
+            'cycle_number' => 999,
+            'items' => [['product_id' => $product->id, 'quantity' => 10]],
+        ];
+
+        $this->actingAs($this->user)->post(route('cycles.store'), $data);
+
+        $this->assertDatabaseHas('cycles', ['supplier_id' => $supplier->id, 'cycle_number' => 1]);
+        $this->assertDatabaseMissing('cycles', ['supplier_id' => $supplier->id, 'cycle_number' => 999]);
+    }
+
     public function test_store_merges_duplicate_product_items(): void
     {
         $supplier = Supplier::factory()->create();
@@ -236,7 +271,6 @@ class CycleControllerTest extends TestCase
 
         $data = [
             'supplier_id' => $supplier->id,
-            'cycle_number' => 1,
             'items' => [
                 ['product_id' => $product->id, 'quantity' => 10],
                 ['product_id' => $product->id, 'quantity' => 5],

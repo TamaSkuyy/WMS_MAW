@@ -13,7 +13,6 @@ import { Link } from '@inertiajs/react';
 export default function Create({ suppliers, products }: any) {
     const { data, setData, post, errors, processing } = useForm({
         supplier_id: '',
-        cycle_number: '',
         notes: '',
         items: [] as { product_id: string; quantity: number }[],
     });
@@ -62,11 +61,6 @@ export default function Create({ suppliers, products }: any) {
                                 <Label>Supplier *</Label>
                                 <SearchableSelect options={suppliers.map((s: any) => ({ value: s.id, label: s.name }))} value={data.supplier_id} onChange={(v) => setData('supplier_id', v as string)} />
                                 {errors.supplier_id && <p className="mt-1 text-sm text-red-500">{errors.supplier_id}</p>}
-                            </div>
-                            <div>
-                                <Label>Cycle Number *</Label>
-                                <Input type="number" value={data.cycle_number} onChange={(e) => setData('cycle_number', e.target.value)} placeholder="contoh: 1" />
-                                {errors.cycle_number && <p className="mt-1 text-sm text-red-500">{errors.cycle_number}</p>}
                             </div>
                             <div>
                                 <Label>Catatan</Label>

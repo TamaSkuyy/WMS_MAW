@@ -58,7 +58,6 @@ class CycleController extends Controller
     {
         $validated = $request->validate([
             'supplier_id' => 'required|exists:suppliers,id',
-            'cycle_number' => 'required|integer|min:1',
             'notes' => 'nullable|string|max:500',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
@@ -67,10 +66,13 @@ class CycleController extends Controller
         $validated['items'] = $this->mergeDuplicateItems($validated['items']);
 
         $slot = DeliverySlot::currentForTime(now());
+        // Auto-assigned, never client-supplied — avoids duplicate-key errors
+        // from users guessing/reusing a cycle_number for the same supplier.
+        $cycleNumber = (Cycle::where('supplier_id', $validated['supplier_id'])->max('cycle_number') ?? 0) + 1;
 
         $cycle = Cycle::create([
             'supplier_id' => $validated['supplier_id'],
-            'cycle_number' => $validated['cycle_number'],
+            'cycle_number' => $cycleNumber,
             'status' => 'draft',
             'notes' => $validated['notes'] ?? null,
             'delivery_date' => now()->toDateString(),
@@ -127,7 +129,6 @@ class CycleController extends Controller
 
         $validated = $request->validate([
             'supplier_id' => 'required|exists:suppliers,id',
-            'cycle_number' => 'required|integer|min:1',
             'notes' => 'nullable|string|max:500',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
@@ -135,9 +136,11 @@ class CycleController extends Controller
         ]);
         $validated['items'] = $this->mergeDuplicateItems($validated['items']);
 
+        // cycle_number is server-assigned at creation and never editable —
+        // changing it here would risk colliding with another cycle's number
+        // for the same supplier.
         $cycle->update([
             'supplier_id' => $validated['supplier_id'],
-            'cycle_number' => $validated['cycle_number'],
             'notes' => $validated['notes'] ?? null,
         ]);
 

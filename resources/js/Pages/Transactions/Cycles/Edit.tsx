@@ -13,7 +13,6 @@ import { Link } from '@inertiajs/react';
 export default function Edit({ cycle, suppliers, products }: any) {
     const { data, setData, put, errors, processing } = useForm({
         supplier_id: cycle.supplier_id || '',
-        cycle_number: cycle.cycle_number || '',
         notes: cycle.notes || '',
         items: cycle.items.map((i: any) => ({ product_id: String(i.product_id), quantity: i.quantity })),
     });
@@ -60,8 +59,8 @@ export default function Edit({ cycle, suppliers, products }: any) {
                                 <SearchableSelect options={suppliers.map((s: any) => ({ value: s.id, label: s.name }))} value={data.supplier_id} onChange={(v) => setData('supplier_id', v as string)} />
                             </div>
                             <div>
-                                <Label>Cycle Number *</Label>
-                                <Input type="number" value={data.cycle_number} onChange={(e) => setData('cycle_number', e.target.value)} />
+                                <Label>Cycle Number</Label>
+                                <Input type="number" value={cycle.cycle_number} disabled />
                             </div>
                             <div>
                                 <Label>Catatan</Label>
