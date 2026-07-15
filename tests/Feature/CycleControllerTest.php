@@ -372,7 +372,7 @@ class CycleControllerTest extends TestCase
             ]],
         ]);
 
-        Event::assertDispatched(StockChanged::class);
+        Event::assertDispatched(StockChanged::class, fn (StockChanged $event) => $event->supplierId === $cycle->supplier_id);
     }
 
     public function test_receive_does_not_dispatch_stock_changed_event_when_rejected(): void
@@ -403,7 +403,7 @@ class CycleControllerTest extends TestCase
             ],
         ]);
 
-        Event::assertDispatched(StockChanged::class);
+        Event::assertDispatched(StockChanged::class, fn (StockChanged $event) => $event->supplierId === $supplier->id);
     }
 
     public function test_store_sets_delivery_date_and_slot_from_current_time(): void

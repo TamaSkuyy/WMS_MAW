@@ -3,6 +3,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { Part, PartCycleReceipt, Supplier } from '../types';
 import { SlotWindow } from '../utils/scheduling';
 import { getStatusColor } from '../utils/statusColor';
+import { useAutoScroll } from '../utils/useAutoScroll';
 
 interface PartsTableProps {
     parts: Part[];
@@ -26,6 +27,15 @@ const STATUS_TABS: { value: StatusFilter; label: string }[] = [
 const GRID_TEMPLATE = '56px 130px 190px minmax(160px,1fr) 130px repeat(6, 96px) 140px';
 const ROW_HEIGHT = 56;
 
+// Mirrors the backend's computeReceiptStatus() — used to re-derive a cell's
+// status after summing multiple same-slot receipts together.
+function deriveReceiptStatus(planQty: number, receivedQty: number): PartCycleReceipt['status'] {
+    if (receivedQty === 0 && planQty > 0) return 'pending';
+    if (receivedQty < planQty) return 'shortage';
+    if (receivedQty > planQty) return 'over';
+    return 'matched';
+}
+
 export default function PartsTable({ parts, receipts, suppliers, slots, onResetReceipts }: PartsTableProps) {
     const [search, setSearch] = useState('');
     const [category, setCategory] = useState('');
@@ -45,10 +55,26 @@ export default function PartsTable({ parts, receipts, suppliers, slots, onResetR
     }, [receipts]);
 
     // One aggregate pass per part: per-cycle receipt lookup + total actual/plan + derived status.
+    // A supplier can have more than one real cycle in the same slot on the
+    // same day, so multiple receipts can share a cycleNumber for one part —
+    // those are summed per cell rather than letting one silently overwrite
+    // the other.
     const rows = useMemo(() => {
         return parts.map((part) => {
             const partReceipts = receiptsByPart.get(part.id) ?? [];
-            const byCycle = new Map(partReceipts.map((r) => [r.cycleNumber, r]));
+
+            const byCycle = new Map<number, { planQty: number; receivedQty: number; status: PartCycleReceipt['status'] }>();
+            for (const r of partReceipts) {
+                const existing = byCycle.get(r.cycleNumber);
+                if (existing) {
+                    existing.planQty += r.planQty;
+                    existing.receivedQty += r.receivedQty;
+                    existing.status = deriveReceiptStatus(existing.planQty, existing.receivedQty);
+                } else {
+                    byCycle.set(r.cycleNumber, { planQty: r.planQty, receivedQty: r.receivedQty, status: r.status });
+                }
+            }
+
             const totalPlan = partReceipts.reduce((sum, r) => sum + r.planQty, 0);
             const totalActual = partReceipts.reduce((sum, r) => sum + r.receivedQty, 0);
             const hasSchedule = partReceipts.length > 0;
@@ -86,6 +112,11 @@ export default function PartsTable({ parts, receipts, suppliers, slots, onResetR
         estimateSize: () => ROW_HEIGHT,
         overscan: 12,
     });
+
+    // Slowly auto-scroll through the (potentially huge) part list so
+    // everything cycles into view on an unattended TV, without needing
+    // anyone to scroll manually.
+    useAutoScroll(parentRef);
 
     return (
         <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">

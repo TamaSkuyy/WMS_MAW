@@ -48,6 +48,11 @@ export default function Index({ suppliers, slots, cycles, parts, receipts: initi
     const [tvMode, setTvMode] = useState(false);
     const [rotate, setRotate] = useState(false);
 
+    // Bumped whenever a live receive auto-focuses a supplier, so the rotate
+    // interval below restarts from zero instead of switching away again
+    // within moments of the auto-focus.
+    const [rotateResetSignal, setRotateResetSignal] = useState(0);
+
     useEffect(() => {
         if (!tvMode || !rotate || suppliers.length === 0) return;
 
@@ -60,19 +65,27 @@ export default function Index({ suppliers, slots, cycles, parts, receipts: initi
         }, ROTATE_INTERVAL_MS);
 
         return () => clearInterval(interval);
-    }, [tvMode, rotate, suppliers]);
+    }, [tvMode, rotate, suppliers, rotateResetSignal]);
 
     // Live updates: every receiving (manual or QR quick-receive) broadcasts
     // StockChanged on the public 'warehouse.stock' channel (same signal the
     // other TV dashboard listens to). Reload just the data props so suppliers,
     // cycles, parts and receipts stay current without a manual page refresh.
+    // If the event carries a supplierId (always true for receiving, never for
+    // Shopping's stock changes), focus that supplier and reset the rotate
+    // timer so staff watching the TV notice the new activity immediately.
     useEffect(() => {
         const Echo = (window as any).Echo;
         if (!Echo) return;
 
         const channel = Echo.channel('warehouse.stock');
-        channel.listen('.StockChanged', () => {
+        channel.listen('.StockChanged', (event: { supplierId?: number | null }) => {
             router.reload({ only: ['suppliers', 'cycles', 'parts', 'receipts'], preserveState: true, preserveScroll: true });
+
+            if (event?.supplierId) {
+                setSelectedSupplierId(event.supplierId);
+                setRotateResetSignal((n) => n + 1);
+            }
         });
 
         return () => {

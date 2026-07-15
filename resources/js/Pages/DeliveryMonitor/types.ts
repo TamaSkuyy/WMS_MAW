@@ -26,6 +26,9 @@ export interface Part {
 }
 
 export interface PartCycleReceipt {
+    id: number; // unique per receipt row (the underlying CycleItem id) — a
+    // supplier can have multiple real cycles in the same slot on the same
+    // day, so partId+cycleNumber alone is not guaranteed unique.
     partId: number;
     cycleNumber: number; // 1-6
     planQty: number;

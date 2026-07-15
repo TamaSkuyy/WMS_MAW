@@ -230,7 +230,7 @@ class CycleController extends Controller
             return back()->with('error', 'Cannot receive this cycle.');
         }
 
-        event(new StockChanged());
+        event(new StockChanged(supplierId: $cycle->supplier_id));
 
         return redirect()->route('cycles.show', $cycle)->with('success', 'Cycle completed. Stock updated.');
     }
@@ -296,7 +296,7 @@ class CycleController extends Controller
             return $cycle;
         });
 
-        event(new StockChanged());
+        event(new StockChanged(supplierId: $cycle->supplier_id));
 
         return redirect()->route('cycles.show', $cycle)->with('success', 'Barang diterima. Stock diperbarui.');
     }

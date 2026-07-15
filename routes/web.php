@@ -33,6 +33,7 @@ Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'inde
 
 Route::get('/tv-dashboard', [App\Http\Controllers\TvDashboardController::class, 'index'])->name('tv-dashboard');
 Route::get('/delivery-monitor', [App\Http\Controllers\DeliveryMonitorController::class, 'index'])->name('delivery-monitor');
+Route::get('/delivery-monitor/suppliers/{supplier}/ledger', [App\Http\Controllers\DeliveryMonitorController::class, 'ledger'])->name('delivery-monitor.ledger');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
