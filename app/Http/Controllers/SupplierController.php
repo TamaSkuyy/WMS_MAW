@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\HasImportExport;
+use App\Models\DeliverySlot;
 use App\Models\Supplier;
 use App\Services\ImportExport\Base\BaseExporter;
 use App\Services\ImportExport\Base\BaseImporter;
@@ -113,6 +114,8 @@ class SupplierController extends Controller
     {
         return Inertia::render('Master/Suppliers/Edit', [
             'supplier' => $supplier->load('primaryAddress'),
+            'deliverySlots' => DeliverySlot::orderBy('slot_number')->get(['id', 'slot_number', 'time_start', 'time_end', 'label']),
+            'scheduledSlotIds' => $supplier->scheduledSlots()->pluck('delivery_slots.id'),
         ]);
     }
 
@@ -131,6 +134,8 @@ class SupplierController extends Controller
             'state' => 'required|string|max:100',
             'postal_code' => 'required|string|max:20',
             'country' => 'required|string|max:100',
+            'delivery_slot_ids' => 'nullable|array',
+            'delivery_slot_ids.*' => 'exists:delivery_slots,id',
         ]);
 
         $supplier->update([
@@ -159,6 +164,8 @@ class SupplierController extends Controller
                 'address_type' => 'primary',
             ]);
         }
+
+        $supplier->scheduledSlots()->sync($validated['delivery_slot_ids'] ?? []);
 
         return redirect()->route('suppliers.show', $supplier)
                        ->with('success', 'Supplier updated successfully.');

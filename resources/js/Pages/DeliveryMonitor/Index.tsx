@@ -4,26 +4,30 @@ import Header from './components/Header';
 import SupplierGrid from './components/SupplierGrid';
 import SupplierDetailPanel from './components/SupplierDetailPanel';
 import PartsTable from './components/PartsTable';
-import { generateMockData, getCurrentCycleNumber, calculateOtifPercent } from './utils/mockData';
+import { getCurrentCycleNumber, SlotWindow } from './utils/scheduling';
+import { calculateOtifPercent } from './utils/otif';
 import { useClock } from './utils/useClock';
-import { PartCycleReceipt } from './types';
+import { Supplier, DeliveryCycle, Part, PartCycleReceipt } from './types';
 
 const ROTATE_INTERVAL_MS = 8000;
 
-function todayIso(): string {
-    return new Date().toISOString().split('T')[0];
+interface IndexProps {
+    suppliers: Supplier[];
+    slots: SlotWindow[];
+    cycles: DeliveryCycle[];
+    parts: Part[];
+    receipts: PartCycleReceipt[];
+    selectedDate: string;
 }
 
-export default function Index() {
-    const mockData = useMemo(() => generateMockData(), []);
-    const { suppliers, cycles, parts } = mockData;
+export default function Index({ suppliers, slots, cycles, parts, receipts: initialReceipts, selectedDate }: IndexProps) {
     const clock = useClock();
-    const currentCycleNumber = getCurrentCycleNumber(clock);
+    const currentCycleNumber = getCurrentCycleNumber(clock, slots);
 
-    // Receipts are mutable state (not a plain const from mockData) so "Reset Receipts"
-    // in PartsTable can update them and have every dependent view (OTIF badge, detail
-    // panel, table) recompute live.
-    const [receipts, setReceipts] = useState<PartCycleReceipt[]>(mockData.receipts);
+    // Receipts are mutable state (not the raw prop) so "Reset Receipts" in
+    // PartsTable can update them and have every dependent view (OTIF badge,
+    // detail panel, table) recompute live without a server round-trip.
+    const [receipts, setReceipts] = useState<PartCycleReceipt[]>(initialReceipts);
     const todayOtifPercent = useMemo(() => calculateOtifPercent(receipts), [receipts]);
 
     const handleResetReceipts = () => {
@@ -32,11 +36,10 @@ export default function Index() {
 
     const [selectedSupplierId, setSelectedSupplierId] = useState<number | null>(suppliers[0]?.id ?? null);
     const focusedSupplier = suppliers.find((s) => s.id === selectedSupplierId);
-    const [selectedDate, setSelectedDate] = useState<string>(todayIso());
+    const [selectedDateState, setSelectedDateState] = useState<string>(selectedDate);
     const [tvMode, setTvMode] = useState(false);
     const [rotate, setRotate] = useState(false);
 
-    // Auto-rotate the focused supplier while TV mode + rotate are both on.
     useEffect(() => {
         if (!tvMode || !rotate || suppliers.length === 0) return;
 
@@ -55,9 +58,7 @@ export default function Index() {
         setTvMode((current) => {
             const next = !current;
             if (next && document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen().catch(() => {
-                    // Fullscreen can be rejected by the browser (no user gesture, permissions policy, etc.) — non-fatal.
-                });
+                document.documentElement.requestFullscreen().catch(() => {});
             } else if (!next && document.fullscreenElement && document.exitFullscreen) {
                 document.exitFullscreen().catch(() => {});
             }
@@ -72,8 +73,8 @@ export default function Index() {
                 suppliers={suppliers}
                 selectedSupplierId={selectedSupplierId}
                 onSelectSupplier={setSelectedSupplierId}
-                selectedDate={selectedDate}
-                onSelectDate={setSelectedDate}
+                selectedDate={selectedDateState}
+                onSelectDate={setSelectedDateState}
                 tvMode={tvMode}
                 onToggleTvMode={handleToggleTvMode}
                 rotate={rotate}
@@ -101,6 +102,7 @@ export default function Index() {
                     parts={parts}
                     receipts={receipts}
                     suppliers={suppliers}
+                    slots={slots}
                     onResetReceipts={handleResetReceipts}
                 />
             </div>

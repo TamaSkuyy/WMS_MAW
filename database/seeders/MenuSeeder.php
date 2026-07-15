@@ -123,6 +123,15 @@ class MenuSeeder extends Seeder
             'group' => 'main',
         ]);
 
+        Menu::create([
+            'name' => 'Jadwal Slot Pengiriman',
+            'icon' => 'TimeIcon',
+            'path' => '/delivery-slots',
+            'parent_id' => $masterData->id,
+            'sort_order' => 11,
+            'group' => 'main',
+        ]);
+
         // === TRANSACTIONS (parent) ===
         $transactions = Menu::create([
             'name' => 'Transactions',

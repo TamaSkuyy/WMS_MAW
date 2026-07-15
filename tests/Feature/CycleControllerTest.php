@@ -371,4 +371,46 @@ class CycleControllerTest extends TestCase
 
         Event::assertDispatched(StockChanged::class);
     }
+
+    public function test_store_sets_delivery_date_and_slot_from_current_time(): void
+    {
+        \Carbon\Carbon::setTestNow('2026-07-15 08:00:00');
+
+        $supplier = Supplier::factory()->create();
+        $product = Product::factory()->create();
+
+        $response = $this->actingAs($this->user)->post(route('cycles.store'), [
+            'supplier_id' => $supplier->id,
+            'cycle_number' => 1,
+            'items' => [['product_id' => $product->id, 'quantity' => 10]],
+        ]);
+
+        $response->assertRedirect();
+        $cycle = Cycle::first();
+        $this->assertSame('2026-07-15', $cycle->delivery_date->toDateString());
+        $this->assertSame(1, $cycle->deliverySlot->slot_number);
+
+        \Carbon\Carbon::setTestNow();
+    }
+
+    public function test_quick_receive_store_sets_delivery_date_and_slot(): void
+    {
+        \Carbon\Carbon::setTestNow('2026-07-15 18:00:00');
+
+        $supplier = Supplier::factory()->create();
+        $product = Product::factory()->create();
+        $rack = Rack::factory()->create();
+
+        $response = $this->actingAs($this->user)->post(route('cycles.quick-receive.store'), [
+            'supplier_id' => $supplier->id,
+            'items' => [['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 5]],
+        ]);
+
+        $response->assertRedirect();
+        $cycle = Cycle::first();
+        $this->assertSame('2026-07-15', $cycle->delivery_date->toDateString());
+        $this->assertSame(6, $cycle->deliverySlot->slot_number);
+
+        \Carbon\Carbon::setTestNow();
+    }
 }

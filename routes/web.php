@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DeliverySlotController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PermissionController;
@@ -114,6 +115,7 @@ Route::middleware('auth')->group(function () {
     Route::get('shifts/export', [ShiftController::class, 'export'])->name('shifts.export');
     Route::get('shifts/import-template', [ShiftController::class, 'importTemplate'])->name('shifts.import-template');
     Route::resource('shifts', ShiftController::class)->except(['show']);
+    Route::resource('delivery-slots', DeliverySlotController::class)->only(['index', 'edit', 'update']);
 
     Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAllRead');
     Route::post('/notifications/{id}/mark-read', [NotificationController::class, 'markAsRead'])->name('notifications.markRead');

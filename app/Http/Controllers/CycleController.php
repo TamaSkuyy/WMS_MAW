@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Events\StockChanged;
 use App\Models\Cycle;
 use App\Models\CycleItem;
+use App\Models\DeliverySlot;
 use App\Models\Product;
 use App\Models\Rack;
 use App\Models\Stock;
@@ -65,11 +66,15 @@ class CycleController extends Controller
         ]);
         $validated['items'] = $this->mergeDuplicateItems($validated['items']);
 
+        $slot = DeliverySlot::currentForTime(now());
+
         $cycle = Cycle::create([
             'supplier_id' => $validated['supplier_id'],
             'cycle_number' => $validated['cycle_number'],
             'status' => 'draft',
             'notes' => $validated['notes'] ?? null,
+            'delivery_date' => now()->toDateString(),
+            'delivery_slot_id' => $slot?->id,
         ]);
 
         foreach ($validated['items'] as $item) {
@@ -249,12 +254,15 @@ class CycleController extends Controller
         $cycle = DB::transaction(function () use ($validated) {
             $supplierId  = $validated['supplier_id'];
             $cycleNumber = (Cycle::where('supplier_id', $supplierId)->max('cycle_number') ?? 0) + 1;
+            $slot = DeliverySlot::currentForTime(now());
 
             $cycle = Cycle::create([
                 'supplier_id'  => $supplierId,
                 'cycle_number' => $cycleNumber,
                 'status'       => 'completed',
                 'received_at'  => now(),
+                'delivery_date' => now()->toDateString(),
+                'delivery_slot_id' => $slot?->id,
             ]);
 
             foreach ($validated['items'] as $item) {

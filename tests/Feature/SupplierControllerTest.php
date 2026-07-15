@@ -243,4 +243,46 @@ class SupplierControllerTest extends TestCase
 
         $response->assertSessionHasErrors(['name', 'email', 'street', 'city', 'state', 'postal_code']);
     }
+
+    public function test_supplier_gets_an_auto_generated_code_on_creation(): void
+    {
+        $supplier = Supplier::factory()->create(['name' => 'PT. ADI JAYA MAKMUR']);
+
+        $this->assertSame('AJM', $supplier->code);
+    }
+
+    public function test_supplier_name_that_collides_on_initials_gets_a_distinct_code(): void
+    {
+        Supplier::factory()->create(['name' => 'PT. ADI JAYA MAKMUR']);
+        $second = Supplier::factory()->create(['name' => 'PT. AGUNG JAYA MULIA']);
+
+        $this->assertSame('AJM1', $second->code);
+    }
+
+    public function test_update_syncs_delivery_slot_schedule(): void
+    {
+        $supplier = Supplier::factory()->create();
+        $supplier->addresses()->create([
+            'street' => 'Jl. Test', 'city' => 'Jakarta', 'state' => 'DKI',
+            'postal_code' => '12345', 'country' => 'Indonesia', 'address_type' => 'primary',
+        ]);
+        $slotOne = \App\Models\DeliverySlot::where('slot_number', 1)->first();
+        $slotFour = \App\Models\DeliverySlot::where('slot_number', 4)->first();
+
+        $response = $this->actingAs($this->user)->put(route('suppliers.update', $supplier), [
+            'name' => $supplier->name,
+            'contact_person' => $supplier->contact_person,
+            'email' => $supplier->email,
+            'phone' => $supplier->phone,
+            'street' => 'Jl. Test', 'city' => 'Jakarta', 'state' => 'DKI',
+            'postal_code' => '12345', 'country' => 'Indonesia',
+            'delivery_slot_ids' => [$slotOne->id, $slotFour->id],
+        ]);
+
+        $response->assertRedirect();
+        $this->assertEqualsCanonicalizing(
+            [1, 4],
+            $supplier->fresh()->scheduledSlots()->pluck('slot_number')->all()
+        );
+    }
 }

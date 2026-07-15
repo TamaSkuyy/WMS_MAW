@@ -9,7 +9,7 @@ import Input from '../../../Tailadmin/components/form/input/InputField';
 import Label from '../../../Tailadmin/components/form/Label';
 import { Link } from '@inertiajs/react';
 
-export default function Edit({ supplier }: any) {
+export default function Edit({ supplier, deliverySlots, scheduledSlotIds }: any) {
     const primaryAddress = supplier.primary_address || {};
 
     const { data, setData, put, errors } = useForm({
@@ -22,7 +22,16 @@ export default function Edit({ supplier }: any) {
         state: primaryAddress.state || '',
         postal_code: primaryAddress.postal_code || '',
         country: primaryAddress.country || 'Indonesia',
+        delivery_slot_ids: (scheduledSlotIds || []) as number[],
     });
+
+    const toggleSlot = (slotId: number) => {
+        setData('delivery_slot_ids',
+            data.delivery_slot_ids.includes(slotId)
+                ? data.delivery_slot_ids.filter((id) => id !== slotId)
+                : [...data.delivery_slot_ids, slotId]
+        );
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -96,6 +105,32 @@ export default function Edit({ supplier }: any) {
                                 <Label>Negara *</Label>
                                 <Input type="text" value={data.country} onChange={(e) => setData('country', e.target.value)} placeholder="Negara" />
                                 {errors.country && <p className="mt-1 text-sm text-red-500">{errors.country}</p>}
+                            </div>
+                        </div>
+
+                        <hr className="border-gray-200 dark:border-gray-700" />
+                        <h3 className="text-lg font-medium">Jadwal Pengiriman (Slot Harian)</h3>
+
+                        <div>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-1">
+                                {(deliverySlots || []).map((slot: any) => (
+                                    <label
+                                        key={slot.id}
+                                        className="flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm cursor-pointer"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={data.delivery_slot_ids.includes(slot.id)}
+                                            onChange={() => toggleSlot(slot.id)}
+                                        />
+                                        <span>
+                                            C{slot.slot_number}
+                                            <span className="block text-xs text-gray-400">
+                                                {slot.time_start.slice(0, 5)}-{slot.time_end.slice(0, 5)}
+                                            </span>
+                                        </span>
+                                    </label>
+                                ))}
                             </div>
                         </div>
 

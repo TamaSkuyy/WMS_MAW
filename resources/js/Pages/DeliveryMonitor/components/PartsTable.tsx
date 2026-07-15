@@ -1,13 +1,14 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Part, PartCycleReceipt, Supplier } from '../types';
-import { CYCLE_WINDOWS } from '../utils/mockData';
+import { SlotWindow } from '../utils/scheduling';
 import { getStatusColor } from '../utils/statusColor';
 
 interface PartsTableProps {
     parts: Part[];
     receipts: PartCycleReceipt[];
     suppliers: Supplier[];
+    slots: SlotWindow[];
     onResetReceipts: () => void;
 }
 
@@ -25,7 +26,7 @@ const STATUS_TABS: { value: StatusFilter; label: string }[] = [
 const GRID_TEMPLATE = '56px 130px 190px minmax(160px,1fr) 130px repeat(6, 96px) 140px';
 const ROW_HEIGHT = 56;
 
-export default function PartsTable({ parts, receipts, suppliers, onResetReceipts }: PartsTableProps) {
+export default function PartsTable({ parts, receipts, suppliers, slots, onResetReceipts }: PartsTableProps) {
     const [search, setSearch] = useState('');
     const [category, setCategory] = useState('');
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -150,7 +151,7 @@ export default function PartsTable({ parts, receipts, suppliers, onResetReceipts
                         <div className="px-2 py-2">Supplier</div>
                         <div className="px-2 py-2">Part Name</div>
                         <div className="px-2 py-2">Category</div>
-                        {CYCLE_WINDOWS.map((w) => (
+                        {slots.map((w) => (
                             <div key={w.cycleNumber} className="px-2 py-2 text-center">
                                 <div>C{w.cycleNumber}</div>
                                 <div className="text-[9px] font-normal normal-case text-gray-400">
@@ -209,7 +210,7 @@ export default function PartsTable({ parts, receipts, suppliers, onResetReceipts
                                                 </span>
                                             </div>
 
-                                            {CYCLE_WINDOWS.map((w) => {
+                                            {slots.map((w) => {
                                                 const receipt = row.byCycle.get(w.cycleNumber);
                                                 if (!receipt) {
                                                     return (
