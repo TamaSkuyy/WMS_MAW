@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import Header from './components/Header';
 import SupplierGrid from './components/SupplierGrid';
 import SupplierDetailPanel from './components/SupplierDetailPanel';
@@ -30,6 +30,14 @@ export default function Index({ suppliers, slots, cycles, parts, receipts: initi
     const [receipts, setReceipts] = useState<PartCycleReceipt[]>(initialReceipts);
     const todayOtifPercent = useMemo(() => calculateOtifPercent(receipts), [receipts]);
 
+    // Re-sync local receipt state whenever the server sends a fresh copy
+    // (e.g. after the StockChanged partial reload below) — a plain useState
+    // initializer only runs once on mount, so without this the view would
+    // keep showing stale receipts after a live update.
+    useEffect(() => {
+        setReceipts(initialReceipts);
+    }, [initialReceipts]);
+
     const handleResetReceipts = () => {
         setReceipts((current) => current.map((r) => ({ ...r, receivedQty: 0, status: 'pending' })));
     };
@@ -53,6 +61,24 @@ export default function Index({ suppliers, slots, cycles, parts, receipts: initi
 
         return () => clearInterval(interval);
     }, [tvMode, rotate, suppliers]);
+
+    // Live updates: every receiving (manual or QR quick-receive) broadcasts
+    // StockChanged on the public 'warehouse.stock' channel (same signal the
+    // other TV dashboard listens to). Reload just the data props so suppliers,
+    // cycles, parts and receipts stay current without a manual page refresh.
+    useEffect(() => {
+        const Echo = (window as any).Echo;
+        if (!Echo) return;
+
+        const channel = Echo.channel('warehouse.stock');
+        channel.listen('.StockChanged', () => {
+            router.reload({ only: ['suppliers', 'cycles', 'parts', 'receipts'], preserveState: true, preserveScroll: true });
+        });
+
+        return () => {
+            Echo.leave('warehouse.stock');
+        };
+    }, []);
 
     const handleToggleTvMode = () => {
         setTvMode((current) => {
