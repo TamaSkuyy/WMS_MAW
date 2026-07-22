@@ -98,7 +98,7 @@ class ImportProductsFromExcel extends Command
                     }
                 }
 
-                $unit = $pcsPerBox > 1 ? "{$pcsPerBox} pcs/box" : 'pcs';
+                $unit = 'pcs';
 
                 if ($this->option('dry-run')) {
                     $status = 'would import';
