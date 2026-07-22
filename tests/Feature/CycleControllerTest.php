@@ -349,6 +349,59 @@ class CycleControllerTest extends TestCase
         ]);
     }
 
+    public function test_receive_stock_delta_prevents_double_counting(): void
+    {
+        // If the receive endpoint is somehow called multiple times for the
+        // same item (e.g. status guard bypassed), the stock should reflect
+        // only the net delta, not accumulate every absolute received_quantity.
+        $rack = Rack::factory()->create();
+        $cycle = Cycle::factory()->create(['status' => 'draft']);
+        $product = Product::factory()->create();
+        $item = CycleItem::factory()->create([
+            'cycle_id' => $cycle->id,
+            'product_id' => $product->id,
+            'quantity' => 10,
+            'received_quantity' => 0,
+        ]);
+
+        // First receive: 8 of 10
+        $this->actingAs($this->user)->post(route('cycles.receive', $cycle), [
+            'items' => [[
+                'id' => $item->id,
+                'received_quantity' => 8,
+                'rack_id' => $rack->id,
+                'notes' => null,
+            ]],
+        ]);
+
+        $this->assertDatabaseHas('stocks', [
+            'product_id' => $product->id,
+            'rack_id' => $rack->id,
+            'quantity' => 8,
+        ]);
+
+        // Simulate status being reset (bypassing the guard) and the same
+        // payload arriving again. With delta logic the stock should stay at
+        // the correct net amount — not jump to 16.
+        $cycle->update(['status' => 'draft']);
+
+        $this->actingAs($this->user)->post(route('cycles.receive', $cycle), [
+            'items' => [[
+                'id' => $item->id,
+                'received_quantity' => 8,
+                'rack_id' => $rack->id,
+                'notes' => null,
+            ]],
+        ]);
+
+        // Still 8, not 16 — delta was 8 - 8 = 0
+        $this->assertDatabaseHas('stocks', [
+            'product_id' => $product->id,
+            'rack_id' => $rack->id,
+            'quantity' => 8,
+        ]);
+    }
+
     public function test_receive_dispatches_stock_changed_event(): void
     {
         Event::fake([StockChanged::class]);

@@ -6,6 +6,7 @@ use App\Models\Cycle;
 use App\Models\Supplier;
 use App\Services\DeliveryMonitor\DeliveryMonitorSnapshotBuilder;
 use Carbon\Carbon;
+use Carbon\Exceptions\InvalidFormatException;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -13,9 +14,7 @@ class DeliveryMonitorController extends Controller
 {
     public function index(Request $request)
     {
-        $date = $request->filled('date')
-            ? Carbon::parse($request->input('date'))
-            : now();
+        $date = $this->resolveDate($request);
 
         $snapshot = (new DeliveryMonitorSnapshotBuilder())->build($date);
 
@@ -47,5 +46,22 @@ class DeliveryMonitorController extends Controller
         ]);
 
         return response()->json($cycles);
+    }
+
+    /**
+     * Resolve the monitoring date from the request, falling back to today
+     * when no date is given or the provided value is unparseable.
+     */
+    private function resolveDate(Request $request): Carbon
+    {
+        if (! $request->filled('date')) {
+            return now();
+        }
+
+        try {
+            return Carbon::parse($request->input('date'));
+        } catch (InvalidFormatException) {
+            return now();
+        }
     }
 }

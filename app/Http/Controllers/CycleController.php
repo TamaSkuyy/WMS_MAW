@@ -193,13 +193,22 @@ class CycleController extends Controller
                 $item = CycleItem::where('id', $itemData['id'])
                     ->where('cycle_id', $lockedCycle->id)
                     ->firstOrFail();
+
+                // Snapshot the old value BEFORE updating so we can compute the
+                // correct stock delta instead of blindly adding the absolute
+                // received_quantity (which would double-count if this method
+                // were ever called multiple times for the same item).
+                $oldReceived = (int) $item->received_quantity;
+
                 $item->update([
                     'received_quantity' => $itemData['received_quantity'],
                     'rack_id' => $itemData['rack_id'],
                     'notes' => $itemData['notes'] ?? null,
                 ]);
 
-                if ($itemData['received_quantity'] > 0) {
+                $delta = $itemData['received_quantity'] - $oldReceived;
+
+                if ($delta !== 0) {
                     $stock = Stock::where('product_id', $item->product_id)
                         ->where('rack_id', $itemData['rack_id'])
                         ->lockForUpdate()
@@ -213,7 +222,7 @@ class CycleController extends Controller
                         ]);
                     }
 
-                    $stock->quantity += $itemData['received_quantity'];
+                    $stock->quantity += $delta;
                     $stock->save();
                 }
             }

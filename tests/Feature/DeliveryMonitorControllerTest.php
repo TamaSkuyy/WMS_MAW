@@ -69,6 +69,21 @@ class DeliveryMonitorControllerTest extends TestCase
         $this->assertSame($older->id, $data[1]['id']);
     }
 
+    public function test_index_falls_back_to_today_when_date_is_garbage(): void
+    {
+        Supplier::factory()->create();
+
+        // Sending an unparseable date string should NOT 500 — it should
+        // silently fall back to today's date.
+        $response = $this->get(route('delivery-monitor', ['date' => 'not-a-date-at-all']));
+
+        $response->assertStatus(200);
+        $response->assertInertia(fn ($page) => $page
+            ->component('DeliveryMonitor/Index')
+            ->where('selectedDate', now()->toDateString())
+        );
+    }
+
     public function test_ledger_only_includes_cycles_for_the_given_supplier(): void
     {
         $supplier = Supplier::factory()->create();
