@@ -90,7 +90,7 @@ const AppHeader: React.FC = () => {
               height={28}
             />
             <span className="text-sm font-bold text-[#0F172A] dark:text-white">
-              MAW
+              Mitra Adhi Wasana
             </span>
           </Link>
 

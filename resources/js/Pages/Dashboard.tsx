@@ -6,7 +6,7 @@ import MetricCard from './Dashboard/MetricCard';
 export default function Dashboard({ metrics, lowStockItems, pendingCycles, todayShoppings }: any) {
     return (
         <>
-            <Head title="Dashboard - MAW Warehouse System" />
+            <Head title="Dashboard - Mitra Adhi Wasana" />
 
             <div className="flex items-center gap-3 mb-6">
                 <div className="w-1 h-8 rounded-full bg-brand-500"></div>
@@ -16,6 +16,34 @@ export default function Dashboard({ metrics, lowStockItems, pendingCycles, today
                         Ringkasan operasional gudang real-time
                     </p>
                 </div>
+            </div>
+
+            {/* Quick Links */}
+            <div className="mb-6">
+                <Link
+                    href={route('delivery-monitor')}
+                    className="group flex items-center gap-4 rounded-2xl border border-brand-100 dark:border-brand-500/20 bg-gradient-to-r from-brand-50 to-white dark:from-brand-500/10 dark:to-gray-900 p-5 hover:shadow-md hover:border-brand-300 dark:hover:border-brand-500/40 transition-all"
+                >
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500 text-white shrink-0 group-hover:scale-110 transition-transform">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6">
+                            <path d="M3.375 4.5C2.339 4.5 1.5 5.34 1.5 6.375V13.5h12V6.375c0-1.036-.84-1.875-1.875-1.875h-8.25ZM13.5 15h-12v2.625c0 1.035.84 1.875 1.875 1.875h.375a3 3 0 1 1 6 0h3a.75.75 0 0 0 .75-.75V15Z" />
+                            <path d="M8.25 19.5a1.5 1.5 0 1 0-3 0 1.5 1.5 0 0 0 3 0ZM15.75 6.75a.75.75 0 0 0-.75.75v11.25c0 .087.015.17.042.248a3 3 0 0 1 5.958.464c.01.096.012.192 0 .288a3 3 0 0 1-5.958.464.75.75 0 0 0-.042-.247V10.5h-1.5a.75.75 0 0 1 0-1.5h1.5V7.5h-1.5a.75.75 0 0 1 0-1.5h1.5V4.5a.75.75 0 0 1 .75-.75h.75a3 3 0 0 1 5.916.498.747.747 0 0 1-.016.252 3 3 0 0 1-5.9.498.75.75 0 0 1-.75-.748V7.5h1.5a.75.75 0 0 1 0 1.5h-1.5v1.5h1.5a.75.75 0 0 1 0 1.5h-1.5v2.25c0 .414.336.75.75.75Z" />
+                        </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-brand-700 dark:text-brand-300">
+                            Delivery Monitor
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                            Pantau jadwal pengiriman supplier, status penerimaan, dan progress real-time
+                        </p>
+                    </div>
+                    <span className="text-brand-400 group-hover:translate-x-1 transition-transform shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5">
+                            <path fillRule="evenodd" d="M3 10a.75.75 0 0 1 .75-.75h10.638L10.23 5.29a.75.75 0 1 1 1.04-1.08l5.5 5.25a.75.75 0 0 1 0 1.08l-5.5 5.25a.75.75 0 1 1-1.04-1.08l4.158-3.96H3.75A.75.75 0 0 1 3 10Z" clipRule="evenodd" />
+                        </svg>
+                    </span>
+                </Link>
             </div>
 
             {/* Metric Cards */}

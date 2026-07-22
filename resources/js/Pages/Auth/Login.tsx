@@ -25,7 +25,7 @@ export default function Login({ status, canResetPassword }) {
 
     return (
         <>
-            <Head title="Sign In — MAW Warehouse" />
+            <Head title="Sign In — Mitra Adhi Wasana" />
             <AuthLayout>
                 <div className="flex flex-col flex-1">
                     {/* <div className="w-full max-w-md pt-10 mx-auto">

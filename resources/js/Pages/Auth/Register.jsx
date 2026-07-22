@@ -26,7 +26,7 @@ export default function Register() {
 
     return (
         <>
-            <Head title="Register — MAW Warehouse" />
+            <Head title="Register — Mitra Adhi Wasana" />
             <AuthLayout>
                 <div className="flex flex-col flex-1">
                     {/* <div className="w-full max-w-md pt-10 mx-auto">

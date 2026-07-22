@@ -1,5 +1,5 @@
 import React from 'react';
-import { TruckIcon, TvIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { TvIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import DatePicker from '../../../Tailadmin/components/form/date-picker';
 import { ThemeToggleButton } from '../../../Tailadmin/components/common/ThemeToggleButton';
 import { Supplier } from '../types';
@@ -43,10 +43,15 @@ export default function Header({
             <div className="flex flex-wrap items-center justify-between gap-4">
                 {/* Branding */}
                 <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-500 text-white shrink-0">
-                        <TruckIcon className="h-6 w-6" />
-                    </div>
+                    <img
+                        src="/images/maw/logo-icon.png"
+                        alt="Mitra Adhi Wasana"
+                        className="h-11 w-11 rounded-xl shrink-0"
+                    />
                     <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-widest text-brand-600 dark:text-brand-400 mb-0.5">
+                            Mitra Adhi Wasana
+                        </p>
                         <h1 className="text-lg font-bold leading-tight text-gray-900 dark:text-white">
                             Warehouse Part Delivery Monitor
                         </h1>

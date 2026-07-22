@@ -227,7 +227,7 @@ const AppSidebar: React.FC = () => {
           />
           {(isExpanded || isHovered || isMobileOpen) && (
             <span className="text-base font-bold text-[#0F172A] dark:text-white tracking-wide">
-              MAW
+              Mitra Adhi Wasana
             </span>
           )}
         </Link>
