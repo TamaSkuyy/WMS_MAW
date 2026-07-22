@@ -4,7 +4,7 @@ import AuthLayout from '../../Tailadmin/pages/AuthPages/AuthPageLayout';
 import Label from '../../Tailadmin/components/form/Label';
 import Input from '../../Tailadmin/components/form/input/InputField';
 import Button from '../../Tailadmin/components/ui/button/Button';
-import { EyeCloseIcon, EyeIcon, BoxCubeIcon } from '../../Tailadmin/icons';
+import { EyeCloseIcon, EyeIcon } from '../../Tailadmin/icons';
 
 export default function Register() {
     const [showPassword, setShowPassword] = useState(false);
@@ -44,11 +44,13 @@ export default function Register() {
                         <div>
                             <div className="mb-5 sm:mb-8">
                                 <div className="flex items-center gap-3 mb-3">
-                                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-brand-50 dark:bg-brand-900/20">
-                                        <BoxCubeIcon className="size-5 text-brand-500" />
-                                    </div>
+                                    <img
+                                        src="/images/maw/logo-icon.png"
+                                        alt="Mitra Adhi Wasana"
+                                        className="w-10 h-10 rounded-lg"
+                                    />
                                     <span className="text-sm font-medium text-brand-600 dark:text-brand-400">
-                                        PT. MITRA ADHI WASANA
+                                        MITRA ADHI WASANA
                                     </span>
                                 </div>
                                 <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
