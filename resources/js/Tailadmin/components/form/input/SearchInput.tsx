@@ -1,5 +1,5 @@
 import { router } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface SearchInputProps {
     placeholder?: string;
@@ -20,8 +20,15 @@ export default function SearchInput({
     debounceMs = 300,
 }: SearchInputProps) {
     const [value, setValue] = useState(filters?.search || '');
+    const mounted = useRef(false);
 
     useEffect(() => {
+        // Skip mount pertama, hanya fire saat user mengetik
+        if (!mounted.current) {
+            mounted.current = true;
+            return;
+        }
+
         const timer = setTimeout(() => {
             const params = { ...filters, search: value || '' };
             Object.keys(params).forEach(k => {

@@ -172,6 +172,11 @@ quick_update() {
     ${RUNTIME} cp config/. "${APP_CONTAINER}:/var/www/html/config/"
     ${RUNTIME} cp database/. "${APP_CONTAINER}:/var/www/html/database/"
     ${RUNTIME} cp routes/. "${APP_CONTAINER}:/var/www/html/routes/"
+    # Copy bootstrap tapi JANGAN bootstrap/cache (environment-specific)
+    dc exec -T app mkdir -p /var/www/html/bootstrap
+    for f in bootstrap/*.php; do
+        [ -f "$f" ] && ${RUNTIME} cp "$f" "${APP_CONTAINER}:/var/www/html/bootstrap/"
+    done
     # Pastikan resources dir exist sebelum copy
     dc exec -T app mkdir -p /var/www/html/resources
     ${RUNTIME} cp resources/. "${APP_CONTAINER}:/var/www/html/resources/" 2>/dev/null || warn "Resources copy partial atau kosong"
