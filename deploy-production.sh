@@ -27,6 +27,33 @@ warn()    { echo -e "${YELLOW}[WARN]${NC} $*"; }
 err()     { echo -e "${RED}[ERROR]${NC} $*"; }
 success() { echo -e "${GREEN}[✓]${NC} $*"; }
 
+# ── Copy dir ke container pakai tar pipe + retry ─────────────────────────────
+# Docker cp kadang gagal "archive/tar: missed writing bytes" saat disk sibuk.
+# Pakai exec + tar pipe yang bypass storage driver + ada retry.
+copy_dir_to_container() {
+    local SRC="$1"
+    local CONTAINER="$2"
+    local DST="$3"
+    local LABEL="${4:-copy-dir}"
+    local MAX_RETRIES=3
+    local DELAY=2
+
+    ${RUNTIME} exec "$CONTAINER" mkdir -p "$DST" 2>/dev/null || true
+
+    for attempt in $(seq 1 $MAX_RETRIES); do
+        if [ "$attempt" -gt 1 ]; then
+            warn "  ${LABEL}: retry ${attempt}/${MAX_RETRIES} (${DELAY}s)..."
+            sleep "$DELAY"
+            DELAY=$((DELAY * 2))
+        fi
+        if tar -C "$SRC" -cf - . 2>/dev/null | ${RUNTIME} exec -i "$CONTAINER" tar -C "$DST" -xf - 2>/dev/null; then
+            return 0
+        fi
+    done
+    err "  ${LABEL}: GAGAL setelah ${MAX_RETRIES}x retry — coba jalankan ulang deploy"
+    return 1
+}
+
 # ── Parse arguments ────────────────────────────────────────────────────────────
 FORCE_BUILD=false
 BUILD_ASSETS=false
@@ -191,13 +218,13 @@ quick_update() {
         ASSET_URL="/" VITE_APP_URL="" npm run build
 
         # Salin ke container app
-        ${RUNTIME} cp public/build/. "${APP_CONTAINER}:/var/www/html/public/build/"
+        copy_dir_to_container "public/build" "$APP_CONTAINER" "/var/www/html/public/build" "app-assets"
 
         # PENTING: Salin juga ke container nginx karena nginx yang serve static files
         NGINX_CONTAINER=$(dc ps -q nginx 2>/dev/null | head -1 || true)
         if [ -n "$NGINX_CONTAINER" ]; then
             log "  → Salin assets ke nginx container..."
-            ${RUNTIME} cp public/build/. "${NGINX_CONTAINER}:/var/www/html/public/build/"
+            copy_dir_to_container "public/build" "$NGINX_CONTAINER" "/var/www/html/public/build" "nginx-assets"
         else
             warn "  Nginx container tidak ditemukan, assets hanya tersalin ke app."
         fi
@@ -226,11 +253,9 @@ quick_update() {
     NGINX_CONTAINER=$(dc ps -q nginx 2>/dev/null | head -1 || true)
     if [ -n "$NGINX_CONTAINER" ]; then
         log "  → Propagasi update ke nginx container..."
-        ${RUNTIME} exec "$NGINX_CONTAINER" mkdir -p /var/www/html/resources 2>/dev/null || true
-        ${RUNTIME} cp resources/. "${NGINX_CONTAINER}:/var/www/html/resources/" 2>/dev/null || true
+        copy_dir_to_container "resources" "$NGINX_CONTAINER" "/var/www/html/resources" "nginx-resources" || true
         if [ -d "public/build/" ]; then
-            ${RUNTIME} exec "$NGINX_CONTAINER" mkdir -p /var/www/html/public/build 2>/dev/null || true
-            ${RUNTIME} cp public/build/. "${NGINX_CONTAINER}:/var/www/html/public/build/" 2>/dev/null || true
+            copy_dir_to_container "public/build" "$NGINX_CONTAINER" "/var/www/html/public/build" "nginx-build" || true
         fi
     fi
 
