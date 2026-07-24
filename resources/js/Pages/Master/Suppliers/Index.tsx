@@ -50,6 +50,7 @@ export default function Index({ suppliers, filters }: any) {
                     templateUrl={route('suppliers.import-template')}
                     title="Supplier"
                     fields={[
+                        { key: 'code', label: 'Kode / Singkatan', required: false },
                         { key: 'name', label: 'Nama', required: true },
                         { key: 'contact_person', label: 'Kontak Person', required: false },
                         { key: 'email', label: 'Email', required: true },
@@ -74,6 +75,7 @@ export default function Index({ suppliers, filters }: any) {
                     <table className="min-w-full">
                         <thead className="bg-[#F8F9FC] border-b border-[#E9ECEF]">
                             <tr>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider w-20">Kode</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Nama</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Kontak Person</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Email</th>
@@ -84,6 +86,9 @@ export default function Index({ suppliers, filters }: any) {
                         <tbody>
                             {suppliers.data.map((supplier: any) => (
                                 <tr key={supplier.id} className="border-b border-[#F1F3F5] hover:bg-[#F8F9FC] transition-all duration-150">
+                                    <td className="px-4 py-3 whitespace-nowrap">
+                                        <span className="rounded bg-brand-50 dark:bg-brand-500/10 px-2 py-0.5 text-[11px] font-bold text-brand-600 dark:text-brand-400">{supplier.code || '-'}</span>
+                                    </td>
                                     <td className="px-4 py-3 whitespace-nowrap text-sm text-[#1A1D23] font-medium">{supplier.name}</td>
                                     <td className="px-4 py-3 whitespace-nowrap text-[13px] text-[#6C757D]">{supplier.contact_person || '-'}</td>
                                     <td className="px-4 py-3 whitespace-nowrap text-[13px] text-[#6C757D]">{supplier.email}</td>

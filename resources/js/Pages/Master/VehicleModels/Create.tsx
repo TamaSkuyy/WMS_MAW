@@ -8,18 +8,14 @@ import Input from '../../../Tailadmin/components/form/input/InputField';
 import Label from '../../../Tailadmin/components/form/Label';
 
 export default function Create() {
-    const { data, setData, post, errors } = useForm({ name: '', brand: '', suffix: '' });
+    const { data, setData, post, errors } = useForm({ name: '', brand: 'Toyota', suffix: '' });
     return (
         <>
             <Head title="Tambah Model" />
             <PageBreadcrumb pageTitle="Tambah Model Kendaraan" />
             <ComponentCard title="Model Baru">
                 <form onSubmit={(e) => { e.preventDefault(); post(route('vehicle-models.store')); }} className="space-y-4 max-w-md">
-                    <div>
-                        <Label>Merek *</Label>
-                        <Input type="text" value={data.brand} onChange={(e) => setData('brand', e.target.value)} placeholder="contoh: Toyota" />
-                        {errors.brand && <p className="mt-1 text-sm text-red-500">{errors.brand}</p>}
-                    </div>
+                    <input type="hidden" value={data.brand} />
                     <div>
                         <Label>Model *</Label>
                         <Input type="text" value={data.name} onChange={(e) => setData('name', e.target.value)} placeholder="contoh: Fortuner" />

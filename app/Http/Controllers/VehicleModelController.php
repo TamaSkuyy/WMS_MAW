@@ -31,10 +31,9 @@ class VehicleModelController extends Controller
     public function index(Request $request)
     {
         return Inertia::render('Master/VehicleModels/Index', [
-            'vehicleModels' => VehicleModel::orderBy('brand')->orderBy('name')
+            'vehicleModels' => VehicleModel::orderBy('name')
                 ->when($request->search, function ($query, $search) {
-                    $query->where('name', 'like', "%{$search}%")
-                          ->orWhere('brand', 'like', "%{$search}%");
+                    $query->where('name', 'like', "%{$search}%");
                 })
                 ->paginate(10)
                 ->withQueryString(),
@@ -49,9 +48,10 @@ class VehicleModelController extends Controller
     {
         $validated = $request->validate([
             'name'   => 'required|string|max:100',
-            'brand'  => 'required|string|max:100',
+            'brand'  => 'nullable|string|max:100',
             'suffix' => 'nullable|string|max:50',
         ]);
+        $validated['brand'] = $validated['brand'] ?: 'Toyota';
         VehicleModel::create($validated);
         return redirect()->route('vehicle-models.index')->with('success', 'Model kendaraan berhasil dibuat.');
     }
@@ -65,13 +65,14 @@ class VehicleModelController extends Controller
             'name'   => [
                 'required', 'string', 'max:100',
                 \Illuminate\Validation\Rule::unique('vehicle_models')->where(function ($query) use ($request) {
-                    return $query->where('brand', $request->brand)
+                    return $query->where('brand', $request->brand ?: 'Toyota')
                                  ->where('suffix', $request->suffix);
                 })->ignore($vehicleModel->id),
             ],
-            'brand'  => 'required|string|max:100',
+            'brand'  => 'nullable|string|max:100',
             'suffix' => 'nullable|string|max:50',
         ]);
+        $validated['brand'] = $validated['brand'] ?: 'Toyota';
         $vehicleModel->update($validated);
         return redirect()->route('vehicle-models.index')->with('success', 'Model kendaraan berhasil diupdate.');
     }

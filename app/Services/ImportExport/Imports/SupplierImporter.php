@@ -21,6 +21,7 @@ class SupplierImporter extends BaseImporter implements Importable
     public function rules(): array
     {
         return [
+            'code' => ['nullable', 'string', 'max:10'],
             'name' => ['required', 'string', 'max:255'],
             'contact_person' => ['nullable', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
@@ -35,12 +36,13 @@ class SupplierImporter extends BaseImporter implements Importable
 
     public function templateHeadings(): array
     {
-        return ['Nama', 'Kontak', 'Email', 'Telepon', 'Jalan', 'Kota', 'Provinsi', 'KodePos', 'Negara'];
+        return ['Kode', 'Nama', 'Kontak', 'Email', 'Telepon', 'Jalan', 'Kota', 'Provinsi', 'KodePos', 'Negara'];
     }
 
     public function insertRow(array $data): void
     {
         $supplier = Supplier::create([
+            'code' => $data['code'] ?? null,
             'name' => $data['name'],
             'contact_person' => $data['contact_person'] ?? null,
             'email' => $data['email'],

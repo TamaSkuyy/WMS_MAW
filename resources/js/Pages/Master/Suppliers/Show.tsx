@@ -17,6 +17,12 @@ export default function Show({ supplier }: any) {
                     <ComponentCard title="Informasi Supplier" desc="Detail data supplier">
                         <dl className="space-y-4">
                             <div>
+                                <dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Kode / Singkatan</dt>
+                                <dd className="text-sm text-[#1A1D23]">
+                                    <span className="rounded bg-brand-50 dark:bg-brand-500/10 px-2 py-0.5 text-sm font-bold text-brand-600 dark:text-brand-400">{supplier.code || '-'}</span>
+                                </dd>
+                            </div>
+                            <div>
                                 <dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Nama</dt>
                                 <dd className="text-sm text-[#1A1D23]">{supplier.name}</dd>
                             </div>

@@ -13,6 +13,7 @@ export default function Edit({ supplier, deliverySlots, scheduledSlotIds }: any)
     const primaryAddress = supplier.primary_address || {};
 
     const { data, setData, put, errors } = useForm({
+        code: supplier.code || '',
         name: supplier.name || '',
         contact_person: supplier.contact_person || '',
         email: supplier.email || '',
@@ -58,6 +59,12 @@ export default function Edit({ supplier, deliverySlots, scheduledSlotIds }: any)
                             <Label>Nama *</Label>
                             <Input type="text" value={data.name} onChange={(e) => setData('name', e.target.value)} placeholder="Nama perusahaan supplier" />
                             {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+                        </div>
+                        <div>
+                            <Label>Kode / Singkatan</Label>
+                            <Input type="text" value={data.code} onChange={(e) => setData('code', e.target.value.toUpperCase())} placeholder="Contoh: DWA, MMM (max 10 huruf)" />
+                            <p className="mt-0.5 text-xs text-gray-400">Kosongkan untuk auto-generate dari nama</p>
+                            {errors.code && <p className="mt-1 text-sm text-red-500">{errors.code}</p>}
                         </div>
                         <div>
                             <Label>Kontak Person</Label>

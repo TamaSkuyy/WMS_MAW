@@ -27,7 +27,7 @@ export default function Index({ vehicleModels, filters }: any) {
                 <div className="mb-3 flex flex-wrap items-center gap-3">
                     <Link href={route('vehicle-models.create')}><Button>Tambah Model</Button></Link>
                     <SearchInput
-                        placeholder="Cari merek atau model..."
+                        placeholder="Cari model..."
                         routeName="vehicle-models.index"
                         filters={filters}
                     />
@@ -48,7 +48,6 @@ export default function Index({ vehicleModels, filters }: any) {
                     title="Model Kendaraan"
                     fields={[
                         { key: 'name', label: 'Nama', required: true },
-                        { key: 'brand', label: 'Merek', required: true },
                         { key: 'suffix', label: 'Suffix', required: false },
                     ]}
                 />
@@ -65,7 +64,6 @@ export default function Index({ vehicleModels, filters }: any) {
                     <table className="min-w-full">
                         <thead className="bg-[#F8F9FC] border-b border-[#E9ECEF]">
                             <tr>
-                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Merek</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Model</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Suffix</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider w-24">Aksi</th>
@@ -74,7 +72,6 @@ export default function Index({ vehicleModels, filters }: any) {
                         <tbody>
                             {vehicleModels.data.map((m: any) => (
                                 <tr key={m.id} className="border-b border-[#F1F3F5] hover:bg-[#F8F9FC] transition-all duration-150">
-                                    <td className="px-4 py-3 text-sm text-[#1A1D23]">{m.brand}</td>
                                     <td className="px-4 py-3 text-sm text-[#1A1D23]">{m.name}</td>
                                     <td className="px-4 py-3 text-sm text-[#6C757D]">{m.suffix || '-'}</td>
                                     <td className="px-4 py-3 text-sm text-[#1A1D23]">

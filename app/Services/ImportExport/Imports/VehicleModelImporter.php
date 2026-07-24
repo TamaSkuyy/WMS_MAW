@@ -22,13 +22,19 @@ class VehicleModelImporter extends BaseImporter implements Importable
     {
         return [
             'name' => ['required', 'string', 'max:100'],
-            'brand' => ['required', 'string', 'max:100'],
+            'brand' => ['nullable', 'string', 'max:100'],
             'suffix' => ['nullable', 'string', 'max:50'],
         ];
     }
 
     public function templateHeadings(): array
     {
-        return ['Nama', 'Merek', 'Suffix'];
+        return ['Nama', 'Suffix'];
+    }
+
+    public function transformRow(array $mapped): array
+    {
+        $mapped['brand'] = ! empty($mapped['brand']) ? $mapped['brand'] : 'Toyota';
+        return $mapped;
     }
 }

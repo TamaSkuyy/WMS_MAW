@@ -16,14 +16,10 @@ export default function Edit({ vehicleModel }: any) {
     return (
         <>
             <Head title={`Edit Model - ${vehicleModel.name}`} />
-            <PageBreadcrumb pageTitle={`Edit: ${vehicleModel.brand} ${vehicleModel.name}${vehicleModel.suffix ? ' ' + vehicleModel.suffix : ''}`} />
+            <PageBreadcrumb pageTitle={`Edit: ${vehicleModel.name}${vehicleModel.suffix ? ' ' + vehicleModel.suffix : ''}`} />
             <ComponentCard title="Edit Model">
                 <form onSubmit={(e) => { e.preventDefault(); put(route('vehicle-models.update', vehicleModel.id)); }} className="space-y-4 max-w-md">
-                    <div>
-                        <Label>Merek *</Label>
-                        <Input type="text" value={data.brand} onChange={(e) => setData('brand', e.target.value)} />
-                        {errors.brand && <p className="mt-1 text-sm text-red-500">{errors.brand}</p>}
-                    </div>
+                    <input type="hidden" value={data.brand} />
                     <div>
                         <Label>Model *</Label>
                         <Input type="text" value={data.name} onChange={(e) => setData('name', e.target.value)} />

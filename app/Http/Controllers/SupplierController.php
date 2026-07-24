@@ -66,6 +66,7 @@ class SupplierController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'code' => 'nullable|string|max:10|unique:suppliers',
             'name' => 'required|string|max:255|unique:suppliers',
             'contact_person' => 'nullable|string|max:255',
             'email' => 'required|email|unique:suppliers',
@@ -78,6 +79,7 @@ class SupplierController extends Controller
         ]);
 
         $supplier = Supplier::create([
+            'code' => $validated['code'] ?? null,
             'name' => $validated['name'],
             'contact_person' => $validated['contact_person'],
             'email' => $validated['email'],
@@ -125,6 +127,7 @@ class SupplierController extends Controller
     public function update(Request $request, Supplier $supplier)
     {
         $validated = $request->validate([
+            'code' => 'nullable|string|max:10|unique:suppliers,code,' . $supplier->id,
             'name' => 'required|string|max:255|unique:suppliers,name,' . $supplier->id,
             'contact_person' => 'nullable|string|max:255',
             'email' => 'required|email|unique:suppliers,email,' . $supplier->id,
@@ -139,6 +142,7 @@ class SupplierController extends Controller
         ]);
 
         $supplier->update([
+            'code' => $validated['code'] ?? null,
             'name' => $validated['name'],
             'contact_person' => $validated['contact_person'],
             'email' => $validated['email'],
