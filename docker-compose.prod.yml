@@ -76,6 +76,23 @@ services:
       timeout: 5s
       retries: 3
 
+  reverb:
+    image: wms-wma-app:prod
+    restart: unless-stopped
+    command: php artisan reverb:start --host=0.0.0.0 --port=8081 --no-interaction
+    env_file:
+      - .env.prod
+    volumes:
+      - storage-vol:/var/www/html/storage
+    depends_on:
+      - redis
+    healthcheck:
+      test: ["CMD", "pidof", "php"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
   mysql:
     image: mysql:8.0
     restart: unless-stopped

@@ -211,11 +211,22 @@ quick_update() {
     # 3. Build & salin frontend assets (opsional)
     if [ "${BUILD_ASSETS}" = true ]; then
         log "3/7 Build frontend assets (Vite)..."
-        # Clear Vite cache + old build (chown dulu karena file mungkin punya Docker)
-        sudo chown -R $USER:$USER node_modules/.vite public/build 2>/dev/null || true
-        rm -rf node_modules/.vite public/build
+        # Clear Vite cache + old build via Docker (file biasanya punya root)
+        # Ini lebih reliable daripada sudo chown yg butuh password
+        docker run --rm \
+            -v "$(pwd)/public/build:/build" \
+            -v "$(pwd)/node_modules/.vite:/vite" \
+            alpine sh -c "rm -rf /build/* /vite/* 2>/dev/null; chmod 777 /build /vite 2>/dev/null; exit 0"
+        # Bersihkan sisa file yg mungkin masih ada
+        rm -rf node_modules/.vite public/build 2>/dev/null || true
+        # Export VITE_ vars dari .env.prod agar build pakai config production
+        # (tanpa ini, Vite akan baca dari .env development yg berisi localhost)
+        set -a
+        # shellcheck source=/dev/null
+        . "${ENV_FILE}"
+        set +a
         # ASSET_URL harus '/' agar CSS tidak meng-embed URL absolut localhost ke font path
-        ASSET_URL="/" VITE_APP_URL="" npm run build
+        ASSET_URL="/" npm run build
 
         # Salin ke container app
         copy_dir_to_container "public/build" "$APP_CONTAINER" "/var/www/html/public/build" "app-assets"
