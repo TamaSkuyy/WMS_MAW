@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
@@ -37,9 +37,17 @@ export default function QuickReceive({ suppliers, products, racks }: any) {
     const [lastScanStatus, setLastScanStatus] = useState<'ok' | 'unknown' | null>(null);
     const [submitting, setSubmitting] = useState(false);
 
+    // Filter produk berdasarkan supplier yang dipilih
+    const filteredProducts = useMemo(() => {
+        if (!supplierId) return [];
+        return products.filter((p: any) => String(p.supplier_id) === String(supplierId));
+    }, [products, supplierId]);
+
     const handleScan = useCallback(
         (code: string) => {
-            const product = products.find(
+            if (!supplierId) return;
+
+            const product = filteredProducts.find(
                 (p: any) => p.part_number.toLowerCase() === code.toLowerCase()
             );
 
@@ -76,7 +84,7 @@ export default function QuickReceive({ suppliers, products, racks }: any) {
                 ];
             });
         },
-        [products]
+        [filteredProducts, supplierId]
     );
 
     const updateItem = (productId: number, field: string, value: any) => {

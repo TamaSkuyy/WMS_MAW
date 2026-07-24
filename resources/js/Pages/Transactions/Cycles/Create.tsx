@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
 import { Head, useForm } from '@inertiajs/react';
 import { ArrowLeftIcon, CheckIcon } from '@heroicons/react/24/outline';
@@ -19,6 +19,18 @@ export default function Create({ suppliers, products }: any) {
 
     const [selectedProduct, setSelectedProduct] = useState('');
     const [selectedQty, setSelectedQty] = useState(1);
+
+    // Filter produk berdasarkan supplier yang dipilih
+    const filteredProducts = useMemo(() => {
+        if (!data.supplier_id) return [];
+        return products.filter((p: any) => String(p.supplier_id) === String(data.supplier_id));
+    }, [products, data.supplier_id]);
+
+    // Reset selected product when supplier changes
+    const handleSupplierChange = (v: string) => {
+        setData('supplier_id', v);
+        setSelectedProduct('');
+    };
 
     const addItem = () => {
         if (!selectedProduct || selectedQty < 1) return;
@@ -59,7 +71,7 @@ export default function Create({ suppliers, products }: any) {
                         <div className="space-y-5">
                             <div>
                                 <Label>Supplier *</Label>
-                                <SearchableSelect options={suppliers.map((s: any) => ({ value: s.id, label: s.name }))} value={data.supplier_id} onChange={(v) => setData('supplier_id', v as string)} />
+                                <SearchableSelect options={suppliers.map((s: any) => ({ value: s.id, label: s.name }))} value={data.supplier_id} onChange={handleSupplierChange} />
                                 {errors.supplier_id && <p className="mt-1 text-sm text-red-500">{errors.supplier_id}</p>}
                             </div>
                             <div>
@@ -74,9 +86,10 @@ export default function Create({ suppliers, products }: any) {
                             <div className="flex-1">
                                 <Label>Produk</Label>
                                 <SearchableSelect
-                                    options={products.map((p: any) => ({ value: p.id, label: `${p.part_number} - ${p.name}` }))}
+                                    options={filteredProducts.map((p: any) => ({ value: p.id, label: `${p.part_number} - ${p.name}` }))}
                                     value={selectedProduct}
                                     onChange={(v) => setSelectedProduct(v as string)}
+                                    placeholder={data.supplier_id ? 'Pilih produk...' : 'Pilih supplier dulu'}
                                 />
                             </div>
                             <div className="w-24">
