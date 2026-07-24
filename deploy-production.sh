@@ -27,9 +27,7 @@ warn()    { echo -e "${YELLOW}[WARN]${NC} $*"; }
 err()     { echo -e "${RED}[ERROR]${NC} $*"; }
 success() { echo -e "${GREEN}[✓]${NC} $*"; }
 
-# ── Copy dir ke container pakai tar pipe + retry ─────────────────────────────
-# Docker cp kadang gagal "archive/tar: missed writing bytes" saat disk sibuk.
-# Pakai exec + tar pipe yang bypass storage driver + ada retry.
+# ── Copy dir ke container: docker cp dulu, fallback tar pipe ─────────────────
 copy_dir_to_container() {
     local SRC="$1"
     local CONTAINER="$2"
@@ -38,20 +36,43 @@ copy_dir_to_container() {
     local MAX_RETRIES=3
     local DELAY=2
 
+    # Pastikan direktori tujuan ada
     ${RUNTIME} exec "$CONTAINER" mkdir -p "$DST" 2>/dev/null || true
 
+    # Coba docker cp dulu (paling reliable)
     for attempt in $(seq 1 $MAX_RETRIES); do
         if [ "$attempt" -gt 1 ]; then
             warn "  ${LABEL}: retry ${attempt}/${MAX_RETRIES} (${DELAY}s)..."
             sleep "$DELAY"
             DELAY=$((DELAY * 2))
         fi
-        if tar -C "$SRC" -cf - . 2>/dev/null | ${RUNTIME} exec -i "$CONTAINER" tar -C "$DST" -xf - 2>/dev/null; then
+        # Hapus trailing slash di src biar cp folder, bukan isinya
+        local SRC_CLEAN="${SRC%/}"
+        if ${RUNTIME} cp "${SRC_CLEAN}/." "${CONTAINER}:${DST}/" 2>/dev/null; then
             return 0
         fi
     done
-    err "  ${LABEL}: GAGAL setelah ${MAX_RETRIES}x retry — coba jalankan ulang deploy"
-    return 1
+
+    # Fallback: tar file via docker cp + extract di dalam container
+    # (docker cp gagal chown UID, tapi cp single file + tar extract internal works)
+    warn "  ${LABEL}: docker cp gagal, coba tar file..."
+    for attempt in $(seq 1 $MAX_RETRIES); do
+        local TMP_TAR
+        TMP_TAR=$(mktemp /tmp/wms-deploy-XXXXXX.tar)
+        if tar --format=ustar -C "$SRC" -cf "$TMP_TAR" . 2>/dev/null && \
+           ${RUNTIME} cp "$TMP_TAR" "${CONTAINER}:/tmp/deploy-copy.tar" 2>/dev/null && \
+           ${RUNTIME} exec "$CONTAINER" tar -xf /tmp/deploy-copy.tar -C "$DST" 2>/dev/null && \
+           ${RUNTIME} exec "$CONTAINER" rm -f /tmp/deploy-copy.tar 2>/dev/null; then
+            rm -f "$TMP_TAR"
+            return 0
+        fi
+        rm -f "$TMP_TAR"
+        ${RUNTIME} exec "$CONTAINER" rm -f /tmp/deploy-copy.tar 2>/dev/null || true
+        sleep 2
+    done
+
+    err "  ${LABEL}: GAGAL setelah semua retry. Lanjut aja (cek manual kalau perlu)."
+    return 0  # jangan stop seluruh deploy, cukup warn
 }
 
 # ── Parse arguments ────────────────────────────────────────────────────────────
