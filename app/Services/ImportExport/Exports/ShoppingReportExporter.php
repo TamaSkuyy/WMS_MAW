@@ -45,7 +45,7 @@ class ShoppingReportExporter extends BaseExporter
             $model->shopping->partner_name,
             $model->product->part_number,
             $model->product->name,
-            $model->rack->code,
+            $model->rack?->code ?? '-',
             $model->quantity,
             $model->shopping->status,
         ];

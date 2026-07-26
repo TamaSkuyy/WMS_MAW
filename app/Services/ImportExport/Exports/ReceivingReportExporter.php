@@ -46,7 +46,7 @@ class ReceivingReportExporter extends BaseExporter
             $model->cycle->supplier->name ?? '-',
             $model->product->part_number,
             $model->product->name,
-            $model->rack->code ?? '-',
+            $model->rack?->code ?? '-',
             $model->received_quantity,
             $model->cycle->status,
         ];

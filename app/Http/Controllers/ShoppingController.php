@@ -175,8 +175,8 @@ class ShoppingController extends Controller
                     ->first();
 
                 if (! $stock || $stock->quantity < $item->quantity) {
-                    $productName = $item->product->name ?? 'Unknown';
-                    $rackCode = $item->rack->code ?? '?';
+                    $productName = $item->product?->name ?? 'Unknown';
+                    $rackCode = $item->rack?->code ?? '(relay)';
 
                     return [
                         'ok' => false,
@@ -204,7 +204,11 @@ class ShoppingController extends Controller
             return back()->with('error', $result['error']);
         }
 
-        event(new StockChanged());
+        try {
+            event(new StockChanged());
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         return redirect()->route('shoppings.show', $shopping)->with('success', 'Shopping processed. Stock deducted.');
     }
