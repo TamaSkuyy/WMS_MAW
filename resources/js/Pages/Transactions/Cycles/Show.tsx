@@ -91,9 +91,13 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
         setItems(newItems);
     };
 
+    const missingRack = items.some((it: any) => !it.rack_id);
+    const canReceive = !submitting && !missingRack;
+
     const handleReceive = (e: React.FormEvent) => {
         e.preventDefault();
-        if (submitting) return;
+        if (!canReceive) return;
+        if (!confirm('Konfirmasi penerimaan? Stok akan bertambah sesuai jumlah yang dimasukkan.')) return;
         setSubmitting(true);
         router.post(route('cycles.receive', cycle.id), { items }, {
             onSuccess: () => setIsReceiving(false),
@@ -155,13 +159,19 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
                                                     <Input type="number" value={items[i].received_quantity} onChange={(e) => updateItem(i, 'received_quantity', parseInt(e.target.value) || 0)} min={0} max={item.quantity} />
                                                 </td>
                                                 <td className="px-3 py-2">
-                                                    <div className="flex flex-col gap-1">
+                                                    <div className={`flex flex-col gap-1 ${!items[i].rack_id ? 'p-1 rounded ring-2 ring-red-300 bg-red-50 dark:bg-red-900/10' : ''}`}>
                                                         <SearchableSelect options={racks.map((r: any) => ({ value: r.id, label: r.code }))} value={items[i].rack_id} onChange={(v) => updateItem(i, 'rack_id', v as string)} />
-                                                        {items[i].rack_source === 'default' && (
-                                                            <span className="self-start px-1.5 py-0.5 text-xs font-medium rounded bg-blue-100 text-blue-700">Default</span>
-                                                        )}
-                                                        {items[i].rack_source === 'history' && (
-                                                            <span className="self-start px-1.5 py-0.5 text-xs font-medium rounded bg-gray-100 text-gray-600">Terakhir</span>
+                                                        {!items[i].rack_id ? (
+                                                            <span className="text-xs text-red-600 font-medium">⚠ Pilih rak!</span>
+                                                        ) : (
+                                                            <>
+                                                                {items[i].rack_source === 'default' && (
+                                                                    <span className="self-start px-1.5 py-0.5 text-xs font-medium rounded bg-blue-100 text-blue-700">Default</span>
+                                                                )}
+                                                                {items[i].rack_source === 'history' && (
+                                                                    <span className="self-start px-1.5 py-0.5 text-xs font-medium rounded bg-gray-100 text-gray-600">Terakhir</span>
+                                                                )}
+                                                            </>
                                                         )}
                                                     </div>
                                                 </td>
@@ -172,9 +182,14 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
                                         ))}
                                     </tbody>
                                 </table>
+                                {missingRack && (
+                                    <div className="mt-3 flex items-center gap-2 px-3 py-2 text-sm text-red-700 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                                        <span>⚠️</span> <span>Pilih rak untuk semua item sebelum menyelesaikan penerimaan.</span>
+                                    </div>
+                                )}
                                 <div className="mt-4 flex gap-3">
-                                    <Button type="submit" disabled={submitting}>
-                                        {submitting ? 'Menyimpan...' : 'Selesaikan Penerimaan'}
+                                    <Button type="submit" disabled={!canReceive}>
+                                        {submitting ? 'Menyimpan...' : missingRack ? '⚠ Lengkapi Rak' : 'Selesaikan Penerimaan'}
                                     </Button>
                                     <Button type="button" variant="outline" onClick={() => setIsReceiving(false)} disabled={submitting}>Batal</Button>
                                 </div>

@@ -98,19 +98,21 @@ export default function Create({ products, racks, vehicleModels }: any) {
         ));
     };
 
-    const hasActiveItems = tableItems.some(i => i.quantity > 0);
+    const activeItems = tableItems.filter(i => i.quantity > 0);
+    const hasActiveItems = activeItems.length > 0;
+    const missingRack = activeItems.some(i => !i.rack_id);
+    const canSubmit = !submitting && partnerName.trim() !== '' && hasActiveItems && !missingRack;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!hasActiveItems || submitting) return;
+        if (!canSubmit) return;
+        if (!confirm(`Konfirmasi pengiriman ke "${partnerName}"? Stok akan dikurangi.`)) return;
         setSubmitting(true);
         router.post(route('shoppings.store'), {
             partner_name: partnerName,
             shopping_date: shoppingDate,
             notes,
-            items: tableItems
-                .filter(i => i.quantity > 0)
-                .map(i => ({ product_id: i.product_id, rack_id: i.rack_id, quantity: i.quantity })),
+            items: activeItems.map(i => ({ product_id: i.product_id, rack_id: i.rack_id, quantity: i.quantity })),
         }, { onFinish: () => setSubmitting(false) });
     };
 
@@ -233,11 +235,16 @@ export default function Create({ products, racks, vehicleModels }: any) {
                                                     </span>
                                                 </td>
                                                 <td className="px-3 py-2 w-32">
-                                                    <SearchableSelect
-                                                        options={racks.map((r: any) => ({ value: r.id, label: r.code }))}
-                                                        value={item.rack_id}
-                                                        onChange={(v) => updateItem(item.product_id, 'rack_id', v as string)}
-                                                    />
+                                                    <div className={item.quantity > 0 && !item.rack_id ? 'p-1 rounded ring-2 ring-red-300 bg-red-50 dark:bg-red-900/10' : ''}>
+                                                        <SearchableSelect
+                                                            options={racks.map((r: any) => ({ value: r.id, label: r.code }))}
+                                                            value={item.rack_id}
+                                                            onChange={(v) => updateItem(item.product_id, 'rack_id', v as string)}
+                                                        />
+                                                        {item.quantity > 0 && !item.rack_id && (
+                                                            <span className="text-xs text-red-600 font-medium">⚠ Pilih rak!</span>
+                                                        )}
+                                                    </div>
                                                 </td>
                                                 <td className="px-3 py-2 w-20">
                                                     <Input
@@ -259,13 +266,27 @@ export default function Create({ products, racks, vehicleModels }: any) {
                     </ComponentCard>
                 </div>
 
+                {(!partnerName.trim() && hasActiveItems) && (
+                    <div className="mt-3 flex items-center gap-2 px-3 py-2 text-sm text-red-700 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                        <span>⚠️</span> <span>Isi Nama Mitra terlebih dahulu.</span>
+                    </div>
+                )}
+                {missingRack && (
+                    <div className="mt-3 flex items-center gap-2 px-3 py-2 text-sm text-red-700 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                        <span>⚠️</span> <span>Pilih rak untuk semua item yang memiliki quantity.</span>
+                    </div>
+                )}
                 <div className="mt-4 flex gap-3">
                     <Button
                         type="submit"
-                        disabled={!hasActiveItems || submitting}
+                        disabled={!canSubmit}
                         icon={<CheckIcon className="w-4 h-4" />}
                     >
-                        {submitting ? 'Menyimpan...' : 'Simpan Shopping'}
+                        {submitting ? 'Menyimpan...'
+                            : !partnerName.trim() ? '⚠ Isi Nama Mitra'
+                            : missingRack ? '⚠ Lengkapi Rak'
+                            : !hasActiveItems ? '⚠ Belum ada item'
+                            : 'Simpan Shopping'}
                     </Button>
                     <Button type="button" variant="outline" onClick={() => window.history.back()}>Batal</Button>
                 </div>
