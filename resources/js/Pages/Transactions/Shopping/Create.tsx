@@ -16,6 +16,9 @@ interface TableItem {
     name: string;
     stock: number;
     rack_id: string;
+    rack_label: string;      // e.g. "A1", "B2", or "⚠ Relay"
+    rack_zone: string;       // e.g. "Zona A", or "—"
+    is_relay: boolean;       // true if this is relay/overflow stock
     quantity: number;
 }
 
@@ -65,43 +68,86 @@ export default function Create({ products, racks, vehicleModels }: any) {
         [selUnit, selSuffix, vehicleModels]
     );
 
+    // Build rack lookup for labels/zones
+    const rackMap = useMemo(() => {
+        const map = new Map<string, { code: string; zone: string }>();
+        racks.forEach((r: any) => map.set(String(r.id), { code: r.code, zone: r.zone || '-' }));
+        return map;
+    }, [racks]);
+
+    // Expand products into one row per (product, rack) — so stock spread
+    // across multiple racks (including relay) is visible and selectable.
     useEffect(() => {
         if (!activeVehicleModelId) { setTableItems([]); return; }
         const filtered = products.filter((p: any) => p.vehicle_model_id === activeVehicleModelId);
-        setTableItems(filtered.map((p: any) => ({
-            product_id: p.id,
-            part_number: p.part_number,
-            name: p.name,
-            stock: p.default_rack_id
-                ? (p.stocks.find((s: any) => s.rack_id === p.default_rack_id)?.quantity ?? 0)
-                : p.stocks.reduce((sum: number, s: any) => sum + s.quantity, 0),
-            rack_id: p.default_rack_id ? String(p.default_rack_id) : '',
-            quantity: 0,
-        })));
-    }, [activeVehicleModelId]);
+        const rows: TableItem[] = [];
+        filtered.forEach((p: any) => {
+            // Per-rack rows
+            (p.stocks || []).forEach((s: any) => {
+                const rid = s.rack_id ? String(s.rack_id) : '';
+                rows.push({
+                    product_id: p.id,
+                    part_number: p.part_number,
+                    name: p.name,
+                    stock: s.quantity,
+                    rack_id: rid,
+                    rack_label: rid ? (rackMap.get(rid)?.code ?? rid) : '⚠ Relay',
+                    rack_zone: rid ? (rackMap.get(rid)?.zone ?? '-') : '—',
+                    is_relay: !rid,
+                    quantity: 0,
+                });
+            });
+            // If product has NO stock at all, still show one row (no stock)
+            if ((p.stocks || []).length === 0) {
+                rows.push({
+                    product_id: p.id,
+                    part_number: p.part_number,
+                    name: p.name,
+                    stock: 0,
+                    rack_id: '',
+                    rack_label: '—',
+                    rack_zone: '—',
+                    is_relay: false,
+                    quantity: 0,
+                });
+            }
+        });
+        setTableItems(rows);
+    }, [activeVehicleModelId, rackMap]);
 
     const handleScan = useCallback((code: string) => {
-        const item = tableItems.find(i => i.part_number.toLowerCase() === code.toLowerCase());
-        if (!item) { setLastScan(code); setLastScanStatus('unknown'); return; }
-        if (item.stock <= 0) { setLastScan(code); setLastScanStatus('no_stock'); return; }
+        // Find the first row matching this part number that has stock > 0
+        const item = tableItems.find(i =>
+            i.part_number.toLowerCase() === code.toLowerCase() && i.stock > 0
+        );
+        if (!item) {
+            const existsButZero = tableItems.find(i => i.part_number.toLowerCase() === code.toLowerCase());
+            setLastScan(code);
+            setLastScanStatus(existsButZero ? 'no_stock' : 'unknown');
+            return;
+        }
         beep();
         setLastScan(code);
         setLastScanStatus('ok');
         setTableItems(prev => prev.map(i =>
-            i.product_id === item.product_id ? { ...i, quantity: i.quantity + 1 } : i
+            i.product_id === item.product_id && i.rack_id === item.rack_id
+                ? { ...i, quantity: i.quantity + 1 }
+                : i
         ));
     }, [tableItems]);
 
-    const updateItem = (productId: number, field: keyof TableItem, value: any) => {
+    // Update by (product_id + rack_id) so we target the correct row
+    const updateItem = (productId: number, rackId: string, field: keyof TableItem, value: any) => {
         setTableItems(prev => prev.map(i =>
-            i.product_id === productId ? { ...i, [field]: value } : i
+            i.product_id === productId && i.rack_id === rackId ? { ...i, [field]: value } : i
         ));
     };
 
     const activeItems = tableItems.filter(i => i.quantity > 0);
     const hasActiveItems = activeItems.length > 0;
-    const missingRack = activeItems.some(i => !i.rack_id);
-    const canSubmit = !submitting && partnerName.trim() !== '' && hasActiveItems && !missingRack;
+    // Relay row warning (informational, not blocking — user can ship from relay)
+    const hasRelayItems = activeItems.some(i => i.is_relay);
+    const canSubmit = !submitting && partnerName.trim() !== '' && hasActiveItems;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -112,7 +158,7 @@ export default function Create({ products, racks, vehicleModels }: any) {
             partner_name: partnerName,
             shopping_date: shoppingDate,
             notes,
-            items: activeItems.map(i => ({ product_id: i.product_id, rack_id: i.rack_id, quantity: i.quantity })),
+            items: activeItems.map(i => ({ product_id: i.product_id, rack_id: i.rack_id || null, quantity: i.quantity })),
         }, { onFinish: () => setSubmitting(false) });
     };
 
@@ -214,19 +260,37 @@ export default function Create({ products, racks, vehicleModels }: any) {
                                         <tr>
                                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Part #</th>
                                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Nama</th>
+                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Rak / Zona</th>
                                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Stok</th>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Rack</th>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
+                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-24">Qty Kirim</th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
-                                        {tableItems.map((item) => (
+                                        {tableItems.map((item) => {
+                                            const key = `${item.product_id}-${item.rack_id}`;
+                                            return (
                                             <tr
-                                                key={item.product_id}
-                                                className={item.stock === 0 ? 'bg-red-50 dark:bg-red-900/10 opacity-60' : ''}
+                                                key={key}
+                                                className={
+                                                    item.is_relay ? 'bg-amber-50 dark:bg-amber-900/10' :
+                                                    item.stock === 0 ? 'bg-red-50 dark:bg-red-900/10 opacity-60' : ''
+                                                }
                                             >
                                                 <td className="px-3 py-2 text-xs font-mono whitespace-nowrap">{item.part_number}</td>
-                                                <td className="px-3 py-2 text-sm">{item.name}</td>
+                                                <td className="px-3 py-2 text-sm">
+                                                    {item.name}
+                                                    {item.is_relay && (
+                                                        <span className="ml-1.5 inline-flex items-center px-1 py-0.5 text-[10px] font-bold rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                                                            RELAY
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="px-3 py-2 text-sm">
+                                                    <span className={item.is_relay ? 'text-amber-600 dark:text-amber-400 font-medium' : ''}>
+                                                        {item.rack_label}
+                                                    </span>
+                                                    <span className="ml-1 text-xs text-gray-400">{item.rack_zone}</span>
+                                                </td>
                                                 <td className="px-3 py-2">
                                                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                                                         item.stock > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
@@ -234,30 +298,19 @@ export default function Create({ products, racks, vehicleModels }: any) {
                                                         {item.stock}
                                                     </span>
                                                 </td>
-                                                <td className="px-3 py-2 w-32">
-                                                    <div className={item.quantity > 0 && !item.rack_id ? 'p-1 rounded ring-2 ring-red-300 bg-red-50 dark:bg-red-900/10' : ''}>
-                                                        <SearchableSelect
-                                                            options={racks.map((r: any) => ({ value: r.id, label: r.code }))}
-                                                            value={item.rack_id}
-                                                            onChange={(v) => updateItem(item.product_id, 'rack_id', v as string)}
-                                                        />
-                                                        {item.quantity > 0 && !item.rack_id && (
-                                                            <span className="text-xs text-red-600 font-medium">⚠ Pilih rak!</span>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="px-3 py-2 w-20">
+                                                <td className="px-3 py-2 w-24">
                                                     <Input
                                                         type="number"
                                                         value={item.quantity}
-                                                        onChange={(e) => updateItem(item.product_id, 'quantity', parseInt(e.target.value) || 0)}
+                                                        onChange={(e) => updateItem(item.product_id, item.rack_id, 'quantity', parseInt(e.target.value) || 0)}
                                                         min={0}
                                                         max={item.stock}
                                                         disabled={item.stock === 0}
                                                     />
                                                 </td>
                                             </tr>
-                                        ))}
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             </div>
@@ -271,9 +324,9 @@ export default function Create({ products, racks, vehicleModels }: any) {
                         <span>⚠️</span> <span>Isi Nama Mitra terlebih dahulu.</span>
                     </div>
                 )}
-                {missingRack && (
-                    <div className="mt-3 flex items-center gap-2 px-3 py-2 text-sm text-red-700 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                        <span>⚠️</span> <span>Pilih rak untuk semua item yang memiliki quantity.</span>
+                {hasRelayItems && (
+                    <div className="mt-3 flex items-center gap-2 px-3 py-2 text-sm text-amber-700 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                        <span>💡</span> <span>Item dari stok Relay akan dikirim tanpa lokasi rak spesifik. Stok relay akan otomatis berkurang.</span>
                     </div>
                 )}
                 <div className="mt-4 flex gap-3">
@@ -284,7 +337,6 @@ export default function Create({ products, racks, vehicleModels }: any) {
                     >
                         {submitting ? 'Menyimpan...'
                             : !partnerName.trim() ? '⚠ Isi Nama Mitra'
-                            : missingRack ? '⚠ Lengkapi Rak'
                             : !hasActiveItems ? '⚠ Belum ada item'
                             : 'Simpan Shopping'}
                     </Button>

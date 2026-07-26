@@ -178,7 +178,7 @@ class CycleController extends Controller
             'items' => 'required|array',
             'items.*.id' => 'required|exists:cycle_items,id',
             'items.*.received_quantity' => 'required|integer|min:0',
-            'items.*.rack_id' => 'required|exists:racks,id',
+            'items.*.rack_id' => 'nullable|exists:racks,id',
             'items.*.notes' => 'nullable|string|max:200',
         ]);
 
@@ -217,7 +217,7 @@ class CycleController extends Controller
                     if (! $stock) {
                         $stock = Stock::create([
                             'product_id' => $item->product_id,
-                            'rack_id' => $itemData['rack_id'],
+                            'rack_id' => $itemData['rack_id'] ?? null,
                             'quantity' => 0,
                         ]);
                     }
@@ -259,7 +259,7 @@ class CycleController extends Controller
             'supplier_id'        => 'required|exists:suppliers,id',
             'items'              => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.rack_id'    => 'required|exists:racks,id',
+            'items.*.rack_id'    => 'nullable|exists:racks,id',
             'items.*.quantity'   => 'required|integer|min:1',
         ]);
 
@@ -282,18 +282,18 @@ class CycleController extends Controller
                     'product_id'        => $item['product_id'],
                     'quantity'          => $item['quantity'],
                     'received_quantity' => $item['quantity'],
-                    'rack_id'           => $item['rack_id'],
+                    'rack_id'           => $item['rack_id'] ?? null,
                 ]);
 
                 $stock = Stock::where('product_id', $item['product_id'])
-                    ->where('rack_id', $item['rack_id'])
+                    ->where('rack_id', $item['rack_id'] ?? null)
                     ->lockForUpdate()
                     ->first();
 
                 if (! $stock) {
                     $stock = Stock::create([
                         'product_id' => $item['product_id'],
-                        'rack_id'    => $item['rack_id'],
+                        'rack_id'    => $item['rack_id'] ?? null,
                         'quantity'   => 0,
                     ]);
                 }

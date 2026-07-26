@@ -500,4 +500,54 @@ class CycleControllerTest extends TestCase
 
         \Carbon\Carbon::setTestNow();
     }
+
+    public function test_receive_without_rack_is_accepted(): void
+    {
+        $cycle = Cycle::factory()->create(['status' => 'draft']);
+        $product = Product::factory()->create();
+        $item = CycleItem::factory()->create([
+            'cycle_id' => $cycle->id,
+            'product_id' => $product->id,
+            'quantity' => 10,
+            'received_quantity' => 0,
+        ]);
+
+        // Submit receive WITHOUT rack_id — this should be allowed after
+        // the nullable validation change. Stock is NOT created because
+        // there is no rack to place the items in.
+        $response = $this->actingAs($this->user)->post(route('cycles.receive', $cycle), [
+            'items' => [[
+                'id' => $item->id,
+                'received_quantity' => 5,
+                'rack_id' => null,
+                'notes' => null,
+            ]],
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('cycles', ['id' => $cycle->id, 'status' => 'completed']);
+        $this->assertDatabaseHas('cycle_items', ['id' => $item->id, 'received_quantity' => 5, 'rack_id' => null]);
+        // Stock tetap dibuat meskipun tanpa rak (relay/overflow)
+        $this->assertDatabaseHas('stocks', ['product_id' => $product->id, 'rack_id' => null, 'quantity' => 5]);
+    }
+
+    public function test_quick_receive_without_rack_is_accepted(): void
+    {
+        $supplier = \App\Models\Supplier::factory()->create();
+        $product = Product::factory()->create();
+
+        // Submit quick receive WITHOUT rack_id
+        $response = $this->actingAs($this->user)->post(route('cycles.quick-receive.store'), [
+            'supplier_id' => $supplier->id,
+            'items' => [
+                ['product_id' => $product->id, 'rack_id' => null, 'quantity' => 3],
+            ],
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('cycles', ['supplier_id' => $supplier->id, 'status' => 'completed']);
+        $this->assertDatabaseHas('cycle_items', ['product_id' => $product->id, 'quantity' => 3, 'rack_id' => null]);
+        // Stock dibuat dengan rack_id null (relay/overflow)
+        $this->assertDatabaseHas('stocks', ['product_id' => $product->id, 'rack_id' => null, 'quantity' => 3]);
+    }
 }

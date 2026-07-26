@@ -59,7 +59,7 @@ class ShoppingController extends Controller
             'notes' => 'nullable|string|max:500',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.rack_id' => 'required|exists:racks,id',
+            'items.*.rack_id' => 'nullable|exists:racks,id',
             'items.*.quantity' => 'required|integer|min:1',
         ]);
         $validated['items'] = $this->mergeDuplicateItems($validated['items']);
@@ -115,7 +115,7 @@ class ShoppingController extends Controller
             'notes' => 'nullable|string|max:500',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.rack_id' => 'required|exists:racks,id',
+            'items.*.rack_id' => 'nullable|exists:racks,id',
             'items.*.quantity' => 'required|integer|min:1',
         ]);
         $validated['items'] = $this->mergeDuplicateItems($validated['items']);

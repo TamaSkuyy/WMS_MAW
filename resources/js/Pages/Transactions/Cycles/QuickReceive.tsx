@@ -100,11 +100,12 @@ export default function QuickReceive({ suppliers, products, racks }: any) {
     };
 
     const totalQty = items.reduce((sum, i) => sum + i.quantity, 0);
-    const canSubmit =
-        !!supplierId && items.length > 0 && items.every((i) => !!i.rack_id);
+    const canSubmit = !!supplierId && items.length > 0;
+    const missingRack = items.some((i) => !i.rack_id);
 
     const handleSubmit = () => {
         if (!canSubmit || submitting) return;
+        if (!confirm('Konfirmasi penerimaan? Stok akan bertambah.')) return;
         setSubmitting(true);
         router.post(
             route('cycles.quick-receive.store'),
@@ -256,9 +257,7 @@ export default function QuickReceive({ suppliers, products, racks }: any) {
                                                         }
                                                     />
                                                     {!item.rack_id && (
-                                                        <p className="text-xs text-red-500 mt-0.5">
-                                                            Pilih rack
-                                                        </p>
+                                                        <span className="text-xs text-amber-600 font-medium">⚠ Relay / Tanpa Rak</span>
                                                     )}
                                                 </td>
                                                 <td className="px-3 py-2 w-20">
@@ -292,6 +291,11 @@ export default function QuickReceive({ suppliers, products, racks }: any) {
                             </div>
                         )}
 
+                        {missingRack && (
+                            <div className="mt-3 flex items-center gap-2 px-3 py-2 text-sm text-amber-700 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                                <span>⚠️</span> <span>Beberapa item belum pilih rak — stok dicatat tanpa lokasi (Overflow).</span>
+                            </div>
+                        )}
                         {items.length > 0 && (
                             <div className="mt-4 pt-4 border-t border-gray-100 flex gap-3">
                                 <Button
