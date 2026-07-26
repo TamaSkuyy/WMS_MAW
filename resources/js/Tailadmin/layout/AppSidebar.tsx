@@ -17,7 +17,7 @@ type Menu = {
 };
 
 const AppSidebar: React.FC = () => {
-  const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+  const { isExpanded, isMobileOpen, isHovered, setIsHovered, closeMobileSidebar } = useSidebar();
   const { url, props } = usePage();
   const location = { pathname: url };
 
@@ -143,6 +143,7 @@ const AppSidebar: React.FC = () => {
             nav.path && (
               <Link
                 href={nav.path}
+                onClick={closeMobileSidebar}
                 className={`menu-item group ${
                   isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
                 }`}
@@ -180,6 +181,7 @@ const AppSidebar: React.FC = () => {
                   <li key={subItem.id}>
                     <Link
                       href={subItem.path || "#"}
+                      onClick={closeMobileSidebar}
                       className={`menu-dropdown-item ${
                         subItem.path && isActive(subItem.path)
                           ? "menu-dropdown-item-active"
@@ -218,7 +220,7 @@ const AppSidebar: React.FC = () => {
           !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
         }`}
       >
-        <Link href="/" className="flex items-center gap-2.5">
+        <Link href="/" className="flex items-center gap-2.5" onClick={closeMobileSidebar}>
           <img
             src="/images/maw/logo-icon.png"
             alt="Mitra Adhi Wasana"

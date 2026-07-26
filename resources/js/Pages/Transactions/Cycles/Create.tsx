@@ -82,8 +82,8 @@ export default function Create({ suppliers, products }: any) {
                     </ComponentCard>
 
                     <ComponentCard title="Tambah Item" desc="Pilih produk yang akan diterima">
-                        <div className="flex gap-2 items-end mb-4">
-                            <div className="flex-1">
+                        <div className="mb-4 space-y-3">
+                            <div>
                                 <Label>Produk</Label>
                                 <SearchableSelect
                                     options={filteredProducts.map((p: any) => ({ value: p.id, label: `${p.part_number} - ${p.name}` }))}
@@ -92,11 +92,13 @@ export default function Create({ suppliers, products }: any) {
                                     placeholder={data.supplier_id ? 'Pilih produk...' : 'Pilih supplier dulu'}
                                 />
                             </div>
-                            <div className="w-24">
-                                <Label>Qty</Label>
-                                <Input type="number" value={selectedQty} onChange={(e) => setSelectedQty(parseInt(e.target.value) || 0)} min={1} />
+                            <div className="flex gap-2 items-end">
+                                <div className="w-24 sm:w-28">
+                                    <Label>Qty</Label>
+                                    <Input type="number" value={selectedQty} onChange={(e) => setSelectedQty(parseInt(e.target.value) || 0)} min={1} />
+                                </div>
+                                <Button type="button" onClick={addItem} className="shrink-0">+ Tambah</Button>
                             </div>
-                            <Button type="button" onClick={addItem}>Tambah</Button>
                         </div>
                         {errors.items && <p className="mt-1 text-sm text-red-500">{errors.items}</p>}
 

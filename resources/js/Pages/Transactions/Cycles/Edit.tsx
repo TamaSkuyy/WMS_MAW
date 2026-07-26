@@ -81,12 +81,14 @@ export default function Edit({ cycle, suppliers, products }: any) {
                         </div>
                     </ComponentCard>
                     <ComponentCard title="Item" desc="Daftar produk dalam cycle">
-                        <div className="flex gap-2 items-end mb-4">
-                            <div className="flex-1"><Label>Produk</Label>
+                        <div className="mb-4 space-y-3">
+                            <div><Label>Produk</Label>
                                 <SearchableSelect options={filteredProducts.map((p: any) => ({ value: p.id, label: `${p.part_number} - ${p.name}` }))} value={selectedProduct} onChange={(v) => setSelectedProduct(v as string)} placeholder={data.supplier_id ? 'Pilih produk...' : 'Pilih supplier dulu'} />
                             </div>
-                            <div className="w-24"><Label>Qty</Label><Input type="number" value={selectedQty} onChange={(e) => setSelectedQty(parseInt(e.target.value) || 0)} min={1} /></div>
-                            <Button type="button" onClick={addItem}>Tambah</Button>
+                            <div className="flex gap-2 items-end">
+                                <div className="w-24 sm:w-28"><Label>Qty</Label><Input type="number" value={selectedQty} onChange={(e) => setSelectedQty(parseInt(e.target.value) || 0)} min={1} /></div>
+                                <Button type="button" onClick={addItem} className="shrink-0">+ Tambah</Button>
+                            </div>
                         </div>
                         {data.items.length > 0 && (
                             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 mt-3">

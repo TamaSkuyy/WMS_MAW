@@ -140,48 +140,61 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
                                 </Button>
                             </div>
                             <form onSubmit={handleReceive}>
-                                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                <div className="overflow-x-auto">
+                                <table className="min-w-[850px] sm:min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                     <thead className="bg-gray-50 dark:bg-gray-800">
                                         <tr>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Produk</th>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Qty Dokumen</th>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Qty Diterima</th>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Rak</th>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Catatan</th>
+                                            <th className="px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase">Part Number / Nama Produk</th>
+                                            <th className="px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase w-14">Qty Doc</th>
+                                            <th className="px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase w-16">Diterima</th>
+                                            <th className="px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase w-32">Rak</th>
+                                            <th className="px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase hidden sm:table-cell">Catatan</th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
                                         {cycle.items.map((item: any, i: number) => (
                                             <tr key={item.id}>
-                                                <td className="px-3 py-2 text-sm">{item.product?.part_number} — {item.product?.name}</td>
-                                                <td className="px-3 py-2 text-sm text-center">{item.quantity}</td>
-                                                <td className="px-3 py-2">
-                                                    <Input type="number" value={items[i].received_quantity} onChange={(e) => updateItem(i, 'received_quantity', parseInt(e.target.value) || 0)} min={0} max={item.quantity} />
+                                                <td className="px-2 py-2 min-w-[180px]">
+                                                    <span className="text-xs font-mono text-gray-700 dark:text-gray-300">{item.product?.part_number}</span>
+                                                    <span className="text-xs sm:text-sm text-gray-800 dark:text-white/90 block mt-0.5">{item.product?.name}</span>
                                                 </td>
-                                                <td className="px-3 py-2">
-                                                    <div className="flex flex-col gap-1">
-                                                        <SearchableSelect options={racks.map((r: any) => ({ value: r.id, label: r.code }))} value={items[i].rack_id} onChange={(v) => updateItem(i, 'rack_id', v as string)} />
+                                                <td className="px-2 py-2 text-xs text-center tabular-nums">{item.quantity}</td>
+                                                <td className="px-2 py-2">
+                                                    <input
+                                                        type="number"
+                                                        value={items[i].received_quantity}
+                                                        onChange={(e) => updateItem(i, 'received_quantity', parseInt(e.target.value) || 0)}
+                                                        min={0} max={item.quantity}
+                                                        className="w-14 sm:w-20 text-center text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-800 rounded px-1 py-1.5"
+                                                    />
+                                                </td>
+                                                <td className="px-2 py-2">
+                                                    <div className="flex flex-col gap-0.5">
+                                                        <div className="w-28 sm:w-36">
+                                                            <SearchableSelect options={racks.map((r: any) => ({ value: r.id, label: r.code }))} value={items[i].rack_id} onChange={(v) => updateItem(i, 'rack_id', v as string)} />
+                                                        </div>
                                                         {!items[i].rack_id ? (
-                                                            <span className="self-start px-1.5 py-0.5 text-xs font-medium rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">⚠ Relay / Tanpa Rak</span>
+                                                            <span className="text-[10px] font-medium text-amber-600">⚠ Relay</span>
                                                         ) : (
                                                             <>
                                                                 {items[i].rack_source === 'default' && (
-                                                                    <span className="self-start px-1.5 py-0.5 text-xs font-medium rounded bg-blue-100 text-blue-700">Default</span>
+                                                                    <span className="text-[10px] font-medium text-blue-600">Default</span>
                                                                 )}
                                                                 {items[i].rack_source === 'history' && (
-                                                                    <span className="self-start px-1.5 py-0.5 text-xs font-medium rounded bg-gray-100 text-gray-600">Terakhir</span>
+                                                                    <span className="text-[10px] font-medium text-gray-500">Terakhir</span>
                                                                 )}
                                                             </>
                                                         )}
                                                     </div>
                                                 </td>
-                                                <td className="px-3 py-2">
-                                                    <input type="text" value={items[i].notes} onChange={(e) => updateItem(i, 'notes', e.target.value)} className="w-full text-sm border rounded px-2 py-1 dark:bg-gray-800 dark:border-gray-700" placeholder="contoh: 2 pcs rusak" />
+                                                <td className="px-2 py-2 hidden sm:table-cell">
+                                                    <input type="text" value={items[i].notes} onChange={(e) => updateItem(i, 'notes', e.target.value)} className="w-full text-xs border rounded px-2 py-1 dark:bg-gray-800 dark:border-gray-700" placeholder="cth: rusak" />
                                                 </td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
+                                </div>
                                 {missingRack && (
                                     <div className="mt-3 flex items-center gap-2 px-3 py-2 text-sm text-amber-700 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
                                         <span>⚠️</span> <span>Beberapa item belum memilih rak — stok akan dicatat tanpa lokasi rak (Overflow).</span>
@@ -197,28 +210,31 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
                         </ComponentCard>
                     ) : (
                         <ComponentCard title="Item" desc="Daftar produk dalam cycle">
-                            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <div className="overflow-x-auto">
+                            <table className="min-w-[600px] sm:min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                 <thead className="bg-gray-50 dark:bg-gray-800">
                                     <tr>
-                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Part #</th>
-                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Produk</th>
-                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Model</th>
-                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
-                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Diterima</th>
+                                        <th className="px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase">Part Number / Nama Produk</th>
+                                        <th className="px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase hidden sm:table-cell">Model</th>
+                                        <th className="px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase w-12">Qty</th>
+                                        <th className="px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase w-14">Terima</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
                                     {cycle.items.map((item: any) => (
                                         <tr key={item.id}>
-                                            <td className="px-3 py-2 text-sm font-mono">{item.product?.part_number}</td>
-                                            <td className="px-3 py-2 text-sm">{item.product?.name}</td>
-                                            <td className="px-3 py-2 text-sm text-gray-500">{item.product?.vehicle_model?.name || '-'}</td>
-                                            <td className="px-3 py-2 text-sm text-center">{item.quantity}</td>
-                                            <td className="px-3 py-2 text-sm text-center">{item.received_quantity || 0}</td>
+                                            <td className="px-2 py-2 min-w-[180px]">
+                                                <span className="text-xs font-mono text-gray-700 dark:text-gray-300">{item.product?.part_number}</span>
+                                                <span className="text-xs sm:text-sm text-gray-800 dark:text-white/90 block mt-0.5">{item.product?.name}</span>
+                                            </td>
+                                            <td className="px-2 py-2 text-xs text-gray-500 hidden sm:table-cell">{item.product?.vehicle_model?.name || '-'}</td>
+                                            <td className="px-2 py-2 text-xs text-center tabular-nums">{item.quantity}</td>
+                                            <td className="px-2 py-2 text-xs text-center tabular-nums">{item.received_quantity || 0}</td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
+                            </div>
                         </ComponentCard>
                     )}
                 </div>

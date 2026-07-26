@@ -255,14 +255,14 @@ export default function Create({ products, racks, vehicleModels }: any) {
                             </p>
                         ) : (
                             <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                <table className="min-w-[550px] sm:min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                     <thead className="bg-gray-50 dark:bg-gray-800">
                                         <tr>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Part #</th>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Nama</th>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Rak / Zona</th>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Stok</th>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-24">Qty Kirim</th>
+                                            <th className="px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase">Part #</th>
+                                            <th className="px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase">Nama</th>
+                                            <th className="px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase hidden sm:table-cell">Rak / Zona</th>
+                                            <th className="px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase w-12">Stok</th>
+                                            <th className="px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase w-20">Qty</th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
@@ -276,36 +276,39 @@ export default function Create({ products, racks, vehicleModels }: any) {
                                                     item.stock === 0 ? 'bg-red-50 dark:bg-red-900/10 opacity-60' : ''
                                                 }
                                             >
-                                                <td className="px-3 py-2 text-xs font-mono whitespace-nowrap">{item.part_number}</td>
-                                                <td className="px-3 py-2 text-sm">
-                                                    {item.name}
-                                                    {item.is_relay && (
-                                                        <span className="ml-1.5 inline-flex items-center px-1 py-0.5 text-[10px] font-bold rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                                                            RELAY
-                                                        </span>
-                                                    )}
+                                                <td className="px-2 py-2 text-[11px] sm:text-xs font-mono whitespace-nowrap">{item.part_number}</td>
+                                                <td className="px-2 py-2 text-[11px] sm:text-sm">
+                                                    <div className="flex flex-col sm:flex-row sm:items-center gap-0.5">
+                                                        <span>{item.name}</span>
+                                                        <span className="inline-flex sm:hidden text-[10px] text-gray-400">{item.rack_label}</span>
+                                                        {item.is_relay && (
+                                                            <span className="inline-flex items-center px-1 py-0.5 text-[9px] font-bold rounded bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 w-fit">
+                                                                RELAY
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </td>
-                                                <td className="px-3 py-2 text-sm">
+                                                <td className="px-2 py-2 text-xs hidden sm:table-cell">
                                                     <span className={item.is_relay ? 'text-amber-600 dark:text-amber-400 font-medium' : ''}>
                                                         {item.rack_label}
                                                     </span>
-                                                    <span className="ml-1 text-xs text-gray-400">{item.rack_zone}</span>
+                                                    <span className="ml-1 text-gray-400">{item.rack_zone}</span>
                                                 </td>
-                                                <td className="px-3 py-2">
-                                                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                                                <td className="px-2 py-2 text-center">
+                                                    <span className={`text-[11px] sm:text-xs font-medium px-1.5 py-0.5 rounded-full ${
                                                         item.stock > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                                                     }`}>
                                                         {item.stock}
                                                     </span>
                                                 </td>
-                                                <td className="px-3 py-2 w-24">
-                                                    <Input
+                                                <td className="px-2 py-2">
+                                                    <input
                                                         type="number"
                                                         value={item.quantity}
                                                         onChange={(e) => updateItem(item.product_id, item.rack_id, 'quantity', parseInt(e.target.value) || 0)}
-                                                        min={0}
-                                                        max={item.stock}
+                                                        min={0} max={item.stock}
                                                         disabled={item.stock === 0}
+                                                        className="w-16 text-center text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-800 rounded px-1 py-1.5 disabled:opacity-40"
                                                     />
                                                 </td>
                                             </tr>
