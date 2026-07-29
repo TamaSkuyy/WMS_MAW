@@ -81,6 +81,7 @@ Route::middleware('auth')->group(function () {
     Route::get('reports/receiving/export', [App\Http\Controllers\ReportController::class, 'receivingExport'])->name('reports.receiving.export');
     Route::get('reports/shopping', [App\Http\Controllers\ReportController::class, 'shopping'])->name('reports.shopping');
     Route::get('reports/shopping/export', [App\Http\Controllers\ReportController::class, 'shoppingExport'])->name('reports.shopping.export');
+    Route::get('reports/supplier-performance', [App\Http\Controllers\SupplierPerformanceController::class, 'index'])->name('reports.supplier-performance');
 
     Route::post('vehicle-models/import/preview', [VehicleModelController::class, 'importPreview'])->name('vehicle-models.import.preview');
     Route::post('vehicle-models/import', [VehicleModelController::class, 'import'])->name('vehicle-models.import');

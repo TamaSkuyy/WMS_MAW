@@ -64,14 +64,10 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
             setScanFeedback({ message: `"${code}" tidak ada dalam cycle ini`, type: 'error' });
             return;
         }
-        const maxQty = cycle.items[index].quantity;
         const current = items[index].received_quantity;
-        if (current >= maxQty) {
-            setScanFeedback({ message: `${code} — sudah penuh (${maxQty}/${maxQty})`, type: 'warning' });
-            return;
-        }
         beep();
-        setScanFeedback({ message: `✓ ${code} — ${current + 1}/${maxQty}`, type: 'ok' });
+        const qtyPlan = cycle.items[index].quantity;
+        setScanFeedback({ message: `✓ ${code} — ${current + 1} (plan: ${qtyPlan})`, type: 'ok' });
         setItems(prev => {
             const updated = [...prev];
             updated[index] = { ...updated[index], received_quantity: current + 1 };
@@ -84,6 +80,21 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
         receiving: 'bg-yellow-100 text-yellow-800',
         completed: 'bg-green-100 text-green-800',
     };
+
+    const fmtDuration = (ms: number) => {
+        if (ms < 0) return '-';
+        const s = Math.floor(ms / 1000);
+        const h = Math.floor(s / 3600);
+        const m = Math.floor((s % 3600) / 60);
+        const sec = s % 60;
+        if (h > 0) return `${h}j ${m}m ${sec}d`;
+        if (m > 0) return `${m}m ${sec}d`;
+        return `${sec}d`;
+    };
+
+    const cycleStart = new Date(cycle.created_at).getTime();
+    const cycleEnd = cycle.received_at ? new Date(cycle.received_at).getTime() : Date.now();
+    const totalDuration = cycleEnd - cycleStart;
 
     const updateItem = (index: number, field: string, value: any) => {
         const newItems = [...items];
@@ -119,6 +130,7 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
                             <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Status</dt><dd><span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[cycle.status]}`}>{cycle.status}</span></dd></div>
                             <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Item</dt><dd className="text-sm text-[#1A1D23]">{cycle.items.length}</dd></div>
                             <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Diterima</dt><dd className="text-sm text-[#1A1D23]">{cycle.received_at ? new Date(cycle.received_at).toLocaleDateString('id-ID') : '-'}</dd></div>
+                            <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Durasi</dt><dd className="text-sm text-[#1A1D23] tabular-nums">{cycle.status === 'completed' ? `⏱ ${fmtDuration(totalDuration)}` : `🔄 ${fmtDuration(totalDuration)}`}</dd></div>
                             {cycle.notes && <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Catatan</dt><dd className="text-sm text-[#1A1D23]">{cycle.notes}</dd></div>}
                         </dl>
                         <div className="mt-6 flex gap-2 pt-4 border-t border-[#F1F3F5]">
@@ -164,7 +176,7 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
                                                         type="number"
                                                         value={items[i].received_quantity}
                                                         onChange={(e) => updateItem(i, 'received_quantity', parseInt(e.target.value) || 0)}
-                                                        min={0} max={item.quantity}
+                                                        min={0}
                                                         className="w-14 sm:w-20 text-center text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-800 rounded px-1 py-1.5"
                                                     />
                                                 </td>
@@ -207,6 +219,29 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
                                     <Button type="button" variant="outline" onClick={() => setIsReceiving(false)} disabled={submitting}>Batal</Button>
                                 </div>
                             </form>
+                            {/* Receive Logs */}
+                            {cycle.items?.some((i: any) => i.receive_logs?.length > 0) && (
+                                <div className="mt-4 pt-4 border-t border-gray-200">
+                                    <h4 className="text-xs font-medium text-gray-500 mb-2">📋 Riwayat Penerimaan</h4>
+                                    <div className="text-[11px] space-y-1 max-h-40 overflow-y-auto">
+                                        {cycle.items.map((item: any) =>
+                                            item.receive_logs?.map((log: any, li: number) => {
+                                                const logTime = new Date(log.created_at).getTime();
+                                                const duration = logTime - cycleStart;
+                                                return (
+                                                <div key={`${item.id}-${li}`} className="flex gap-3 text-gray-500 items-center">
+                                                    <span className="text-gray-300 font-mono w-14">{item.product?.part_number?.substring(0, 10)}</span>
+                                                    <span className="text-green-600 font-medium w-8">+{log.quantity}</span>
+                                                    <span className="w-36">{new Date(log.created_at).toLocaleString('id-ID', {day:'numeric',month:'short', hour:'2-digit',minute:'2-digit',second:'2-digit'})}</span>
+                                                    <span className="text-blue-500 w-20 tabular-nums">⏱ {fmtDuration(duration)}</span>
+                                                    {log.user?.name && <span className="text-gray-400">— {log.user.name}</span>}
+                                                </div>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </ComponentCard>
                     ) : (
                         <ComponentCard title="Item" desc="Daftar produk dalam cycle">

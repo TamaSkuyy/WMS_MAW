@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CycleItem extends Model
 {
@@ -25,5 +26,10 @@ class CycleItem extends Model
     public function rack(): BelongsTo
     {
         return $this->belongsTo(Rack::class);
+    }
+
+    public function receiveLogs(): HasMany
+    {
+        return $this->hasMany(ReceiveLog::class);
     }
 }

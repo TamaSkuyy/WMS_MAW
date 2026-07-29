@@ -91,7 +91,7 @@ class CycleController extends Controller
 
     public function show(Cycle $cycle)
     {
-        $cycle->load(['supplier', 'items.product.vehicleModel', 'items.product.category', 'items.product.defaultRack']);
+        $cycle->load(['supplier', 'items.product.vehicleModel', 'items.product.category', 'items.product.defaultRack', 'items.receiveLogs.user']);
 
         $productIds = $cycle->items->pluck('product_id')->toArray();
         $lastUsedRacks = CycleItem::whereIn('product_id', $productIds)
@@ -182,7 +182,10 @@ class CycleController extends Controller
             'items.*.notes' => 'nullable|string|max:200',
         ]);
 
-        $ok = DB::transaction(function () use ($validated, $cycle) {
+        $userId = $request->user()?->id;
+        $now = now();
+
+        $ok = DB::transaction(function () use ($validated, $cycle, $userId, $now) {
             $lockedCycle = Cycle::where('id', $cycle->id)->lockForUpdate()->firstOrFail();
 
             if ($lockedCycle->status !== 'draft' && $lockedCycle->status !== 'receiving') {
@@ -194,19 +197,27 @@ class CycleController extends Controller
                     ->where('cycle_id', $lockedCycle->id)
                     ->firstOrFail();
 
-                // Snapshot the old value BEFORE updating so we can compute the
-                // correct stock delta instead of blindly adding the absolute
-                // received_quantity (which would double-count if this method
-                // were ever called multiple times for the same item).
                 $oldReceived = (int) $item->received_quantity;
+                $newReceived = (int) $itemData['received_quantity'];
+                $delta = $newReceived - $oldReceived;
+
+                if ($delta !== 0) {
+                    // Log this receive action
+                    \App\Models\ReceiveLog::create([
+                        'cycle_item_id' => $item->id,
+                        'quantity'      => $delta,
+                        'rack_id'       => $itemData['rack_id'] ?? null,
+                        'user_id'       => $userId,
+                        'notes'         => $itemData['notes'] ?? null,
+                        'created_at'    => $now,
+                    ]);
+                }
 
                 $item->update([
-                    'received_quantity' => $itemData['received_quantity'],
-                    'rack_id' => $itemData['rack_id'],
-                    'notes' => $itemData['notes'] ?? null,
+                    'received_quantity' => $newReceived,
+                    'rack_id'           => $itemData['rack_id'] ?? null,
+                    'notes'             => $itemData['notes'] ?? null,
                 ]);
-
-                $delta = $itemData['received_quantity'] - $oldReceived;
 
                 if ($delta !== 0) {
                     $stock = Stock::where('product_id', $item->product_id)
@@ -227,9 +238,12 @@ class CycleController extends Controller
                 }
             }
 
+            // Check if ALL items are fully received
+            $allComplete = $lockedCycle->items()->whereRaw('received_quantity < quantity')->count() === 0;
+
             $lockedCycle->update([
-                'status' => 'completed',
-                'received_at' => now(),
+                'status'      => $allComplete ? 'completed' : 'receiving',
+                'received_at' => $allComplete ? $now : null,
             ]);
 
             return true;
@@ -245,7 +259,11 @@ class CycleController extends Controller
             report($e);
         }
 
-        return redirect()->route('cycles.show', $cycle)->with('success', 'Cycle completed. Stock updated.');
+        $msg = $cycle->fresh()->status === 'completed'
+            ? 'Cycle completed. All items received.'
+            : 'Penerimaan sebagian berhasil. Cycle masih receiving.';
+
+        return redirect()->route('cycles.show', $cycle)->with('success', $msg);
     }
 
     public function quickReceiveForm()
