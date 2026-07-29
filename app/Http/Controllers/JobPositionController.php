@@ -41,19 +41,24 @@ class JobPositionController extends Controller
                 ->paginate(10)
                 ->withQueryString(),
             'filters' => $request->only(['search']),
+            'roles' => \Spatie\Permission\Models\Role::pluck('name')->toArray(),
         ]);
     }
 
     public function create()
     {
-        return Inertia::render('Master/JobPositions/Create');
+        return Inertia::render('Master/JobPositions/Create', [
+            'roles' => \Spatie\Permission\Models\Role::pluck('name')->toArray(),
+        ]);
     }
 
     public function store(Request $request)
     {
+        $roleNames = JobPosition::roleOptions();
         $validated = $request->validate([
             'name' => 'required|string|max:100|unique:job_positions',
             'level' => 'nullable|string|max:50',
+            'role_name' => 'nullable|string|in:' . implode(',', array_merge($roleNames, [''])),
         ]);
 
         JobPosition::create($validated);
@@ -65,14 +70,17 @@ class JobPositionController extends Controller
     {
         return Inertia::render('Master/JobPositions/Edit', [
             'position' => $jobPosition,
+            'roles' => \Spatie\Permission\Models\Role::pluck('name')->toArray(),
         ]);
     }
 
     public function update(Request $request, JobPosition $jobPosition)
     {
+        $roleNames = JobPosition::roleOptions();
         $validated = $request->validate([
             'name' => 'required|string|max:100|unique:job_positions,name,' . $jobPosition->id,
             'level' => 'nullable|string|max:50',
+            'role_name' => 'nullable|string|in:' . implode(',', array_merge($roleNames, [''])),
         ]);
 
         $jobPosition->update($validated);

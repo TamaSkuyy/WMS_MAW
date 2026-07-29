@@ -26,11 +26,11 @@ class RoleAndMenuSeeder extends Seeder
         Permission::firstOrCreate(['name' => 'manage users']);
         Permission::firstOrCreate(['name' => 'view dashboard']);
 
-        // create roles and assign created permissions
-        $roleAdmin = Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'web']);
+        // assign all permissions to superadmin
+        $roleAdmin = Role::firstOrCreate(['name' => 'superadmin', 'guard_name' => 'web']);
         $roleAdmin->givePermissionTo(Permission::all());
 
-        // create an admin user
+        // create default admin user
         $admin = User::firstOrCreate(
             ['email' => 'admin@maw.com'],
             [
@@ -38,7 +38,7 @@ class RoleAndMenuSeeder extends Seeder
                 'password' => Hash::make('password'),
             ]
         );
-        $admin->assignRole($roleAdmin);
+        $admin->syncRoles(['superadmin']);
 
         // Menus are handled by MenuSeeder
     }

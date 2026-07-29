@@ -9,7 +9,7 @@ import Label from '../../Tailadmin/components/form/Label';
 import ImportExportToolbar from '../../Components/ImportExport/ImportExportToolbar';
 import ImportModal from '../../Components/ImportExport/ImportModal';
 
-export default function Index({ users, roles }: any) {
+export default function Index({ users }: any) {
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState<number | null>(null);
     const [importModalOpen, setImportModalOpen] = useState(false);
@@ -18,7 +18,7 @@ export default function Index({ users, roles }: any) {
         name: '',
         email: '',
         password: '',
-        role: '',
+        employee_id: '',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -45,7 +45,7 @@ export default function Index({ users, roles }: any) {
             name: user.name,
             email: user.email,
             password: '',
-            role: user.roles?.length > 0 ? user.roles[0].name : '',
+            employee_id: user.employee_id || '',
         });
     };
 
@@ -130,18 +130,17 @@ export default function Index({ users, roles }: any) {
                             </div>
 
                             <div>
-                                <Label>Role</Label>
-                                <select
-                                    value={data.role}
-                                    onChange={(e) => setData('role', e.target.value)}
-                                    className="w-full px-4 py-2 bg-transparent border rounded-lg outline-none border-gray-300 dark:border-gray-700 dark:bg-gray-900"
-                                >
-                                    <option value="">-- Select Role --</option>
-                                    {roles.map((role: any) => (
-                                        <option key={role.id} value={role.name}>{role.name}</option>
-                                    ))}
-                                </select>
-                                {errors.role && <p className="mt-1 text-sm text-red-500">{errors.role}</p>}
+                                <Label>Employee ID</Label>
+                                <Input
+                                    type="text"
+                                    value={data.employee_id}
+                                    onChange={(e) => setData('employee_id', e.target.value)}
+                                    placeholder="Employee ID (optional)"
+                                />
+                                {errors.employee_id && <p className="mt-1 text-sm text-red-500">{errors.employee_id}</p>}
+                                <p className="text-[13px] text-[#6C757D] mt-1">
+                                    Role akan otomatis diisi dari jabatan karyawan yang dipilih.
+                                </p>
                             </div>
 
                             <div className="flex gap-2">
@@ -176,9 +175,13 @@ export default function Index({ users, roles }: any) {
                                             <td className="px-4 py-3 whitespace-nowrap text-sm text-[#1A1D23]">{user.name}</td>
                                             <td className="px-4 py-3 whitespace-nowrap text-[13px] text-[#6C757D]">{user.email}</td>
                                             <td className="px-4 py-3 whitespace-nowrap text-[13px] text-[#6C757D]">
-                                                {user.roles?.map((r: any) => (
-                                                    <span key={r.id} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#EEF2FF] text-[#3B5BDB]">
-                                                        {r.name}
+                                                {user.employee?.job_position?.role_name ? (
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#EEF2FF] text-[#3B5BDB]">
+                                                        {user.employee.job_position.role_name}
+                                                    </span>
+                                                ) : user.roles?.map((r: any) => (
+                                                    <span key={r.id} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#FEF3C7] text-[#B45309]">
+                                                        {r.name} (manual)
                                                     </span>
                                                 ))}
                                             </td>
