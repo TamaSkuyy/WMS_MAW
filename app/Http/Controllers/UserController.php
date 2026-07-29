@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
-use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
@@ -36,12 +35,10 @@ class UserController extends Controller
 
     public function index()
     {
-        $users = User::with('roles')->get();
-        $roles = Role::all();
+        $users = User::with(['roles', 'employee.jobPosition'])->get();
 
         return Inertia::render('Users/Index', [
             'users' => $users,
-            'roles' => $roles,
         ]);
     }
 
@@ -51,17 +48,22 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', Rules\Password::defaults()],
-            'role' => 'nullable|string|exists:roles,name',
+            'employee_id' => 'nullable|exists:employees,id',
         ]);
 
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
+            'employee_id' => $validated['employee_id'] ?? null,
         ]);
 
-        if (! empty($validated['role'])) {
-            $user->assignRole($validated['role']);
+        // Auto-assign role from employee's job position
+        if (!empty($validated['employee_id'])) {
+            $employee = \App\Models\Employee::with('jobPosition')->find($validated['employee_id']);
+            if ($employee?->jobPosition?->role_name) {
+                $user->syncRoles([$employee->jobPosition->role_name]);
+            }
         }
 
         return redirect()->route('users.index')->with('success', 'User created successfully.');
@@ -75,7 +77,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class.',id,'.$user->id,
             'password' => ['nullable', Rules\Password::defaults()],
-            'role' => 'nullable|string|exists:roles,name',
+            'employee_id' => 'nullable|exists:employees,id',
         ]);
 
         $user->name = $validated['name'];
@@ -83,10 +85,17 @@ class UserController extends Controller
         if (! empty($validated['password'])) {
             $user->password = Hash::make($validated['password']);
         }
+        $user->employee_id = $validated['employee_id'] ?? null;
         $user->save();
 
-        if (! empty($validated['role'])) {
-            $user->syncRoles([$validated['role']]);
+        // Auto-assign role from employee's job position
+        if (!empty($validated['employee_id'])) {
+            $employee = \App\Models\Employee::with('jobPosition')->find($validated['employee_id']);
+            if ($employee?->jobPosition?->role_name) {
+                $user->syncRoles([$employee->jobPosition->role_name]);
+            } else {
+                $user->syncRoles([]);
+            }
         } else {
             $user->syncRoles([]);
         }
@@ -107,8 +116,8 @@ class UserController extends Controller
 
     public function export(Request $request)
     {
-        if (!Auth::user()?->hasRole('admin')) {
-            abort(403, 'Only administrators can export user data.');
+        if (!Auth::user()?->hasRole('superadmin')) {
+            abort(403, 'Only superadmin can export user data.');
         }
 
         return $this->performExport($request);

@@ -10,7 +10,7 @@ import EmptyState from '../../../Tailadmin/components/common/EmptyState';
 import ImportExportToolbar from '../../../Components/ImportExport/ImportExportToolbar';
 import ImportModal from '../../../Components/ImportExport/ImportModal';
 
-export default function Index({ positions, filters }: any) {
+export default function Index({ positions, filters, roles }: any) {
     const [importModalOpen, setImportModalOpen] = useState(false);
 
     const handleDelete = (id: number) => {
@@ -49,6 +49,7 @@ export default function Index({ positions, filters }: any) {
                     fields={[
                         { key: 'name', label: 'Nama', required: true },
                         { key: 'level', label: 'Level', required: false },
+                        { key: 'role_name', label: 'Role', required: false },
                     ]}
                 />
                 {positions.data.length === 0 ? (
@@ -66,6 +67,7 @@ export default function Index({ positions, filters }: any) {
                             <tr>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Nama</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Level</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Role</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider w-24">Aksi</th>
                             </tr>
                         </thead>
@@ -74,6 +76,13 @@ export default function Index({ positions, filters }: any) {
                                 <tr key={p.id} className="border-b border-[#F1F3F5] hover:bg-[#F8F9FC] transition-all duration-150">
                                     <td className="px-4 py-3 text-sm text-[#1A1D23] font-medium">{p.name}</td>
                                     <td className="px-4 py-3 text-[13px] text-[#6C757D]">{p.level || '-'}</td>
+                                    <td className="px-4 py-3 text-[13px] text-[#6C757D]">
+                                        {p.role_name ? (
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#EEF2FF] text-[#3B5BDB]">
+                                                {p.role_name}
+                                            </span>
+                                        ) : '-'}
+                                    </td>
                                     <td className="px-4 py-3 text-sm text-[#1A1D23]">
                                         <TableActions
                                             editRoute={route('job-positions.edit', p.id)}

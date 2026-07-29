@@ -10,8 +10,8 @@ import Label from '../../../Tailadmin/components/form/Label';
 import Select from '../../../Tailadmin/components/form/Select';
 import { Link } from '@inertiajs/react';
 
-export default function Create() {
-    const { data, setData, post, errors } = useForm({ name: '', level: '' });
+export default function Create({ roles }: any) {
+    const { data, setData, post, errors } = useForm({ name: '', level: '', role_name: '' });
     const levelOptions = [
         { value: 'Staff', label: 'Staff' },
         { value: 'Leader', label: 'Leader' },
@@ -20,6 +20,7 @@ export default function Create() {
         { value: 'Kepala Bagian', label: 'Kepala Bagian' },
         { value: 'Direktur', label: 'Direktur' },
     ];
+    const roleOptions = roles.map((r: string) => ({ value: r, label: r }));
 
     return (
         <>
@@ -46,6 +47,11 @@ export default function Create() {
                             <Label>Level</Label>
                             <Select options={levelOptions} placeholder="-- Pilih Level --" defaultValue={data.level} onChange={(val) => setData('level', val)} />
                             {errors.level && <p className="mt-1 text-sm text-red-500">{errors.level}</p>}
+                        </div>
+                        <div>
+                            <Label>Role (Spatie)</Label>
+                            <Select options={roleOptions} placeholder="-- Pilih Role --" defaultValue={data.role_name} onChange={(val) => setData('role_name', val)} />
+                            {errors.role_name && <p className="mt-1 text-sm text-red-500">{errors.role_name}</p>}
                         </div>
                         <div className="flex gap-3 pt-4 border-t border-[#F1F3F5]">
                             <Button type="submit" icon={<CheckIcon className="w-4 h-4" />}>Simpan</Button>

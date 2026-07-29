@@ -17,8 +17,8 @@ class RoleManagementSeeder extends Seeder
         // 1. Create permission for managing roles
         $permission = Permission::firstOrCreate(['name' => 'manage roles']);
 
-        // 2. Assign permission to Super Admin
-        $roleAdmin = Role::where('name', 'Super Admin')->first();
+        // 2. Assign permission to Superadmin
+        $roleAdmin = Role::where('name', 'superadmin')->first();
         if ($roleAdmin) {
             $roleAdmin->givePermissionTo($permission);
         }

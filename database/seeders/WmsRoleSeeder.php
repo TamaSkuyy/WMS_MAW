@@ -11,7 +11,6 @@ class WmsRoleSeeder extends Seeder
 {
     public function run(): void
     {
-        // Reset cached roles and permissions
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // ─── PERMISSIONS ────────────────────────────────────
@@ -35,6 +34,10 @@ class WmsRoleSeeder extends Seeder
             'view stocks',
             'view shoppings', 'create shoppings', 'edit shoppings', 'delete shoppings', 'ship shoppings',
 
+            // Reports
+            'view receiving report', 'export receiving report',
+            'view shopping report', 'export shopping report',
+
             // System
             'view users', 'manage users',
             'view roles', 'manage roles',
@@ -48,41 +51,43 @@ class WmsRoleSeeder extends Seeder
 
         // ─── ROLES ──────────────────────────────────────────
 
-        // 1. Super Admin — semua permission
-        $superAdmin = Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'web']);
-        $superAdmin->givePermissionTo(Permission::all());
+        // 1. Superadmin — semua permission
+        $superadmin = Role::firstOrCreate(['name' => 'superadmin', 'guard_name' => 'web']);
+        $superadmin->syncPermissions(Permission::all());
 
-        // 2. Admin Gudang — semua kecuali manage users/roles/permissions
-        $adminGudang = Role::firstOrCreate(['name' => 'Admin Gudang', 'guard_name' => 'web']);
-        $adminGudang->givePermissionTo(Permission::whereNotIn('name', [
-            'manage users', 'manage roles', 'manage permissions',
-        ])->get());
-
-        // 3. Kepala Gudang — view semua + approve cycles & shopping
-        $kepalaGudang = Role::firstOrCreate(['name' => 'Kepala Gudang', 'guard_name' => 'web']);
-        $kepalaGudang->givePermissionTo([
+        // 2. Leader — view all master data + operasional CRUD + reports
+        $leader = Role::firstOrCreate(['name' => 'leader', 'guard_name' => 'web']);
+        $leader->syncPermissions([
             'view dashboard',
+
             // View all master data
             'view suppliers', 'view products', 'view racks',
             'view vehicle models', 'view product categories',
             'view job positions', 'view work locations', 'view departments', 'view employees',
-            // View & approve transactions
+
+            // Transactions (CRUD + approve)
             'view cycles', 'create cycles', 'edit cycles', 'delete cycles', 'receive cycles',
             'view stocks',
             'view shoppings', 'create shoppings', 'edit shoppings', 'delete shoppings', 'ship shoppings',
+
+            // Reports
+            'view receiving report', 'export receiving report',
+            'view shopping report', 'export shopping report',
         ]);
 
-        // 4. Staff Gudang — operasional dasar
-        $staffGudang = Role::firstOrCreate(['name' => 'Staff Gudang', 'guard_name' => 'web']);
-        $staffGudang->givePermissionTo([
+        // 3. Operator — view + create only, no edit/delete/approve
+        $operator = Role::firstOrCreate(['name' => 'operator', 'guard_name' => 'web']);
+        $operator->syncPermissions([
             'view dashboard',
-            // View master data
+
+            // View master data (read-only)
             'view suppliers', 'view products', 'view racks',
             'view vehicle models', 'view product categories',
-            // Operasional
-            'view cycles', 'create cycles', 'edit cycles', 'receive cycles',
+
+            // Transactions (create + view only)
+            'view cycles', 'create cycles',
             'view stocks',
-            'view shoppings', 'create shoppings', 'edit shoppings', 'ship shoppings',
+            'view shoppings', 'create shoppings',
         ]);
     }
 }

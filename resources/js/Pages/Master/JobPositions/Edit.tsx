@@ -10,10 +10,11 @@ import Label from '../../../Tailadmin/components/form/Label';
 import Select from '../../../Tailadmin/components/form/Select';
 import { Link } from '@inertiajs/react';
 
-export default function Edit({ position }: any) {
+export default function Edit({ position, roles }: any) {
     const { data, setData, put, errors } = useForm({
         name: position.name,
         level: position.level || '',
+        role_name: position.role_name || '',
     });
     const levelOptions = [
         { value: 'Staff', label: 'Staff' },
@@ -23,6 +24,7 @@ export default function Edit({ position }: any) {
         { value: 'Kepala Bagian', label: 'Kepala Bagian' },
         { value: 'Direktur', label: 'Direktur' },
     ];
+    const roleOptions = roles.map((r: string) => ({ value: r, label: r }));
 
     return (
         <>
@@ -49,6 +51,11 @@ export default function Edit({ position }: any) {
                             <Label>Level</Label>
                             <Select options={levelOptions} placeholder="-- Pilih Level --" defaultValue={data.level} onChange={(val) => setData('level', val)} />
                             {errors.level && <p className="mt-1 text-sm text-red-500">{errors.level}</p>}
+                        </div>
+                        <div>
+                            <Label>Role (Spatie)</Label>
+                            <Select options={roleOptions} placeholder="-- Pilih Role --" defaultValue={data.role_name} onChange={(val) => setData('role_name', val)} />
+                            {errors.role_name && <p className="mt-1 text-sm text-red-500">{errors.role_name}</p>}
                         </div>
                         <div className="flex gap-3 pt-4 border-t border-[#F1F3F5]">
                             <Button type="submit" icon={<CheckIcon className="w-4 h-4" />}>Simpan</Button>
