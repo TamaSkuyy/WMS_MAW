@@ -106,6 +106,15 @@ class MenuSeeder extends Seeder
         ]);
 
         Menu::create([
+            'name' => 'Lokasi Tujuan',
+            'icon' => 'PinIcon',
+            'path' => '/shopping-locations',
+            'parent_id' => $masterData->id,
+            'sort_order' => 81,
+            'group' => 'main',
+        ]);
+
+        Menu::create([
             'name' => 'Karyawan',
             'icon' => 'UsersIcon',
             'path' => '/employees',
@@ -190,6 +199,15 @@ class MenuSeeder extends Seeder
             'path' => '/reports/shopping',
             'parent_id' => $reportTransaction->id,
             'sort_order' => 2,
+            'group' => 'main',
+        ]);
+
+        Menu::create([
+            'name' => 'Performa Supplier',
+            'icon' => 'ChartBarIcon',
+            'path' => '/reports/supplier-performance',
+            'parent_id' => $reportTransaction->id,
+            'sort_order' => 3,
             'group' => 'main',
         ]);
 
