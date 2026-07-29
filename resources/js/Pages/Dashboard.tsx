@@ -3,7 +3,7 @@ import { Head, Link } from '@inertiajs/react';
 import { BoxCubeIcon, ArrowUpIcon, AlertIcon, ArrowDownIcon } from '../Tailadmin/icons';
 import MetricCard from './Dashboard/MetricCard';
 
-export default function Dashboard({ metrics, lowStockItems, pendingCycles, todayShoppings }: any) {
+export default function Dashboard({ metrics, lowStockItems, overStockItems, pendingCycles, todayShoppings }: any) {
     return (
         <>
             <Head title="Dashboard - Mitra Adhi Wasana" />
@@ -74,6 +74,15 @@ export default function Dashboard({ metrics, lowStockItems, pendingCycles, today
                     iconBg="bg-error-50 dark:bg-error-500/20"
                 />
                 <MetricCard
+                    title="Stok Berlebih"
+                    value={metrics?.over_stock_count?.toString() || '0'}
+                    subtitle={metrics?.over_stock_count > 0 ? 'Melebihi max stock' : 'Normal'}
+                    alert={metrics?.over_stock_count > 0}
+                    icon={<ArrowUpIcon className="text-error-500" />}
+                    accentBar="bg-error-500"
+                    iconBg="bg-error-50 dark:bg-error-500/20"
+                />
+                <MetricCard
                     title="Cycle Pending"
                     value={metrics?.pending_cycles?.toString() || '0'}
                     subtitle={metrics?.completed_cycles_today > 0 ? `${metrics.completed_cycles_today} selesai hari ini` : 'Belum ada'}
@@ -102,7 +111,7 @@ export default function Dashboard({ metrics, lowStockItems, pendingCycles, today
                                                     {item.name}
                                                 </p>
                                                 <p className="text-xs text-gray-500">
-                                                    {item.part_number} — Rak {item.rack}
+                                                    {item.part_number} — Rak {item.rack} | Min: {item.min_stock}
                                                 </p>
                                             </div>
                                             <span className="inline-flex items-center px-3 py-1 text-sm font-bold rounded-full bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400">
@@ -115,6 +124,43 @@ export default function Dashboard({ metrics, lowStockItems, pendingCycles, today
                                 <div className="text-center py-8">
                                     <div className="text-3xl mb-2">✅</div>
                                     <p className="text-sm text-gray-500 dark:text-gray-400">Semua stok aman</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Overstock */}
+                <div className="col-span-12 xl:col-span-6">
+                    <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+                        <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800">
+                            <h3 className="text-base font-medium text-gray-800 dark:text-white/90">
+                                📦 Stok Berlebih
+                            </h3>
+                        </div>
+                        <div className="p-6">
+                            {overStockItems?.length > 0 ? (
+                                <div className="space-y-3">
+                                    {overStockItems.map((item: any, i: number) => (
+                                        <div key={i} className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-500/10 rounded-lg">
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                                    {item.name}
+                                                </p>
+                                                <p className="text-xs text-gray-500">
+                                                    {item.part_number} — Rak {item.rack} | Max: {item.max_stock}
+                                                </p>
+                                            </div>
+                                            <span className="inline-flex items-center px-3 py-1 text-sm font-bold rounded-full bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400">
+                                                {item.quantity}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-8">
+                                    <div className="text-3xl mb-2">✅</div>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Semua stok dalam batas</p>
                                 </div>
                             )}
                         </div>
@@ -188,7 +234,7 @@ export default function Dashboard({ metrics, lowStockItems, pendingCycles, today
                                             className="block p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                                         >
                                             <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                                                {shopping.partner_name}
+                                                {shopping.shopping_location || '-'}
                                             </p>
                                             <p className="text-xs text-gray-500 mt-1">
                                                 {shopping.items_count} item · {shopping.shopping_date}

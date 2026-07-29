@@ -39,7 +39,7 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        $products = Product::with(['vehicleModel', 'supplier', 'category'])
+        $products = Product::with(['vehicleModel', 'supplier', 'category', 'stocks'])
             ->when($request->search, function ($query, $search) {
                 $query->where('part_number', 'like', "%{$search}%")
                       ->orWhere('name', 'like', "%{$search}%");
@@ -53,6 +53,21 @@ class ProductController extends Controller
             ->latest()
             ->paginate(15)
             ->withQueryString();
+
+        // Attach total_stock and status per product
+        $products->getCollection()->transform(function ($product) {
+            $product->total_stock = $product->stocks->sum('quantity');
+            $product->stock_status = 'normal';
+            if ($product->min_stock !== null && $product->total_stock < $product->min_stock && $product->total_stock > 0) {
+                $product->stock_status = 'low';
+            } elseif ($product->min_stock !== null && $product->total_stock <= 0) {
+                $product->stock_status = 'out';
+            }
+            if ($product->max_stock !== null && $product->total_stock > $product->max_stock) {
+                $product->stock_status = 'over';
+            }
+            return $product;
+        });
 
         return Inertia::render('Master/Products/Index', [
             'products' => $products,
@@ -90,6 +105,8 @@ class ProductController extends Controller
             'description' => 'nullable|string|max:1000',
             'is_active' => 'boolean',
             'default_rack_id' => 'nullable|exists:racks,id',
+            'min_stock' => 'nullable|integer|min:0',
+            'max_stock' => 'nullable|integer|min:0',
         ]);
 
         Product::create($validated);
@@ -137,6 +154,8 @@ class ProductController extends Controller
             'description' => 'nullable|string|max:1000',
             'is_active' => 'boolean',
             'default_rack_id' => 'nullable|exists:racks,id',
+            'min_stock' => 'nullable|integer|min:0',
+            'max_stock' => 'nullable|integer|min:0',
         ]);
 
         $product->update($validated);

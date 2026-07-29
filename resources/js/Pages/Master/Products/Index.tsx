@@ -126,6 +126,9 @@ export default function Index({ products, categories, suppliers, filters }: any)
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Model Kendaraan</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Supplier</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Kategori</th>
+                                <th className="px-4 py-3 text-center text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider w-16">Stok</th>
+                                <th className="px-4 py-3 text-center text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider w-20">Min / Max</th>
+                                <th className="px-4 py-3 text-center text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider w-20">Status</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider w-24">Aksi</th>
                             </tr>
                         </thead>
@@ -141,6 +144,26 @@ export default function Index({ products, categories, suppliers, filters }: any)
                                     </td>
                                     <td className="px-4 py-3 whitespace-nowrap text-[13px] text-[#6C757D]">{product.supplier?.name || '-'}</td>
                                     <td className="px-4 py-3 whitespace-nowrap text-[13px] text-[#6C757D]">{product.category?.name || '-'}</td>
+                                    <td className="px-4 py-3 text-center text-sm font-medium text-[#1A1D23]">{product.total_stock ?? 0}</td>
+                                    <td className="px-4 py-3 text-center text-[12px] text-[#6C757D]">
+                                        {product.min_stock != null || product.max_stock != null
+                                            ? `${product.min_stock ?? '-'} / ${product.max_stock ?? '-'}`
+                                            : '-'}
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        {product.stock_status === 'low' && (
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-yellow-100 text-yellow-700">⚠ Low</span>
+                                        )}
+                                        {product.stock_status === 'out' && (
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-red-100 text-red-700">✕ Out</span>
+                                        )}
+                                        {product.stock_status === 'over' && (
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-orange-100 text-orange-700">⚠ Over</span>
+                                        )}
+                                        {product.stock_status === 'normal' && (
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-green-100 text-green-700">Normal</span>
+                                        )}
+                                    </td>
                                     <td className="px-4 py-3 whitespace-nowrap text-sm text-[#1A1D23]">
                                         <TableActions
                                             viewRoute={route('products.show', product.id)}

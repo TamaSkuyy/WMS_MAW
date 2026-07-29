@@ -27,14 +27,14 @@ export default function Show({ shopping }: any) {
 
     return (
         <>
-            <Head title={`Pengiriman ke ${shopping.partner_name}`} />
-            <PageBreadcrumb pageTitle={`Detail: ${shopping.partner_name}`} />
+            <Head title={`Shopping ke ${shopping.shopping_location?.name || '-'}`} />
+            <PageBreadcrumb pageTitle={`Detail: ${shopping.shopping_location?.name || '-'}`} />
 
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
                 <div className="xl:col-span-1">
                     <ComponentCard title="Info Shopping" desc="Detail pengiriman barang">
                         <dl className="space-y-4">
-                            <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Mitra</dt><dd className="text-sm text-[#1A1D23]">{shopping.partner_name}</dd></div>
+                            <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Mitra</dt><dd className="text-sm text-[#1A1D23]">{shopping.shopping_location?.name || '-'}</dd></div>
                             <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Tanggal</dt><dd className="text-sm text-[#1A1D23]">{shopping.shopping_date}</dd></div>
                             <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Status</dt><dd><span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[shopping.status]}`}>{shopping.status}</span></dd></div>
                             {shopping.notes && <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Catatan</dt><dd className="text-sm text-[#1A1D23]">{shopping.notes}</dd></div>}

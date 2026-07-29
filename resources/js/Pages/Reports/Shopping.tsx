@@ -109,7 +109,7 @@ export default function Shopping({ items, summary, filters }: any) {
                                         <td className="px-4 py-3 text-sm whitespace-nowrap">
                                             {item.shopping?.shopping_date ? new Date(item.shopping.shopping_date).toLocaleDateString('id-ID') : '-'}
                                         </td>
-                                        <td className="px-4 py-3 text-sm whitespace-nowrap">{item.shopping?.partner_name}</td>
+                                        <td className="px-4 py-3 text-sm whitespace-nowrap">{item.shopping?.shopping_location?.name || '-'}</td>
                                         <td className="px-4 py-3 text-sm whitespace-nowrap">{item.product?.part_number} — {item.product?.name}</td>
                                         <td className="px-4 py-3 text-sm whitespace-nowrap">{item.rack?.code}</td>
                                         <td className="px-4 py-3 text-sm whitespace-nowrap">{item.quantity}</td>

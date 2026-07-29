@@ -114,7 +114,7 @@ class ReportController extends Controller
     private function shoppingQuery(array $filters): Builder
     {
         return ShoppingItem::query()
-            ->with(['shopping', 'product', 'rack'])
+            ->with(['shopping.shoppingLocation', 'product', 'rack'])
             ->whereHas('shopping', function ($q) use ($filters) {
                 if (! empty($filters['date_from'])) {
                     $q->whereDate('shopping_date', '>=', $filters['date_from']);
@@ -123,7 +123,7 @@ class ReportController extends Controller
                     $q->whereDate('shopping_date', '<=', $filters['date_to']);
                 }
                 if (! empty($filters['partner'])) {
-                    $q->where('partner_name', 'like', '%' . $filters['partner'] . '%');
+                    $q->whereHas('shoppingLocation', fn ($ql) => $ql->where('name', 'like', '%' . $filters['partner'] . '%'));
                 }
                 if (! empty($filters['status'])) {
                     $q->where('status', $filters['status']);

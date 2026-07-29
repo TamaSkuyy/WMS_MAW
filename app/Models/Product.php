@@ -22,6 +22,8 @@ class Product extends Model
         'base_price',
         'is_active',
         'default_rack_id',
+        'min_stock',
+        'max_stock',
     ];
 
     protected function casts(): array

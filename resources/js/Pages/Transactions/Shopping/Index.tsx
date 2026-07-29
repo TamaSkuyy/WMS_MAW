@@ -29,11 +29,11 @@ export default function Index({ shoppings, filters }: any) {
             <ComponentCard title="Daftar Shopping">
                 <div className="mb-4 flex gap-3 flex-wrap items-end">
                     <div className="min-w-[200px]">
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Cari Mitra</label>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Cari Lokasi</label>
                         <Input
                             type="text"
                             defaultValue={filters?.search || ''}
-                            placeholder="Nama mitra..."
+                            placeholder="Nama lokasi tujuan..."
                             onChange={(e) => router.get(route('shoppings.index'), { ...filters, search: e.target.value }, { preserveState: true, replace: true })}
                         />
                     </div>
@@ -58,7 +58,7 @@ export default function Index({ shoppings, filters }: any) {
                     <EmptyState
                         icon="📤"
                         title="Belum ada shopping"
-                        message="Buat shopping pengiriman barang ke mitra."
+                        message="Buat shopping pengiriman barang ke lokasi tujuan."
                         actionLabel="Buat Shopping"
                         actionRoute={route('shoppings.create')}
                     />
@@ -67,8 +67,8 @@ export default function Index({ shoppings, filters }: any) {
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead className="bg-gray-50 dark:bg-gray-800">
                             <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mitra / Nama Mitra</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal / Tanggal Kirim</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lokasi Tujuan</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal Kirim</th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-24">Aksi</th>
@@ -77,7 +77,7 @@ export default function Index({ shoppings, filters }: any) {
                         <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
                             {shoppings.data.map((s: any) => (
                                 <tr key={s.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                                    <td className="px-4 py-3 whitespace-nowrap text-sm">{s.partner_name}</td>
+                                    <td className="px-4 py-3 whitespace-nowrap text-sm">{s.shopping_location?.name || '-'}</td>
                                     <td className="px-4 py-3 whitespace-nowrap text-sm">{s.shopping_date}</td>
                                     <td className="px-4 py-3 whitespace-nowrap">
                                         <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[s.status]}`}>{s.status}</span>

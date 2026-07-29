@@ -27,6 +27,8 @@ export default function Index({ stocks }: any) {
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Rak</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Zona</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider w-24">Qty</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider w-24">Total Masuk</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider w-24">Total Keluar</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Supplier</th>
                             </tr>
                         </thead>
@@ -53,6 +55,8 @@ export default function Index({ stocks }: any) {
                                     </td>
                                     <td className="px-4 py-3 text-[13px] text-[#6C757D]">{stock.rack?.zone || '-'}</td>
                                     <td className="px-4 py-3 text-sm text-[#1A1D23] font-medium">{stock.quantity}</td>
+                                    <td className="px-4 py-3 text-sm text-[#1A1D23] font-medium text-green-600">{stock.total_in ?? 0}</td>
+                                    <td className="px-4 py-3 text-sm text-[#1A1D23] font-medium text-red-600">{stock.total_out ?? 0}</td>
                                     <td className="px-4 py-3 text-[13px] text-[#6C757D]">
                                         <Link href={route('suppliers.show', stock.product?.supplier_id)} className="text-brand-500 hover:text-brand-700">
                                             {stock.product?.supplier?.name || '-'}

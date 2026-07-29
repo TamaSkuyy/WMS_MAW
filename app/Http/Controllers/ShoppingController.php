@@ -6,6 +6,7 @@ use App\Events\StockChanged;
 use App\Models\Product;
 use App\Models\Rack;
 use App\Models\Shopping;
+use App\Models\ShoppingLocation;
 use App\Models\Stock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,9 +16,10 @@ class ShoppingController extends Controller
 {
     public function index(Request $request)
     {
-        $shoppings = Shopping::withCount('items')
+        $shoppings = Shopping::with(['shoppingLocation', 'items'])
+            ->withCount('items')
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
-            ->when($request->search, fn ($q, $s) => $q->where('partner_name', 'like', "%{$s}%"))
+            ->when($request->search, fn ($q, $s) => $q->whereHas('shoppingLocation', fn ($ql) => $ql->where('name', 'like', "%{$s}%")))
             ->latest()
             ->paginate(10)
             ->withQueryString();
@@ -31,9 +33,9 @@ class ShoppingController extends Controller
     public function create()
     {
         return Inertia::render('Transactions/Shopping/Create', [
-            'products'      => Product::with(['vehicleModel', 'stocks'])->where('is_active', true)->orderBy('name')->get(),
-            'racks'         => Rack::orderBy('zone')->orderBy('code')->get(),
-            'vehicleModels' => \App\Models\VehicleModel::orderBy('brand')->orderBy('name')->orderBy('suffix')->get(),
+            'products'           => Product::with(['vehicleModel', 'stocks', 'supplier'])->where('is_active', true)->orderBy('name')->get(),
+            'racks'              => Rack::orderBy('zone')->orderBy('code')->get(),
+            'shoppingLocations'  => ShoppingLocation::orderBy('name')->get(),
         ]);
     }
 
@@ -54,7 +56,7 @@ class ShoppingController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'partner_name' => 'required|string|max:255',
+            'shopping_location_id' => 'required|exists:shopping_locations,id',
             'shopping_date' => 'required|date',
             'notes' => 'nullable|string|max:500',
             'items' => 'required|array|min:1',
@@ -65,7 +67,7 @@ class ShoppingController extends Controller
         $validated['items'] = $this->mergeDuplicateItems($validated['items']);
 
         $shopping = Shopping::create([
-            'partner_name' => $validated['partner_name'],
+            'shopping_location_id' => $validated['shopping_location_id'],
             'shopping_date' => $validated['shopping_date'],
             'status' => 'draft',
             'notes' => $validated['notes'] ?? null,
@@ -79,13 +81,13 @@ class ShoppingController extends Controller
             ]);
         }
 
-        return redirect()->route('shoppings.show', $shopping)->with('success', 'Shopping created.');
+        return redirect()->route('shoppings.show', $shopping)->with('success', 'Shopping berhasil dibuat.');
     }
 
     public function show(Shopping $shopping)
     {
         return Inertia::render('Transactions/Shopping/Show', [
-            'shopping' => $shopping->load('items.product.vehicleModel', 'items.rack'),
+            'shopping' => $shopping->load('items.product.vehicleModel', 'items.rack', 'shoppingLocation'),
         ]);
     }
 
@@ -96,10 +98,10 @@ class ShoppingController extends Controller
         }
 
         return Inertia::render('Transactions/Shopping/Edit', [
-            'shopping'      => $shopping->load('items.product.vehicleModel'),
-            'products'      => Product::with(['vehicleModel', 'stocks'])->where('is_active', true)->orderBy('name')->get(),
-            'racks'         => Rack::orderBy('zone')->orderBy('code')->get(),
-            'vehicleModels' => \App\Models\VehicleModel::orderBy('brand')->orderBy('name')->orderBy('suffix')->get(),
+            'shopping'           => $shopping->load('items.product.vehicleModel', 'shoppingLocation'),
+            'products'           => Product::with(['vehicleModel', 'stocks', 'supplier'])->where('is_active', true)->orderBy('name')->get(),
+            'racks'              => Rack::orderBy('zone')->orderBy('code')->get(),
+            'shoppingLocations'  => ShoppingLocation::orderBy('name')->get(),
         ]);
     }
 
@@ -110,7 +112,7 @@ class ShoppingController extends Controller
         }
 
         $validated = $request->validate([
-            'partner_name' => 'required|string|max:255',
+            'shopping_location_id' => 'required|exists:shopping_locations,id',
             'shopping_date' => 'required|date',
             'notes' => 'nullable|string|max:500',
             'items' => 'required|array|min:1',
@@ -121,7 +123,7 @@ class ShoppingController extends Controller
         $validated['items'] = $this->mergeDuplicateItems($validated['items']);
 
         $shopping->update([
-            'partner_name' => $validated['partner_name'],
+            'shopping_location_id' => $validated['shopping_location_id'],
             'shopping_date' => $validated['shopping_date'],
             'notes' => $validated['notes'] ?? null,
         ]);
@@ -135,7 +137,7 @@ class ShoppingController extends Controller
             ]);
         }
 
-        return redirect()->route('shoppings.show', $shopping)->with('success', 'Shopping updated.');
+        return redirect()->route('shoppings.show', $shopping)->with('success', 'Shopping berhasil diupdate.');
     }
 
     public function destroy(Shopping $shopping)
@@ -146,23 +148,20 @@ class ShoppingController extends Controller
 
         $shopping->delete();
 
-        return redirect()->route('shoppings.index')->with('success', 'Shopping deleted.');
+        return redirect()->route('shoppings.index')->with('success', 'Shopping berhasil dihapus.');
     }
 
-    /**
-     * Ship the items — deduct from stock.
-     */
     public function ship(Request $request, Shopping $shopping)
     {
         if ($shopping->status !== 'draft') {
-            return back()->with('error', 'Cannot ship this shopping record.');
+            return back()->with('error', 'Tidak dapat memproses shopping ini.');
         }
 
         $result = DB::transaction(function () use ($shopping) {
             $lockedShopping = Shopping::where('id', $shopping->id)->lockForUpdate()->firstOrFail();
 
             if ($lockedShopping->status !== 'draft') {
-                return ['ok' => false, 'error' => 'Cannot ship this shopping record.'];
+                return ['ok' => false, 'error' => 'Tidak dapat memproses shopping ini.'];
             }
 
             $items = $lockedShopping->items()->with('product', 'rack')->get();
@@ -180,9 +179,9 @@ class ShoppingController extends Controller
 
                     return [
                         'ok' => false,
-                        'error' => "Insufficient stock: {$productName} in rack {$rackCode}. Available: "
+                        'error' => "Stok tidak mencukupi: {$productName} di rak {$rackCode}. Tersedia: "
                             . ($stock->quantity ?? 0)
-                            . ", Requested: {$item->quantity}",
+                            . ", Dibutuhkan: {$item->quantity}",
                     ];
                 }
 
@@ -210,6 +209,6 @@ class ShoppingController extends Controller
             report($e);
         }
 
-        return redirect()->route('shoppings.show', $shopping)->with('success', 'Shopping processed. Stock deducted.');
+        return redirect()->route('shoppings.show', $shopping)->with('success', 'Shopping diproses. Stok dikurangi.');
     }
 }

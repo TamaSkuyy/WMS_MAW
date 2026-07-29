@@ -20,6 +20,7 @@ use App\Http\Controllers\WorkLocationController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ShiftController;
+use App\Http\Controllers\ShoppingLocationController;
 use App\Notifications\TestRealtimeNotification;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -116,6 +117,7 @@ Route::middleware('auth')->group(function () {
     Route::get('shifts/export', [ShiftController::class, 'export'])->name('shifts.export');
     Route::get('shifts/import-template', [ShiftController::class, 'importTemplate'])->name('shifts.import-template');
     Route::resource('shifts', ShiftController::class)->except(['show']);
+    Route::resource('shopping-locations', ShoppingLocationController::class)->except(['show']);
     Route::resource('delivery-slots', DeliverySlotController::class)->only(['index', 'edit', 'update']);
 
     Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAllRead');

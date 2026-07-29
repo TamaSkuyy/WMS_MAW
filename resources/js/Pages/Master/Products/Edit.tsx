@@ -21,6 +21,8 @@ export default function Edit({ product, vehicleModels, categories, suppliers, ra
         description: product.description || '',
         is_active: product.is_active,
         default_rack_id: product.default_rack_id ? String(product.default_rack_id) : '',
+        min_stock: product.min_stock ?? '',
+        max_stock: product.max_stock ?? '',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -113,6 +115,19 @@ export default function Edit({ product, vehicleModels, categories, suppliers, ra
                                 onChange={(value) => setData('default_rack_id', value as string)}
                             />
                             {errors.default_rack_id && <p className="mt-1 text-sm text-red-500">{errors.default_rack_id}</p>}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <Label>Min Stok</Label>
+                                <Input type="number" value={data.min_stock} onChange={(e) => setData('min_stock', e.target.value)} placeholder="Batas minimal" min={0} />
+                                {errors.min_stock && <p className="mt-1 text-sm text-red-500">{errors.min_stock}</p>}
+                            </div>
+                            <div>
+                                <Label>Max Stok</Label>
+                                <Input type="number" value={data.max_stock} onChange={(e) => setData('max_stock', e.target.value)} placeholder="Batas maksimal" min={0} />
+                                {errors.max_stock && <p className="mt-1 text-sm text-red-500">{errors.max_stock}</p>}
+                            </div>
                         </div>
 
                         <div>

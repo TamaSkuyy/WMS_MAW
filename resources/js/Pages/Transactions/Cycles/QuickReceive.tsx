@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
@@ -36,6 +36,7 @@ export default function QuickReceive({ suppliers, products, racks }: any) {
     const [lastScan, setLastScan] = useState('');
     const [lastScanStatus, setLastScanStatus] = useState<'ok' | 'unknown' | null>(null);
     const [submitting, setSubmitting] = useState(false);
+    const scanSuccessRef = useRef(false);
 
     // Filter produk berdasarkan supplier yang dipilih
     const filteredProducts = useMemo(() => {
@@ -58,6 +59,7 @@ export default function QuickReceive({ suppliers, products, racks }: any) {
             }
 
             beep();
+            scanSuccessRef.current = true;
             setLastScan(code);
             setLastScanStatus('ok');
 
@@ -120,6 +122,17 @@ export default function QuickReceive({ suppliers, products, racks }: any) {
             { onFinish: () => setSubmitting(false) }
         );
     };
+
+    // Auto-reopen scanner after successful scan
+    useEffect(() => {
+        if (scanSuccessRef.current && !scannerOpen) {
+            const t = setTimeout(() => {
+                scanSuccessRef.current = false;
+                setScannerOpen(true);
+            }, 800);
+            return () => clearTimeout(t);
+        }
+    }, [scannerOpen]);
 
     return (
         <>
