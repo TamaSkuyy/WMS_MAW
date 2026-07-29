@@ -82,6 +82,30 @@ class DashboardController extends Controller
 
         $totalStock = Stock::sum('quantity');
 
+        // Recent completed cycles with duration
+        $recentCycles = Cycle::with('supplier')
+            ->where('status', 'completed')
+            ->whereNotNull('received_at')
+            ->orderBy('received_at', 'desc')
+            ->limit(5)
+            ->get()
+            ->map(fn($c) => [
+                'id' => $c->id,
+                'supplier' => $c->supplier?->name,
+                'cycle_number' => $c->cycle_number,
+                'items_count' => $c->items()->count(),
+                'created_at' => $c->created_at->format('d M H:i'),
+                'received_at' => $c->received_at->format('d M H:i'),
+                'duration_minutes' => (int) $c->created_at->diffInMinutes($c->received_at),
+            ]);
+
+        // Avg duration for cycles completed today
+        $avgDurationToday = Cycle::where('status', 'completed')
+            ->whereNotNull('received_at')
+            ->whereDate('received_at', today())
+            ->selectRaw('AVG(TIMESTAMPDIFF(SECOND, created_at, received_at)) as avg_seconds')
+            ->value('avg_seconds');
+
         return Inertia::render('Dashboard', [
             'metrics' => [
                 'total_products' => $totalProducts,
@@ -98,6 +122,8 @@ class DashboardController extends Controller
             'overStockItems' => $overStockItems,
             'pendingCycles' => $pendingCycles,
             'todayShoppings' => $todayShoppings,
+            'recentCycles' => $recentCycles,
+            'avgDurationToday' => $avgDurationToday ? (int) $avgDurationToday : null,
         ]);
     }
 }

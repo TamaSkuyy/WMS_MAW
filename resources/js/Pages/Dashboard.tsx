@@ -3,7 +3,17 @@ import { Head, Link } from '@inertiajs/react';
 import { BoxCubeIcon, ArrowUpIcon, AlertIcon, ArrowDownIcon } from '../Tailadmin/icons';
 import MetricCard from './Dashboard/MetricCard';
 
-export default function Dashboard({ metrics, lowStockItems, overStockItems, pendingCycles, todayShoppings }: any) {
+export default function Dashboard({ metrics, lowStockItems, overStockItems, pendingCycles, todayShoppings, recentCycles, avgDurationToday }: any) {
+
+    const fmtDuration = (s: number) => {
+        if (!s || s < 0) return '-';
+        const h = Math.floor(s / 3600);
+        const m = Math.floor((s % 3600) / 60);
+        const sec = s % 60;
+        if (h > 0) return `${h}j ${m}m`;
+        if (m > 0) return `${m}m ${sec}d`;
+        return `${sec}d`;
+    };
     return (
         <>
             <Head title="Dashboard - Mitra Adhi Wasana" />
@@ -85,7 +95,9 @@ export default function Dashboard({ metrics, lowStockItems, overStockItems, pend
                 <MetricCard
                     title="Cycle Pending"
                     value={metrics?.pending_cycles?.toString() || '0'}
-                    subtitle={metrics?.completed_cycles_today > 0 ? `${metrics.completed_cycles_today} selesai hari ini` : 'Belum ada'}
+                    subtitle={metrics?.completed_cycles_today > 0
+                        ? `${metrics.completed_cycles_today} selesai hari ini${avgDurationToday ? ` · ⏱ ${fmtDuration(avgDurationToday)}` : ''}`
+                        : 'Belum ada'}
                     icon={<ArrowDownIcon className="text-success-500" />}
                     accentBar="bg-success-500"
                     iconBg="bg-success-50 dark:bg-success-500/20"
@@ -207,6 +219,52 @@ export default function Dashboard({ metrics, lowStockItems, overStockItems, pend
                                 <div className="text-center py-8">
                                     <div className="text-3xl mb-2">📭</div>
                                     <p className="text-sm text-gray-500 dark:text-gray-400">Tidak ada cycle pending</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Recent Completed Cycles */}
+                <div className="col-span-12 xl:col-span-6">
+                    <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+                        <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                            <h3 className="text-base font-medium text-gray-800 dark:text-white/90">
+                                ✅ Cycle Selesai
+                            </h3>
+                            <Link href={route('reports.supplier-performance')} className="text-sm text-brand-500 hover:text-brand-600">
+                                Performa →
+                            </Link>
+                        </div>
+                        <div className="p-6">
+                            {recentCycles?.length > 0 ? (
+                                <div className="space-y-3">
+                                    {recentCycles.map((cycle: any, i: number) => (
+                                        <Link
+                                            key={i}
+                                            href={route('cycles.show', cycle.id)}
+                                            className="block p-3 bg-green-50 dark:bg-green-500/10 rounded-lg hover:bg-green-100 dark:hover:bg-green-500/20 transition-colors"
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                                        {cycle.supplier} — Cycle #{cycle.cycle_number}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">
+                                                        {cycle.items_count} item · {cycle.created_at} → {cycle.received_at}
+                                                    </p>
+                                                </div>
+                                                <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 tabular-nums">
+                                                    ⏱ {fmtDuration(cycle.duration_minutes * 60)}
+                                                </span>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-8">
+                                    <div className="text-3xl mb-2">📭</div>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Belum ada cycle selesai</p>
                                 </div>
                             )}
                         </div>
