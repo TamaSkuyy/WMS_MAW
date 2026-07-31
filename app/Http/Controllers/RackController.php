@@ -33,7 +33,8 @@ class RackController extends Controller
     public function index(Request $request)
     {
         return Inertia::render('Master/Racks/Index', [
-            'racks' => Rack::orderBy('zone')->orderBy('code')
+            'racks' => Rack::withSum('stocks', 'quantity')
+                ->orderBy('zone')->orderBy('code')
                 ->when($request->search, function ($query, $search) {
                     $query->where('code', 'like', "%{$search}%")
                           ->orWhere('zone', 'like', "%{$search}%");
@@ -54,6 +55,7 @@ class RackController extends Controller
         $validated = $request->validate([
             'code' => 'required|string|max:20|unique:racks',
             'zone' => 'required|string|max:50',
+            'capacity' => 'nullable|integer|min:1',
         ]);
         Rack::create($validated);
         return redirect()->route('racks.index')->with('success', 'Rack created.');
@@ -76,6 +78,7 @@ class RackController extends Controller
         $validated = $request->validate([
             'code' => 'required|string|max:20|unique:racks,code,' . $rack->id,
             'zone' => 'required|string|max:50',
+            'capacity' => 'nullable|integer|min:1',
         ]);
         $rack->update($validated);
         return redirect()->route('racks.show', $rack)->with('success', 'Rack updated.');

@@ -51,6 +51,7 @@ export default function Index({ racks, filters }: any) {
                     fields={[
                         { key: 'code', label: 'Kode', required: true },
                         { key: 'zone', label: 'Zona', required: true },
+                        { key: 'capacity', label: 'Kapasitas', required: false },
                     ]}
                 />
                 {racks.data.length === 0 ? (
@@ -68,14 +69,36 @@ export default function Index({ racks, filters }: any) {
                             <tr>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kode</th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Zona</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kapasitas</th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-24">Aksi</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
-                            {racks.data.map((rack: any) => (
+                            {racks.data.map((rack: any) => {
+                                const usage = rack.stocks_sum_quantity || 0;
+                                const cap = rack.capacity;
+                                const pct = cap ? Math.min(100, Math.round((usage / cap) * 100)) : null;
+                                const isOver = cap && usage > cap;
+                                const isFull = cap && usage === cap;
+                                const isNearFull = cap && pct !== null && pct >= 80 && pct < 100;
+                                return (
                                 <tr key={rack.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                     <td className="px-4 py-3 whitespace-nowrap text-sm font-mono">{rack.code}</td>
                                     <td className="px-4 py-3 whitespace-nowrap text-sm">{rack.zone}</td>
+                                    <td className="px-4 py-3 whitespace-nowrap text-sm">
+                                        {cap ? (
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-20 sm:w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                                                    <div className={`h-full rounded-full transition-all ${isOver ? 'bg-red-500' : isFull ? 'bg-yellow-500' : isNearFull ? 'bg-orange-400' : 'bg-green-500'}`} style={{ width: `${pct}%` }} />
+                                                </div>
+                                                <span className={`text-xs font-medium tabular-nums ${isOver ? 'text-red-600' : isFull ? 'text-yellow-600' : 'text-gray-500'}`}>
+                                                    {usage}/{cap}
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <span className="text-xs text-gray-400">{usage} (tanpa batas)</span>
+                                        )}
+                                    </td>
                                     <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
                                         <TableActions
                                             viewRoute={route('racks.show', rack.id)}
@@ -84,7 +107,8 @@ export default function Index({ racks, filters }: any) {
                                         />
                                     </td>
                                 </tr>
-                            ))}
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>

@@ -23,11 +23,12 @@ class RackImporter extends BaseImporter implements Importable
         return [
             'code' => ['required', 'string', 'max:20'],
             'zone' => ['required', 'string', 'max:50'],
+            'capacity' => ['nullable', 'integer', 'min:1'],
         ];
     }
 
     public function templateHeadings(): array
     {
-        return ['Kode', 'Zona'];
+        return ['Kode', 'Zona', 'Kapasitas'];
     }
 }

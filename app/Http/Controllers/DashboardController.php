@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Cycle;
 use App\Models\Product;
+use App\Models\Rack;
 use App\Models\Shopping;
 use App\Models\Stock;
 use Inertia\Inertia;
@@ -106,6 +107,30 @@ class DashboardController extends Controller
             ->selectRaw('AVG(TIMESTAMPDIFF(SECOND, created_at, received_at)) as avg_seconds')
             ->value('avg_seconds');
 
+        // All racks with capacity usage
+        $rackAlerts = Rack::withSum('stocks', 'quantity')
+            ->get()
+            ->map(function ($rack) {
+                $usage = (int) ($rack->stocks_sum_quantity ?? 0);
+                $cap = $rack->capacity ? (int) $rack->capacity : null;
+                $pct = $cap ? (int) round(($usage / $cap) * 100) : null;
+                return [
+                    'id' => $rack->id,
+                    'code' => $rack->code,
+                    'zone' => $rack->zone,
+                    'usage' => $usage,
+                    'capacity' => $cap,
+                    'pct' => $pct,
+                ];
+            })
+            ->sortByDesc(function ($r) {
+                return $r['pct'] ?? -1;
+            })
+            ->values();
+
+        $rackFullCount = $rackAlerts->where('pct', '>=', 100)->count();
+        $rackNearFullCount = $rackAlerts->where('pct', '>=', 80)->where('pct', '<', 100)->count();
+
         return Inertia::render('Dashboard', [
             'metrics' => [
                 'total_products' => $totalProducts,
@@ -124,6 +149,11 @@ class DashboardController extends Controller
             'todayShoppings' => $todayShoppings,
             'recentCycles' => $recentCycles,
             'avgDurationToday' => $avgDurationToday ? (int) $avgDurationToday : null,
+            'rackAlerts' => $rackAlerts,
+            'rackFullCount' => $rackFullCount,
+            'rackNearFullCount' => $rackNearFullCount,
+            'totalRacks' => Rack::count(),
+            'racksWithCapacity' => Rack::whereNotNull('capacity')->count(),
         ]);
     }
 }

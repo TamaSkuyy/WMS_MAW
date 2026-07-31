@@ -10,7 +10,14 @@ class Rack extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['code', 'zone'];
+    protected $fillable = ['code', 'zone', 'capacity'];
+
+    protected function casts(): array
+    {
+        return [
+            'capacity' => 'integer',
+        ];
+    }
 
     public function stocks(): HasMany
     {

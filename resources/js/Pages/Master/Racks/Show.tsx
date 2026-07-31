@@ -7,6 +7,12 @@ import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
 
 export default function Show({ rack }: any) {
+    const totalQty = rack.stocks?.reduce((sum: number, s: any) => sum + (s.quantity || 0), 0) || 0;
+    const cap = rack.capacity;
+    const pct = cap ? Math.min(100, Math.round((totalQty / cap) * 100)) : null;
+    const isOver = cap && totalQty > cap;
+    const isNearFull = cap && pct !== null && pct >= 80;
+
     return (
         <>
             <Head title={`Rak ${rack.code}`} />
@@ -25,8 +31,29 @@ export default function Show({ rack }: any) {
                                 <dd className="text-sm text-[#1A1D23]">{rack.zone}</dd>
                             </div>
                             <div>
+                                <dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Kapasitas</dt>
+                                <dd className="text-sm text-[#1A1D23]">
+                                    {cap ? (
+                                        <span>{totalQty} / {cap} unit {isOver ? '⚠️' : ''}</span>
+                                    ) : (
+                                        <span>{totalQty} unit (tanpa batas)</span>
+                                    )}
+                                </dd>
+                            </div>
+                            {cap && (
+                                <div>
+                                    <dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Terpakai</dt>
+                                    <dd>
+                                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                                            <div className={`h-full rounded-full transition-all ${isOver ? 'bg-red-500' : isNearFull ? 'bg-orange-400' : 'bg-green-500'}`} style={{ width: `${pct}%` }} />
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-1">{pct}% terpakai</p>
+                                    </dd>
+                                </div>
+                            )}
+                            <div>
                                 <dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Total Produk</dt>
-                                <dd className="text-sm text-[#1A1D23]">{rack.stocks?.length || 0}</dd>
+                                <dd className="text-sm text-[#1A1D23]">{rack.stocks?.length || 0} jenis</dd>
                             </div>
                         </dl>
                         <div className="mt-6 flex gap-2 pt-4 border-t border-[#F1F3F5]">

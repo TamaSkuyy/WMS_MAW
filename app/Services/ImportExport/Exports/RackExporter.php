@@ -10,7 +10,7 @@ class RackExporter extends BaseExporter
 {
     public function headings(): array
     {
-        return ['Kode', 'Zona'];
+        return ['Kode', 'Zona', 'Kapasitas'];
     }
 
     public function exportQuery(): Builder
@@ -20,6 +20,6 @@ class RackExporter extends BaseExporter
 
     public function mapRow($model): array
     {
-        return [$model->code, $model->zone];
+        return [$model->code, $model->zone, $model->capacity];
     }
 }

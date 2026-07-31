@@ -10,7 +10,7 @@ import Label from '../../../Tailadmin/components/form/Label';
 import { Link } from '@inertiajs/react';
 
 export default function Create() {
-    const { data, setData, post, errors } = useForm({ code: '', zone: '' });
+    const { data, setData, post, errors } = useForm({ code: '', zone: '', capacity: '' });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -42,6 +42,12 @@ export default function Create() {
                             <Label>Zona *</Label>
                             <Input type="text" value={data.zone} onChange={(e) => setData('zone', e.target.value)} placeholder="contoh: Zona A" />
                             {errors.zone && <p className="mt-1 text-sm text-red-500">{errors.zone}</p>}
+                        </div>
+                        <div>
+                            <Label>Kapasitas Maksimum</Label>
+                            <Input type="number" value={data.capacity} onChange={(e) => setData('capacity', e.target.value)} placeholder="Kosongkan jika tanpa batas" min={1} />
+                            <p className="mt-1 text-xs text-gray-400">Jumlah maksimum unit yang bisa ditampung rak ini.</p>
+                            {errors.capacity && <p className="mt-1 text-sm text-red-500">{errors.capacity}</p>}
                         </div>
                         <div className="flex gap-3 pt-4 border-t border-[#F1F3F5]">
                             <Button type="submit" icon={<CheckIcon className="w-4 h-4" />}>Simpan</Button>
