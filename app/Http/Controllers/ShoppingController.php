@@ -59,6 +59,7 @@ class ShoppingController extends Controller
             'shopping_location_id' => 'required|exists:shopping_locations,id',
             'shopping_date' => 'required|date',
             'notes' => 'nullable|string|max:500',
+            'frame_number' => 'nullable|string|max:100',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.rack_id' => 'nullable|exists:racks,id',
@@ -71,6 +72,7 @@ class ShoppingController extends Controller
             'shopping_date' => $validated['shopping_date'],
             'status' => 'draft',
             'notes' => $validated['notes'] ?? null,
+            'frame_number' => $validated['frame_number'] ?? null,
         ]);
 
         foreach ($validated['items'] as $item) {
@@ -115,6 +117,7 @@ class ShoppingController extends Controller
             'shopping_location_id' => 'required|exists:shopping_locations,id',
             'shopping_date' => 'required|date',
             'notes' => 'nullable|string|max:500',
+            'frame_number' => 'nullable|string|max:100',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.rack_id' => 'nullable|exists:racks,id',
@@ -126,6 +129,7 @@ class ShoppingController extends Controller
             'shopping_location_id' => $validated['shopping_location_id'],
             'shopping_date' => $validated['shopping_date'],
             'notes' => $validated['notes'] ?? null,
+            'frame_number' => $validated['frame_number'] ?? null,
         ]);
 
         $shopping->items()->delete();

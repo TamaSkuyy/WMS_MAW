@@ -38,6 +38,7 @@ export default function Show({ shopping }: any) {
                             <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Tanggal</dt><dd className="text-sm text-[#1A1D23]">{shopping.shopping_date}</dd></div>
                             <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Status</dt><dd><span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[shopping.status]}`}>{shopping.status}</span></dd></div>
                             {shopping.notes && <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Catatan</dt><dd className="text-sm text-[#1A1D23]">{shopping.notes}</dd></div>}
+                            <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Frame #</dt><dd className="text-sm text-[#1A1D23] font-mono">{shopping.frame_number || '—'}</dd></div>
                         </dl>
                         <div className="mt-6 flex gap-2 pt-4 border-t border-[#F1F3F5]">
                             {shopping.status === 'draft' && (

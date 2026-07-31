@@ -39,9 +39,11 @@ export default function Create({ products, racks, shoppingLocations }: any) {
     const [locationId, setLocationId] = useState('');
     const [shoppingDate, setShoppingDate] = useState(new Date().toISOString().split('T')[0]);
     const [notes, setNotes] = useState('');
+    const [frameNumber, setFrameNumber] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [tableItems, setTableItems] = useState<TableItem[]>([]);
     const [scannerOpen, setScannerOpen] = useState(false);
+    const [scanTarget, setScanTarget] = useState<'part' | 'frame'>('part');
     const [lastScan, setLastScan] = useState('');
     const [lastScanStatus, setLastScanStatus] = useState<'ok' | 'unknown' | 'no_stock' | null>(null);
     const scanSuccessRef = useRef(false);
@@ -51,7 +53,6 @@ export default function Create({ products, racks, shoppingLocations }: any) {
     const [filterSupplierId, setFilterSupplierId] = useState('');
     const [filterVehicleModelId, setFilterVehicleModelId] = useState('');
 
-    // Extract unique suppliers & vehicle models from products
     const { suppliers, vehicleModels } = useMemo(() => {
         const sMap = new Map<number, { id: number; name: string }>();
         const vMap = new Map<number, { id: number; label: string }>();
@@ -69,29 +70,23 @@ export default function Create({ products, racks, shoppingLocations }: any) {
         };
     }, [products]);
 
-    // Build rack lookup
     const rackMap = useMemo(() => {
         const map = new Map<string, { code: string; zone: string }>();
         racks.forEach((r: any) => map.set(String(r.id), { code: r.code, zone: r.zone || '-' }));
         return map;
     }, [racks]);
 
-    // Expand all active products into one row per (product, rack)
     useEffect(() => {
         const rows: TableItem[] = [];
         products.forEach((p: any) => {
             (p.stocks || []).forEach((s: any) => {
                 const rid = s.rack_id ? String(s.rack_id) : '';
                 rows.push({
-                    product_id: p.id,
-                    part_number: p.part_number,
-                    name: p.name,
-                    stock: s.quantity,
-                    rack_id: rid,
+                    product_id: p.id, part_number: p.part_number, name: p.name,
+                    stock: s.quantity, rack_id: rid,
                     rack_label: rid ? (rackMap.get(rid)?.code ?? rid) : '⚠ Relay',
                     rack_zone: rid ? (rackMap.get(rid)?.zone ?? '-') : '—',
-                    is_relay: !rid,
-                    quantity: 0,
+                    is_relay: !rid, quantity: 0,
                 });
             });
             if ((p.stocks || []).length === 0) {
@@ -106,6 +101,14 @@ export default function Create({ products, racks, shoppingLocations }: any) {
     }, [rackMap]);
 
     const handleScan = useCallback((code: string) => {
+        // Frame scan mode — fills frame_number on header
+        if (scanTarget === 'frame') {
+            setFrameNumber(code);
+            setLastScan(code);
+            setLastScanStatus('ok');
+            return;
+        }
+        // Part scan mode — find and increment
         const item = tableItems.find(i =>
             i.part_number.toLowerCase() === code.toLowerCase() && i.stock > 0
         );
@@ -124,18 +127,18 @@ export default function Create({ products, racks, shoppingLocations }: any) {
                 ? { ...i, quantity: i.quantity + 1 }
                 : i
         ));
-    }, [tableItems]);
+    }, [tableItems, scanTarget]);
 
-    // Auto-reopen scanner after successful scan
+    // Auto-reopen scanner after successful part scan
     useEffect(() => {
-        if (scanSuccessRef.current && !scannerOpen) {
+        if (scanSuccessRef.current && !scannerOpen && scanTarget === 'part') {
             const t = setTimeout(() => {
                 scanSuccessRef.current = false;
                 setScannerOpen(true);
             }, 800);
             return () => clearTimeout(t);
         }
-    }, [scannerOpen]);
+    }, [scannerOpen, scanTarget]);
 
     const updateItem = (productId: number, rackId: string, field: keyof TableItem, value: any) => {
         setTableItems(prev => prev.map(i =>
@@ -143,7 +146,6 @@ export default function Create({ products, racks, shoppingLocations }: any) {
         ));
     };
 
-    // Filtered display
     const filteredItems = useMemo(() => {
         let items = tableItems;
         if (searchQuery) {
@@ -180,6 +182,7 @@ export default function Create({ products, racks, shoppingLocations }: any) {
             shopping_location_id: locationId,
             shopping_date: shoppingDate,
             notes,
+            frame_number: frameNumber || null,
             items: activeItems.map(i => ({ product_id: i.product_id, rack_id: i.rack_id || null, quantity: i.quantity })),
         }, { onFinish: () => setSubmitting(false) });
     };
@@ -221,8 +224,20 @@ export default function Create({ products, racks, shoppingLocations }: any) {
                                 {errors.notes && <p className="mt-1 text-sm text-red-500">{errors.notes}</p>}
                             </div>
 
-                            <Button onClick={() => setScannerOpen(true)} className="w-full" type="button">
-                                📷 Scan QR Code
+                            {/* Frame Number — scan barcode */}
+                            <div>
+                                <Label>Frame Number</Label>
+                                <div className="flex gap-2">
+                                    <Input type="text" value={frameNumber} onChange={(e) => setFrameNumber(e.target.value)} placeholder="Scan atau ketik..." />
+                                    <Button type="button" variant="outline" size="sm" onClick={() => { setScanTarget('frame'); setScannerOpen(true); }} title="Scan barcode frame">
+                                        📷
+                                    </Button>
+                                </div>
+                                {errors.frame_number && <p className="mt-1 text-sm text-red-500">{errors.frame_number}</p>}
+                            </div>
+
+                            <Button onClick={() => { setScanTarget('part'); setScannerOpen(true); }} className="w-full" type="button">
+                                📷 Scan Part / QR Code
                             </Button>
 
                             {lastScan && (
@@ -306,16 +321,12 @@ export default function Create({ products, racks, shoppingLocations }: any) {
                             <div className="w-40">
                                 <SearchableSelect
                                     options={suppliers.map((s: any) => ({ value: s.id, label: s.name }))}
-                                    value={filterSupplierId} onChange={(v) => setFilterSupplierId(v as string)}
-                                    placeholder="Supplier..."
-                                />
+                                    value={filterSupplierId} onChange={(v) => setFilterSupplierId(v as string)} placeholder="Supplier..." />
                             </div>
                             <div className="w-48">
                                 <SearchableSelect
                                     options={vehicleModels.map((v: any) => ({ value: v.id, label: v.label }))}
-                                    value={filterVehicleModelId} onChange={(v) => setFilterVehicleModelId(v as string)}
-                                    placeholder="Model..."
-                                />
+                                    value={filterVehicleModelId} onChange={(v) => setFilterVehicleModelId(v as string)} placeholder="Model..." />
                             </div>
                             {(searchQuery || filterSupplierId || filterVehicleModelId) && (
                                 <button type="button" onClick={() => { setSearchQuery(''); setFilterSupplierId(''); setFilterVehicleModelId(''); }} className="text-xs text-red-500 hover:text-red-700 px-2 py-1">✕ Reset</button>
@@ -382,6 +393,8 @@ export default function Create({ products, racks, shoppingLocations }: any) {
                 isOpen={scannerOpen}
                 onClose={() => setScannerOpen(false)}
                 onScan={handleScan}
+                mode={scanTarget === 'frame' ? 'barcode' : 'qr'}
+                feedback={scanTarget === 'frame' ? { message: '📷 Scan barcode untuk Frame Number', type: 'ok' } : undefined}
             />
         </>
     );

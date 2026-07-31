@@ -44,14 +44,15 @@ export default function Edit({ shopping, products, racks, shoppingLocations }: a
         return d.toISOString().split('T')[0];
     });
     const [notes, setNotes] = useState(shopping.notes || '');
+    const [frameNumber, setFrameNumber] = useState(shopping.frame_number || '');
     const [submitting, setSubmitting] = useState(false);
     const [tableItems, setTableItems] = useState<TableItem[]>([]);
     const [scannerOpen, setScannerOpen] = useState(false);
+    const [scanTarget, setScanTarget] = useState<'part' | 'frame'>('part');
     const [lastScan, setLastScan] = useState('');
     const [lastScanStatus, setLastScanStatus] = useState<'ok' | 'unknown' | 'no_stock' | null>(null);
     const scanSuccessRef = useRef(false);
 
-    // Filters
     const [searchQuery, setSearchQuery] = useState('');
     const [filterSupplierId, setFilterSupplierId] = useState('');
     const [filterVehicleModelId, setFilterVehicleModelId] = useState('');
@@ -116,6 +117,12 @@ export default function Edit({ shopping, products, racks, shoppingLocations }: a
     }, [rackMap]);
 
     const handleScan = useCallback((code: string) => {
+        if (scanTarget === 'frame') {
+            setFrameNumber(code);
+            setLastScan(code);
+            setLastScanStatus('ok');
+            return;
+        }
         const item = tableItems.find(i =>
             i.part_number.toLowerCase() === code.toLowerCase() && i.stock > 0
         );
@@ -134,14 +141,14 @@ export default function Edit({ shopping, products, racks, shoppingLocations }: a
                 ? { ...i, quantity: i.quantity + 1 }
                 : i
         ));
-    }, [tableItems]);
+    }, [tableItems, scanTarget]);
 
     useEffect(() => {
-        if (scanSuccessRef.current && !scannerOpen) {
+        if (scanSuccessRef.current && !scannerOpen && scanTarget === 'part') {
             const t = setTimeout(() => { scanSuccessRef.current = false; setScannerOpen(true); }, 800);
             return () => clearTimeout(t);
         }
-    }, [scannerOpen]);
+    }, [scannerOpen, scanTarget]);
 
     const updateItem = (productId: number, rackId: string, field: keyof TableItem, value: any) => {
         setTableItems(prev => prev.map(i =>
@@ -149,7 +156,6 @@ export default function Edit({ shopping, products, racks, shoppingLocations }: a
         ));
     };
 
-    // Filtered display
     const filteredItems = useMemo(() => {
         let items = tableItems;
         if (searchQuery) {
@@ -186,6 +192,7 @@ export default function Edit({ shopping, products, racks, shoppingLocations }: a
             shopping_location_id: locationId,
             shopping_date: shoppingDate,
             notes,
+            frame_number: frameNumber || null,
             items: activeItems.map(i => ({ product_id: i.product_id, rack_id: i.rack_id || null, quantity: i.quantity })),
         }, { onFinish: () => setSubmitting(false) });
     };
@@ -227,8 +234,20 @@ export default function Edit({ shopping, products, racks, shoppingLocations }: a
                                 {errors.notes && <p className="mt-1 text-sm text-red-500">{errors.notes}</p>}
                             </div>
 
-                            <Button onClick={() => setScannerOpen(true)} className="w-full" type="button">
-                                📷 Scan QR Code
+                            {/* Frame Number — scan barcode */}
+                            <div>
+                                <Label>Frame Number</Label>
+                                <div className="flex gap-2">
+                                    <Input type="text" value={frameNumber} onChange={(e) => setFrameNumber(e.target.value)} placeholder="Scan atau ketik..." />
+                                    <Button type="button" variant="outline" size="sm" onClick={() => { setScanTarget('frame'); setScannerOpen(true); }} title="Scan barcode frame">
+                                        📷
+                                    </Button>
+                                </div>
+                                {errors.frame_number && <p className="mt-1 text-sm text-red-500">{errors.frame_number}</p>}
+                            </div>
+
+                            <Button onClick={() => { setScanTarget('part'); setScannerOpen(true); }} className="w-full" type="button">
+                                📷 Scan Part / QR Code
                             </Button>
 
                             {lastScan && (
@@ -375,7 +394,13 @@ export default function Edit({ shopping, products, racks, shoppingLocations }: a
                 </div>
             </form>
 
-            <QrScanner isOpen={scannerOpen} onClose={() => setScannerOpen(false)} onScan={handleScan} />
+            <QrScanner
+                isOpen={scannerOpen}
+                onClose={() => setScannerOpen(false)}
+                onScan={handleScan}
+                mode={scanTarget === 'frame' ? 'barcode' : 'qr'}
+                feedback={scanTarget === 'frame' ? { message: '📷 Scan barcode untuk Frame Number', type: 'ok' } : undefined}
+            />
         </>
     );
 }

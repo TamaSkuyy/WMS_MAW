@@ -11,7 +11,7 @@ class Shopping extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['shopping_location_id', 'shopping_date', 'status', 'notes'];
+    protected $fillable = ['shopping_location_id', 'shopping_date', 'status', 'notes', 'frame_number'];
 
     protected function casts(): array
     {
