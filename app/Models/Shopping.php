@@ -28,7 +28,7 @@ class Shopping extends Model
         return LogOptions::defaults()
             ->logOnly(['shopping_location_id', 'shopping_date', 'status', 'notes', 'frame_number'])
             ->logOnlyDirty()
-            ->dontSubmitEmptyLogs();
+            ->dontLogEmptyChanges();
     }
 
     public function shoppingLocation(): BelongsTo

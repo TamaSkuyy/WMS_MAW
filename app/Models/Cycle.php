@@ -29,7 +29,7 @@ class Cycle extends Model
         return LogOptions::defaults()
             ->logOnly(['cycle_number', 'supplier_id', 'status', 'received_at', 'delivery_date', 'notes'])
             ->logOnlyDirty()
-            ->dontSubmitEmptyLogs();
+            ->dontLogEmptyChanges();
     }
 
     public function supplier(): BelongsTo
