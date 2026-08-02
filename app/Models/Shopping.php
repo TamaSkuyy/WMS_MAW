@@ -6,10 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Shopping extends Model
 {
     use HasFactory;
+    use LogsActivity;
 
     protected $fillable = ['shopping_location_id', 'shopping_date', 'status', 'notes', 'frame_number'];
 
@@ -18,6 +21,14 @@ class Shopping extends Model
         return [
             'shopping_date' => 'date',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['shopping_location_id', 'shopping_date', 'status', 'notes', 'frame_number'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 
     public function shoppingLocation(): BelongsTo

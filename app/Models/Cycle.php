@@ -6,10 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Cycle extends Model
 {
     use HasFactory;
+    use LogsActivity;
 
     protected $fillable = ['supplier_id', 'cycle_number', 'status', 'received_at', 'notes', 'delivery_date', 'delivery_slot_id'];
 
@@ -19,6 +22,14 @@ class Cycle extends Model
             'received_at' => 'datetime',
             'delivery_date' => 'date',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['cycle_number', 'supplier_id', 'status', 'received_at', 'delivery_date', 'notes'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 
     public function supplier(): BelongsTo
