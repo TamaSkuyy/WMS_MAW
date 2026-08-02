@@ -129,7 +129,7 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
                             <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Nomor Cycle</dt><dd className="text-sm text-[#1A1D23] font-mono">{cycle.cycle_number}</dd></div>
                             <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Status</dt><dd><span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[cycle.status]}`}>{cycle.status}</span></dd></div>
                             <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Item</dt><dd className="text-sm text-[#1A1D23]">{cycle.items.length}</dd></div>
-                            <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Diterima</dt><dd className="text-sm text-[#1A1D23]">{cycle.received_at ? new Date(cycle.received_at).toLocaleDateString('id-ID') : '-'}</dd></div>
+                            <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Diterima</dt><dd className="text-sm text-[#1A1D23]">{cycle.received_at ? new Date(cycle.received_at).toLocaleString('id-ID', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '-'}</dd></div>
                             <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Durasi</dt><dd className="text-sm text-[#1A1D23] tabular-nums">{cycle.status === 'completed' ? `⏱ ${fmtDuration(totalDuration)}` : `🔄 ${fmtDuration(totalDuration)}`}</dd></div>
                             {cycle.notes && <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Catatan</dt><dd className="text-sm text-[#1A1D23]">{cycle.notes}</dd></div>}
                         </dl>
@@ -232,7 +232,7 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
                                                 <div key={`${item.id}-${li}`} className="flex gap-3 text-gray-500 items-center">
                                                     <span className="text-gray-300 font-mono w-14">{item.product?.part_number?.substring(0, 10)}</span>
                                                     <span className="text-green-600 font-medium w-8">+{log.quantity}</span>
-                                                    <span className="w-36">{new Date(log.created_at).toLocaleString('id-ID', {day:'numeric',month:'short', hour:'2-digit',minute:'2-digit',second:'2-digit'})}</span>
+                                                    <span className="w-36">{new Date(log.created_at).toLocaleString('id-ID', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'})}</span>
                                                     <span className="text-blue-500 w-20 tabular-nums">⏱ {fmtDuration(duration)}</span>
                                                     {log.user?.name && <span className="text-gray-400">— {log.user.name}</span>}
                                                 </div>

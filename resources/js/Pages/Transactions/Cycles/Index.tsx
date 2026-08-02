@@ -114,7 +114,7 @@ export default function Index({ cycles, suppliers, filters }: any) {
                                     </td>
                                     <td className="px-4 py-3 whitespace-nowrap text-sm text-[#1A1D23]">{cycle.items_count || '-'}</td>
                                     <td className="px-4 py-3 whitespace-nowrap text-[13px] text-[#6C757D]">
-                                        {cycle.received_at ? new Date(cycle.received_at).toLocaleDateString('id-ID') : '-'}
+                                        {cycle.received_at ? new Date(cycle.received_at).toLocaleString('id-ID', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '-'}
                                     </td>
                                     <td className="px-4 py-3 whitespace-nowrap text-sm text-[#1A1D23]">
                                         <div className="flex items-center gap-0.5">

@@ -82,11 +82,11 @@ export default function Show({ employee }: any) {
                         <div className="space-y-4">
                             <div>
                                 <dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Dibuat oleh</dt>
-                                <dd className="text-sm text-[#1A1D23]">{employee.creator?.name || '-'} <span className="text-[#6C757D]">({employee.created_at ? new Date(employee.created_at).toLocaleString('id-ID') : '-'})</span></dd>
+                                <dd className="text-sm text-[#1A1D23]">{employee.creator?.name || '-'} <span className="text-[#6C757D]">({employee.created_at ? new Date(employee.created_at).toLocaleString('id-ID', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '-'})</span></dd>
                             </div>
                             <div>
                                 <dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Diupdate oleh</dt>
-                                <dd className="text-sm text-[#1A1D23]">{employee.updater?.name || '-'} <span className="text-[#6C757D]">({employee.updated_at ? new Date(employee.updated_at).toLocaleString('id-ID') : '-'})</span></dd>
+                                <dd className="text-sm text-[#1A1D23]">{employee.updater?.name || '-'} <span className="text-[#6C757D]">({employee.updated_at ? new Date(employee.updated_at).toLocaleString('id-ID', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '-'})</span></dd>
                             </div>
                         </div>
                     </ComponentCard>

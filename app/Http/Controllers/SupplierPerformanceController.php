@@ -59,7 +59,7 @@ class SupplierPerformanceController extends Controller
                 'quantity' => $item->quantity,
                 'received_quantity' => $item->received_quantity,
                 'shortfall' => $item->quantity - $item->received_quantity,
-                'received_at' => $item->cycle->received_at?->format('d M Y'),
+                'received_at' => $item->cycle->received_at?->format('d/m/Y H:i:s'),
             ]);
 
         // --- Per-supplier summary ---

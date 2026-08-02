@@ -112,7 +112,7 @@ export default function Receiving({ items, summary, filters, suppliers }: any) {
                                 {items.data.map((item: any) => (
                                     <tr key={item.id}>
                                         <td className="px-4 py-3 text-sm whitespace-nowrap">
-                                            {item.cycle?.received_at ? new Date(item.cycle.received_at).toLocaleDateString('id-ID') : '-'}
+                                            {item.cycle?.received_at ? new Date(item.cycle.received_at).toLocaleString('id-ID', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '-'}
                                         </td>
                                         <td className="px-4 py-3 text-sm whitespace-nowrap font-mono">{item.cycle?.cycle_number}</td>
                                         <td className="px-4 py-3 text-sm whitespace-nowrap">{item.cycle?.supplier?.name || '-'}</td>

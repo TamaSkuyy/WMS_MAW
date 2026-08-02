@@ -35,7 +35,7 @@ export default function Show({ shopping }: any) {
                     <ComponentCard title="Info Shopping" desc="Detail pengiriman barang">
                         <dl className="space-y-4">
                             <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Mitra</dt><dd className="text-sm text-[#1A1D23]">{shopping.shopping_location?.name || '-'}</dd></div>
-                            <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Tanggal</dt><dd className="text-sm text-[#1A1D23]">{shopping.shopping_date}</dd></div>
+                            <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Tanggal</dt><dd className="text-sm text-[#1A1D23]">{shopping.shopping_date ? new Date(shopping.shopping_date).toLocaleString('id-ID', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '-'}</dd></div>
                             <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Status</dt><dd><span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[shopping.status]}`}>{shopping.status}</span></dd></div>
                             {shopping.notes && <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Catatan</dt><dd className="text-sm text-[#1A1D23]">{shopping.notes}</dd></div>}
                             <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Frame #</dt><dd className="text-sm text-[#1A1D23] font-mono">{shopping.frame_number || '—'}</dd></div>

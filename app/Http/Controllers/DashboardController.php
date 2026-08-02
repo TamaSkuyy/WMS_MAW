@@ -64,7 +64,7 @@ class DashboardController extends Controller
                 'supplier' => $c->supplier?->name,
                 'cycle_number' => $c->cycle_number,
                 'items_count' => $c->items()->count(),
-                'created_at' => $c->created_at->format('d M Y'),
+                'created_at' => $c->created_at->format('d/m/Y H:i:s'),
             ]);
 
         $todayShoppings = Shopping::with('shoppingLocation')
@@ -76,7 +76,7 @@ class DashboardController extends Controller
             ->map(fn($s) => [
                 'id' => $s->id,
                 'shopping_location' => $s->shoppingLocation?->name,
-                'shopping_date' => $s->shopping_date->format('d M Y'),
+                'shopping_date' => $s->shopping_date->format('d/m/Y H:i:s'),
                 'items_count' => $s->items_count,
                 'status' => $s->status,
             ]);
@@ -95,8 +95,8 @@ class DashboardController extends Controller
                 'supplier' => $c->supplier?->name,
                 'cycle_number' => $c->cycle_number,
                 'items_count' => $c->items()->count(),
-                'created_at' => $c->created_at->format('d M H:i'),
-                'received_at' => $c->received_at->format('d M H:i'),
+                'created_at' => $c->created_at->format('d/m/Y H:i:s'),
+                'received_at' => $c->received_at->format('d/m/Y H:i:s'),
                 'duration_minutes' => (int) $c->created_at->diffInMinutes($c->received_at),
             ]);
 

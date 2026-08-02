@@ -107,7 +107,7 @@ export default function Shopping({ items, summary, filters }: any) {
                                 {items.data.map((item: any) => (
                                     <tr key={item.id}>
                                         <td className="px-4 py-3 text-sm whitespace-nowrap">
-                                            {item.shopping?.shopping_date ? new Date(item.shopping.shopping_date).toLocaleDateString('id-ID') : '-'}
+                                            {item.shopping?.shopping_date ? new Date(item.shopping.shopping_date).toLocaleString('id-ID', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '-'}
                                         </td>
                                         <td className="px-4 py-3 text-sm whitespace-nowrap">{item.shopping?.shopping_location?.name || '-'}</td>
                                         <td className="px-4 py-3 text-sm whitespace-nowrap">{item.product?.part_number} — {item.product?.name}</td>
