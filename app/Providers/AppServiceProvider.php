@@ -57,6 +57,7 @@ class AppServiceProvider extends ServiceProvider
 
         if (config('app.force_https') || $this->app->environment('production')) {
             URL::forceScheme('https');
+            URL::forceRootUrl(config('app.url'));
         }
 
         // Paginator tidak pakai URL generator, dia pakai $request->url() langsung.
