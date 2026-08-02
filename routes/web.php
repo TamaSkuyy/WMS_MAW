@@ -70,6 +70,10 @@ Route::middleware('auth')->group(function () {
     Route::resource('racks', RackController::class);
     Route::get('cycles/quick-receive', [CycleController::class, 'quickReceiveForm'])->name('cycles.quick-receive.form');
     Route::post('cycles/quick-receive', [CycleController::class, 'quickReceiveStore'])->name('cycles.quick-receive.store');
+    Route::post('cycles/import/preview', [CycleController::class, 'importPreview'])->name('cycles.import.preview');
+    Route::post('cycles/import', [CycleController::class, 'import'])->name('cycles.import');
+    Route::get('cycles/export', [CycleController::class, 'export'])->name('cycles.export');
+    Route::get('cycles/import-template', [CycleController::class, 'importTemplate'])->name('cycles.import-template');
     Route::resource('cycles', CycleController::class);
     Route::post('cycles/{cycle}/receive', [CycleController::class, 'receive'])->name('cycles.receive');
 

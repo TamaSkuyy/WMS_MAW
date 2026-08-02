@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
@@ -7,8 +7,11 @@ import Button from '../../../Tailadmin/components/ui/button/Button';
 import SearchableSelect from '../../../Tailadmin/components/form/select/SearchableSelect';
 import TableActions from '../../../Tailadmin/components/common/TableActions';
 import EmptyState from '../../../Tailadmin/components/common/EmptyState';
+import ImportExportToolbar from '../../../Components/ImportExport/ImportExportToolbar';
+import ImportModal from '../../../Components/ImportExport/ImportModal';
 
 export default function Index({ cycles, suppliers, filters }: any) {
+    const [importModalOpen, setImportModalOpen] = useState(false);
     const handleDelete = (id: number) => {
         if (confirm('Hapus cycle ini?')) {
             router.delete(route('cycles.destroy', id));
@@ -49,12 +52,35 @@ export default function Index({ cycles, suppliers, filters }: any) {
                         />
                     </div>
                 </div>
-                <div className="mb-3 flex gap-2">
+                <div className="mb-3 flex flex-wrap gap-2 items-center">
                     <Link href={route('cycles.create')}><Button>Cycle Baru</Button></Link>
                     <Link href={route('cycles.quick-receive.form')}>
                         <Button variant="outline">📷 Terima Cepat</Button>
                     </Link>
+                    <ImportExportToolbar
+                        importUrl={route('cycles.import')}
+                        previewUrl={route('cycles.import.preview')}
+                        exportUrl={route('cycles.export')}
+                        onImportClick={() => setImportModalOpen(true)}
+                    />
                 </div>
+                <ImportModal
+                    isOpen={importModalOpen}
+                    onClose={() => setImportModalOpen(false)}
+                    onComplete={() => window.location.reload()}
+                    importUrl={route('cycles.import')}
+                    previewUrl={route('cycles.import.preview')}
+                    templateUrl={route('cycles.import-template')}
+                    title="Cycle"
+                    fields={[
+                        { key: 'cycle_number', label: 'Cycle Number', required: true },
+                        { key: 'supplier_name', label: 'Supplier', required: true },
+                        { key: 'delivery_date', label: 'Delivery Date', required: true },
+                        { key: 'part_number', label: 'Part Number', required: true },
+                        { key: 'quantity', label: 'Quantity', required: true },
+                        { key: 'notes', label: 'Notes', required: false },
+                    ]}
+                />
                 {cycles.data.length === 0 ? (
                     <EmptyState
                         icon="📥"

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\StockChanged;
+use App\Http\Controllers\Concerns\HasImportExport;
 use App\Models\Cycle;
 use App\Models\CycleItem;
 use App\Models\DeliverySlot;
@@ -10,12 +11,32 @@ use App\Models\Product;
 use App\Models\Rack;
 use App\Models\Stock;
 use App\Models\Supplier;
+use App\Services\ImportExport\Base\BaseExporter;
+use App\Services\ImportExport\Base\BaseImporter;
+use App\Services\ImportExport\Exports\CycleExporter;
+use App\Services\ImportExport\Imports\CycleImporter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class CycleController extends Controller
 {
+    use HasImportExport;
+
+    protected function importer(): BaseImporter
+    {
+        return new CycleImporter();
+    }
+
+    protected function exporter(): BaseExporter
+    {
+        return new CycleExporter();
+    }
+
+    protected function exportFileName(): string
+    {
+        return 'cycles-export';
+    }
     public function index(Request $request)
     {
         $cycles = Cycle::with('supplier')

@@ -29,7 +29,7 @@ export default function Create() {
                     <form onSubmit={(e) => { e.preventDefault(); post(route('work-locations.store')); }} className="space-y-5">
                         <div>
                             <Label>Nama *</Label>
-                            <Input type="text" value={data.name} onChange={(e) => setData('name', e.target.value)} placeholder="contoh: Gudang Utama" />
+                            <Input type="text" value={data.name} onChange={(e) => setData('name', e.target.value)} placeholder="contoh: Karawang" />
                             {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
                         </div>
                         <div className="flex gap-3 pt-4 border-t border-[#F1F3F5]">
