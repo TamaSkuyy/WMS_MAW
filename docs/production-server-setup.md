@@ -389,3 +389,165 @@ docker compose -p wms-wma-prod -f docker-compose.prod.yml --env-file .env.prod l
 # Run artisan
 docker compose -p wms-wma-prod -f docker-compose.prod.yml --env-file .env.prod exec app php artisan ...
 ```
+
+---
+
+## 11. Bonus: Domain + HTTPS Setup
+
+### 11.1 DNS Record
+
+Arahkan domain/subdomain ke IP server:
+
+```
+Type:   A
+Name:   wms          (atau @ untuk root domain)
+Value:  123.45.67.89
+TTL:    3600
+```
+
+Contoh hasil: `wms.example.com` → `123.45.67.89`
+
+### 11.2 Update `.env.prod`
+
+```env
+# Ganti APP_URL ke domain
+APP_URL=https://wms.example.com
+APP_PORT=8090
+
+# Aktifkan force HTTPS
+FORCE_HTTPS=true
+
+# Reverb WebSocket — harus pakai domain yg sama
+VITE_REVERB_HOST="${APP_URL}"
+VITE_REVERB_PORT=443
+VITE_REVERB_SCHEME=https
+REVERB_SCHEME=https
+```
+
+### 11.3 Host Nginx (Reverse Proxy + SSL Termination)
+
+Install nginx di host (bukan di Docker — ini nginx parent):
+
+```bash
+apt install -y nginx certbot python3-certbot-nginx
+```
+
+Buat config reverse proxy:
+
+```bash
+nano /etc/nginx/sites-available/wms
+```
+
+```nginx
+server {
+    listen 80;
+    server_name wms.example.com;
+
+    # ── Proxy to Docker nginx (port 8081) ───────────────────
+    location / {
+        proxy_pass http://127.0.0.1:8081;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 300s;
+        client_max_body_size 20M;
+    }
+
+    # WebSocket (Reverb)
+    location /app {
+        proxy_pass http://127.0.0.1:8081;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_read_timeout 86400s;
+    }
+}
+```
+
+Enable site:
+
+```bash
+ln -s /etc/nginx/sites-available/wms /etc/nginx/sites-enabled/
+rm /etc/nginx/sites-enabled/default 2>/dev/null || true
+nginx -t && systemctl reload nginx
+```
+
+### 11.4 SSL via Let's Encrypt
+
+```bash
+# Dapatkan sertifikat
+certbot --nginx -d wms.example.com
+
+# Test auto-renewal
+certbot renew --dry-run
+```
+
+> SSL auto-renew via systemd timer (otomatis setelah certbot install).
+
+### 11.5 Update Firewall
+
+```bash
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw deny 8090/tcp     # Tutup direct port — hanya lewat nginx SSL
+```
+
+### 11.6 Rebuild Frontend (setelah APP_URL berubah)
+
+```bash
+su - deploy
+cd /opt/wms-wma
+
+# Export env baru
+set -a
+source .env.prod
+set +a
+
+# Rebuild Vite (URL asset harus absolute domain)
+ASSET_URL="/" npm run build
+
+# Deploy
+./deploy-production.sh --update --with-assets
+```
+
+### 11.7 Verify
+
+```bash
+# HTTP → harus redirect ke HTTPS
+curl -I http://wms.example.com | grep Location
+
+# HTTPS → harus 200
+curl -I https://wms.example.com
+
+# Observatory check
+# https://observatory.mozilla.org/analyze/wms.example.com
+```
+
+### 11.8 Arsitektur Final
+
+```
+Internet
+   │
+   ▼
+┌──────────────────────────────────┐
+│ Host Nginx (:80/:443)            │  ← SSL termination
+│ /etc/nginx/sites-available/wms   │     Certbot auto-renew
+└────────────┬─────────────────────┘
+             │ proxy_pass http://127.0.0.1:8081
+             ▼
+┌──────────────────────────────┐
+│ Docker Nginx (:8081 internal) │  ← Static files + proxy to app
+└────────────┬─────────────────┘
+             │ proxy_pass http://app:8080
+             ▼
+┌──────────────────────────────┐
+│ App — FrankenPHP (:8080)     │  ← Laravel + Inertia
+│ Security Headers Middleware  │     CSP, HSTS, nonce
+└──────────────────────────────┘
+```
