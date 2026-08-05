@@ -180,13 +180,17 @@ export default function Edit({ shopping, products, racks, shoppingLocations }: a
     const activeItems = tableItems.filter(i => i.quantity > 0);
     const overStockItems = activeItems.filter(i => i.quantity > i.stock);
     const hasOverStock = overStockItems.length > 0;
-    const canSubmit = !submitting && locationId !== '' && activeItems.length > 0 && !hasOverStock;
+    const canSubmit = !submitting && locationId !== '' && !hasOverStock;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!canSubmit) return;
         const loc = shoppingLocations.find((l: any) => String(l.id) === String(locationId));
-        if (!confirm(`Konfirmasi perubahan pengiriman ke "${loc?.name}"?`)) return;
+        const itemCount = activeItems.length;
+        const msg = itemCount > 0
+            ? `Konfirmasi perubahan pengiriman ke "${loc?.name}" dengan ${itemCount} item?`
+            : `Konfirmasi perubahan Shopping ke "${loc?.name}" tanpa item?`;
+        if (!confirm(msg)) return;
         setSubmitting(true);
         router.put(route('shoppings.update', shopping.id), {
             shopping_location_id: locationId,
@@ -379,18 +383,16 @@ export default function Edit({ shopping, products, racks, shoppingLocations }: a
                     </ComponentCard>
                     </div>
 
-                    {activeItems.length > 0 && (
-                        <div className="flex flex-col gap-2 items-end">
-                            {hasOverStock && (
-                                <p className="text-sm text-red-600 font-medium">
-                                    ⚠️ {overStockItems.length} barang melebihi stok tersedia — kurangi qty atau tidak bisa diproses
-                                </p>
-                            )}
-                            <Button onClick={handleSubmit} disabled={!canSubmit || submitting} icon={<CheckIcon className="w-4 h-4" />}>
-                                {submitting ? 'Menyimpan...' : hasOverStock ? 'Tidak Bisa Diproses' : 'Simpan Perubahan'}
-                            </Button>
-                        </div>
-                    )}
+                    <div className="flex flex-col gap-2 items-end">
+                        {hasOverStock && (
+                            <p className="text-sm text-red-600 font-medium">
+                                ⚠️ {overStockItems.length} barang melebihi stok tersedia — kurangi qty atau tidak bisa diproses
+                            </p>
+                        )}
+                        <Button onClick={handleSubmit} disabled={!canSubmit || submitting} icon={<CheckIcon className="w-4 h-4" />}>
+                            {submitting ? 'Menyimpan...' : hasOverStock ? 'Tidak Bisa Diproses' : 'Simpan Perubahan'}
+                        </Button>
+                    </div>
                 </div>
             </form>
 

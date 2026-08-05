@@ -60,12 +60,11 @@ class ShoppingController extends Controller
             'shopping_date' => 'required|date',
             'notes' => 'nullable|string|max:500',
             'frame_number' => 'nullable|string|max:100',
-            'items' => 'required|array|min:1',
+            'items' => 'nullable|array',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.rack_id' => 'nullable|exists:racks,id',
             'items.*.quantity' => 'required|integer|min:1',
         ]);
-        $validated['items'] = $this->mergeDuplicateItems($validated['items']);
 
         $shopping = Shopping::create([
             'shopping_location_id' => $validated['shopping_location_id'],
@@ -75,12 +74,15 @@ class ShoppingController extends Controller
             'frame_number' => $validated['frame_number'] ?? null,
         ]);
 
-        foreach ($validated['items'] as $item) {
-            $shopping->items()->create([
-                'product_id' => $item['product_id'],
-                'rack_id' => $item['rack_id'],
-                'quantity' => $item['quantity'],
-            ]);
+        if (!empty($validated['items'])) {
+            $items = $this->mergeDuplicateItems($validated['items']);
+            foreach ($items as $item) {
+                $shopping->items()->create([
+                    'product_id' => $item['product_id'],
+                    'rack_id' => $item['rack_id'],
+                    'quantity' => $item['quantity'],
+                ]);
+            }
         }
 
         return redirect()->route('shoppings.show', $shopping)->with('success', 'Shopping berhasil dibuat.');
@@ -118,12 +120,11 @@ class ShoppingController extends Controller
             'shopping_date' => 'required|date',
             'notes' => 'nullable|string|max:500',
             'frame_number' => 'nullable|string|max:100',
-            'items' => 'required|array|min:1',
+            'items' => 'nullable|array',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.rack_id' => 'nullable|exists:racks,id',
             'items.*.quantity' => 'required|integer|min:1',
         ]);
-        $validated['items'] = $this->mergeDuplicateItems($validated['items']);
 
         $shopping->update([
             'shopping_location_id' => $validated['shopping_location_id'],
@@ -133,12 +134,15 @@ class ShoppingController extends Controller
         ]);
 
         $shopping->items()->delete();
-        foreach ($validated['items'] as $item) {
-            $shopping->items()->create([
-                'product_id' => $item['product_id'],
-                'rack_id' => $item['rack_id'],
-                'quantity' => $item['quantity'],
-            ]);
+        if (!empty($validated['items'])) {
+            $items = $this->mergeDuplicateItems($validated['items']);
+            foreach ($items as $item) {
+                $shopping->items()->create([
+                    'product_id' => $item['product_id'],
+                    'rack_id' => $item['rack_id'],
+                    'quantity' => $item['quantity'],
+                ]);
+            }
         }
 
         return redirect()->route('shoppings.show', $shopping)->with('success', 'Shopping berhasil diupdate.');
