@@ -57,6 +57,7 @@ class SupplierController extends Controller
      */
     public function create()
     {
+        abort_unless(auth()->user()->can('create suppliers'), 403);
         return Inertia::render('Master/Suppliers/Create');
     }
 
@@ -65,6 +66,8 @@ class SupplierController extends Controller
      */
     public function store(Request $request)
     {
+        abort_unless(auth()->user()->can('create suppliers'), 403);
+
         $validated = $request->validate([
             'code' => 'nullable|string|max:10|unique:suppliers',
             'name' => 'required|string|max:255|unique:suppliers',
@@ -114,6 +117,8 @@ class SupplierController extends Controller
      */
     public function edit(Supplier $supplier)
     {
+        abort_unless(auth()->user()->can('edit suppliers'), 403);
+
         return Inertia::render('Master/Suppliers/Edit', [
             'supplier' => $supplier->load('primaryAddress'),
             'deliverySlots' => DeliverySlot::orderBy('slot_number')->get(['id', 'slot_number', 'time_start', 'time_end', 'label']),
@@ -126,6 +131,8 @@ class SupplierController extends Controller
      */
     public function update(Request $request, Supplier $supplier)
     {
+        abort_unless(auth()->user()->can('edit suppliers'), 403);
+
         $validated = $request->validate([
             'code' => 'nullable|string|max:10|unique:suppliers,code,' . $supplier->id,
             'name' => 'required|string|max:255|unique:suppliers,name,' . $supplier->id,
@@ -180,6 +187,8 @@ class SupplierController extends Controller
      */
     public function destroy(Supplier $supplier)
     {
+        abort_unless(auth()->user()->can('delete suppliers'), 403);
+
         $supplier->delete();
 
         return redirect()->route('suppliers.index')

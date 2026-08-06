@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
@@ -12,6 +12,11 @@ import ImportModal from '../../../Components/ImportExport/ImportModal';
 
 export default function Index({ suppliers, filters }: any) {
     const [importModalOpen, setImportModalOpen] = useState(false);
+    const permissions = (usePage().props.auth as any)?.permissions || [];
+
+    const canCreate = permissions.includes('create suppliers');
+    const canEdit = permissions.includes('edit suppliers');
+    const canDelete = permissions.includes('delete suppliers');
 
     const handleDelete = (id: number) => {
         if (confirm('Yakin ingin menghapus supplier ini?')) {
@@ -26,22 +31,27 @@ export default function Index({ suppliers, filters }: any) {
 
             <ComponentCard title="Daftar Supplier">
                 <div className="mb-3 flex flex-wrap items-center gap-3">
-                    <Link href={route('suppliers.create')}>
-                        <Button>Tambah Supplier</Button>
-                    </Link>
+                    {canCreate && (
+                        <Link href={route('suppliers.create')}>
+                            <Button>Tambah Supplier</Button>
+                        </Link>
+                    )}
                     <SearchInput
                         placeholder="Cari nama supplier..."
                         routeName="suppliers.index"
                         filters={filters}
                     />
-                    <ImportExportToolbar
-                        importUrl={route('suppliers.import')}
-                        previewUrl={route('suppliers.import.preview')}
-                        exportUrl={route('suppliers.export')}
-                        onImportClick={() => setImportModalOpen(true)}
-                    />
+                    {canCreate && (
+                        <ImportExportToolbar
+                            importUrl={route('suppliers.import')}
+                            previewUrl={route('suppliers.import.preview')}
+                            exportUrl={route('suppliers.export')}
+                            onImportClick={() => setImportModalOpen(true)}
+                        />
+                    )}
                 </div>
-                <ImportModal
+                {canCreate && (
+                    <ImportModal
                     isOpen={importModalOpen}
                     onClose={() => setImportModalOpen(false)}
                     onComplete={() => window.location.reload()}
@@ -62,13 +72,14 @@ export default function Index({ suppliers, filters }: any) {
                         { key: 'country', label: 'Negara', required: true },
                     ]}
                 />
+                )}
                 {suppliers.data.length === 0 ? (
                     <EmptyState
                         icon="📦"
                         title="Belum ada supplier"
                         message="Tambahkan supplier pertama untuk mulai menerima barang."
-                        actionLabel="Tambah Supplier"
-                        actionRoute={route('suppliers.create')}
+                        actionLabel={canCreate ? "Tambah Supplier" : undefined}
+                        actionRoute={canCreate ? route('suppliers.create') : undefined}
                     />
                 ) : (
                 <div className="overflow-x-auto">
@@ -96,8 +107,8 @@ export default function Index({ suppliers, filters }: any) {
                                     <td className="px-4 py-3 whitespace-nowrap text-sm text-[#1A1D23]">
                                         <TableActions
                                             viewRoute={route('suppliers.show', supplier.id)}
-                                            editRoute={route('suppliers.edit', supplier.id)}
-                                            onDelete={() => handleDelete(supplier.id)}
+                                            editRoute={canEdit ? route('suppliers.edit', supplier.id) : undefined}
+                                            onDelete={canDelete ? () => handleDelete(supplier.id) : undefined}
                                         />
                                     </td>
                                 </tr>

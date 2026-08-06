@@ -62,13 +62,38 @@ Route::middleware('auth')->group(function () {
         ->name('import.status');
 
     // ── Master Data: Suppliers ──────────────────────────────
+    // View
     Route::middleware(PermissionMiddleware::using('view suppliers'))->group(function () {
-        Route::get('suppliers/export', [SupplierController::class, 'export'])->name('suppliers.export');
-        Route::get('suppliers/import-template', [SupplierController::class, 'importTemplate'])->name('suppliers.import-template');
+        Route::get('suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
+        Route::get('suppliers/{supplier}', [SupplierController::class, 'show'])->name('suppliers.show');
+    });
+
+    // Create
+    Route::middleware(PermissionMiddleware::using('create suppliers'))->group(function () {
+        Route::get('suppliers/create', [SupplierController::class, 'create'])->name('suppliers.create');
+        Route::post('suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
+    });
+
+    // Edit
+    Route::middleware(PermissionMiddleware::using('edit suppliers'))->group(function () {
+        Route::get('suppliers/{supplier}/edit', [SupplierController::class, 'edit'])->name('suppliers.edit');
+        Route::put('suppliers/{supplier}', [SupplierController::class, 'update'])->name('suppliers.update');
+        Route::patch('suppliers/{supplier}', [SupplierController::class, 'update']);
+    });
+
+    // Delete
+    Route::middleware(PermissionMiddleware::using('delete suppliers'))->group(function () {
+        Route::delete('suppliers/{supplier}', [SupplierController::class, 'destroy'])->name('suppliers.destroy');
+    });
+
+    // Import (pakai create suppliers) / Export (pakai view suppliers)
+    Route::middleware(PermissionMiddleware::using('create suppliers'))->group(function () {
         Route::post('suppliers/import/preview', [SupplierController::class, 'importPreview'])->name('suppliers.import.preview');
         Route::post('suppliers/import', [SupplierController::class, 'import'])->name('suppliers.import');
-        Route::resource('suppliers', SupplierController::class);
+        Route::get('suppliers/import-template', [SupplierController::class, 'importTemplate'])->name('suppliers.import-template');
     });
+    Route::get('suppliers/export', [SupplierController::class, 'export'])
+        ->middleware(PermissionMiddleware::using('view suppliers'))->name('suppliers.export');
 
     // ── Master Data: Products ───────────────────────────────
     Route::middleware(PermissionMiddleware::using('view products'))->group(function () {
