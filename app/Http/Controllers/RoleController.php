@@ -22,6 +22,8 @@ class RoleController extends Controller
 
     public function store(Request $request)
     {
+        abort_unless(auth()->user()->can('manage roles'), 403);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:roles,name',
             'permissions' => 'nullable|array',
@@ -39,6 +41,8 @@ class RoleController extends Controller
 
     public function update(Request $request, string $id)
     {
+        abort_unless(auth()->user()->can('manage roles'), 403);
+
         $role = Role::findOrFail($id);
         
         $validated = $request->validate([
@@ -60,6 +64,8 @@ class RoleController extends Controller
 
     public function destroy(string $id)
     {
+        abort_unless(auth()->user()->can('manage roles'), 403);
+
         $role = Role::findOrFail($id);
         
         if ($role->name === 'Super Admin') {

@@ -19,6 +19,8 @@ class PermissionController extends Controller
 
     public function store(Request $request)
     {
+        abort_unless(auth()->user()->can('manage permissions'), 403);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:permissions,name',
         ]);
@@ -30,6 +32,8 @@ class PermissionController extends Controller
 
     public function update(Request $request, string $id)
     {
+        abort_unless(auth()->user()->can('manage permissions'), 403);
+
         $permission = Permission::findOrFail($id);
         
         $validated = $request->validate([
@@ -43,6 +47,8 @@ class PermissionController extends Controller
 
     public function destroy(string $id)
     {
+        abort_unless(auth()->user()->can('manage permissions'), 403);
+
         $permission = Permission::findOrFail($id);
         
         // Prevent deleting core permissions if needed, but for now we allow deleting any

@@ -55,6 +55,8 @@ class CycleController extends Controller
 
     public function create()
     {
+        abort_unless(auth()->user()->can('create cycles'), 403);
+
         return Inertia::render('Transactions/Cycles/Create', [
             'suppliers' => Supplier::orderBy('name')->get(),
             'products' => Product::with(['vehicleModel', 'category'])->where('is_active', true)->orderBy('name')->get(),
@@ -77,6 +79,8 @@ class CycleController extends Controller
 
     public function store(Request $request)
     {
+        abort_unless(auth()->user()->can('create cycles'), 403);
+
         $validated = $request->validate([
             'supplier_id' => 'required|exists:suppliers,id',
             'notes' => 'nullable|string|max:500',
@@ -132,6 +136,8 @@ class CycleController extends Controller
 
     public function edit(Cycle $cycle)
     {
+        abort_unless(auth()->user()->can('edit cycles'), 403);
+
         if ($cycle->status !== 'draft') {
             return back()->with('error', 'Only draft cycles can be edited.');
         }
@@ -144,6 +150,7 @@ class CycleController extends Controller
 
     public function update(Request $request, Cycle $cycle)
     {
+        abort_unless(auth()->user()->can('edit cycles'), 403);
         if ($cycle->status !== 'draft') {
             return back()->with('error', 'Only draft cycles can be edited.');
         }
@@ -179,6 +186,7 @@ class CycleController extends Controller
 
     public function destroy(Cycle $cycle)
     {
+        abort_unless(auth()->user()->can('delete cycles'), 403);
         if ($cycle->status !== 'draft') {
             return back()->with('error', 'Only draft cycles can be deleted.');
         }
@@ -191,6 +199,7 @@ class CycleController extends Controller
      */
     public function receive(Request $request, Cycle $cycle)
     {
+        abort_unless(auth()->user()->can('receive cycles'), 403);
         if ($cycle->status !== 'draft' && $cycle->status !== 'receiving') {
             return back()->with('error', 'Cannot receive this cycle.');
         }
@@ -289,6 +298,7 @@ class CycleController extends Controller
 
     public function quickReceiveForm()
     {
+        abort_unless(auth()->user()->can('create cycles'), 403);
         return Inertia::render('Transactions/Cycles/QuickReceive', [
             'suppliers' => Supplier::orderBy('name')->get(),
             'products'  => Product::with('defaultRack')->where('is_active', true)->orderBy('name')->get(),
@@ -298,6 +308,7 @@ class CycleController extends Controller
 
     public function quickReceiveStore(Request $request)
     {
+        abort_unless(auth()->user()->can('create cycles'), 403);
         $validated = $request->validate([
             'supplier_id'        => 'required|exists:suppliers,id',
             'items'              => 'required|array|min:1',

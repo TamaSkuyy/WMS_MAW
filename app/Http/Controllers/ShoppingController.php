@@ -32,6 +32,8 @@ class ShoppingController extends Controller
 
     public function create()
     {
+        abort_unless(auth()->user()->can('create shoppings'), 403);
+
         return Inertia::render('Transactions/Shopping/Create', [
             'products'           => Product::with(['vehicleModel', 'stocks', 'supplier'])->where('is_active', true)->orderBy('name')->get(),
             'racks'              => Rack::orderBy('zone')->orderBy('code')->get(),
@@ -55,6 +57,8 @@ class ShoppingController extends Controller
 
     public function store(Request $request)
     {
+        abort_unless(auth()->user()->can('create shoppings'), 403);
+
         $validated = $request->validate([
             'shopping_location_id' => 'required|exists:shopping_locations,id',
             'shopping_date' => 'required|date',
@@ -97,6 +101,8 @@ class ShoppingController extends Controller
 
     public function edit(Shopping $shopping)
     {
+        abort_unless(auth()->user()->can('edit shoppings'), 403);
+
         if ($shopping->status !== 'draft') {
             return back()->with('error', 'Only draft shopping records can be edited.');
         }
@@ -111,6 +117,8 @@ class ShoppingController extends Controller
 
     public function update(Request $request, Shopping $shopping)
     {
+        abort_unless(auth()->user()->can('edit shoppings'), 403);
+
         if ($shopping->status !== 'draft') {
             return back()->with('error', 'Only draft shopping records can be edited.');
         }
@@ -150,6 +158,8 @@ class ShoppingController extends Controller
 
     public function destroy(Shopping $shopping)
     {
+        abort_unless(auth()->user()->can('delete shoppings'), 403);
+
         if ($shopping->status !== 'draft') {
             return back()->with('error', 'Only draft shopping records can be deleted.');
         }
@@ -161,6 +171,8 @@ class ShoppingController extends Controller
 
     public function ship(Request $request, Shopping $shopping)
     {
+        abort_unless(auth()->user()->can('ship shoppings'), 403);
+
         if ($shopping->status !== 'draft') {
             return back()->with('error', 'Tidak dapat memproses shopping ini.');
         }

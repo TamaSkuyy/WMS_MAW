@@ -188,21 +188,77 @@ Route::middleware('auth')->group(function () {
     });
 
     // ── Transactions: Cycles ────────────────────────────────
+    // View
     Route::middleware(PermissionMiddleware::using('view cycles'))->group(function () {
-        Route::get('cycles/export', [CycleController::class, 'export'])->name('cycles.export');
-        Route::get('cycles/import-template', [CycleController::class, 'importTemplate'])->name('cycles.import-template');
-        Route::post('cycles/import/preview', [CycleController::class, 'importPreview'])->name('cycles.import.preview');
-        Route::post('cycles/import', [CycleController::class, 'import'])->name('cycles.import');
+        Route::get('cycles', [CycleController::class, 'index'])->name('cycles.index');
+        Route::get('cycles/{cycle}', [CycleController::class, 'show'])->name('cycles.show');
+    });
+
+    // Create
+    Route::middleware(PermissionMiddleware::using('create cycles'))->group(function () {
+        Route::get('cycles/create', [CycleController::class, 'create'])->name('cycles.create');
+        Route::post('cycles', [CycleController::class, 'store'])->name('cycles.store');
         Route::get('cycles/quick-receive', [CycleController::class, 'quickReceiveForm'])->name('cycles.quick-receive.form');
         Route::post('cycles/quick-receive', [CycleController::class, 'quickReceiveStore'])->name('cycles.quick-receive.store');
+    });
+
+    // Edit
+    Route::middleware(PermissionMiddleware::using('edit cycles'))->group(function () {
+        Route::get('cycles/{cycle}/edit', [CycleController::class, 'edit'])->name('cycles.edit');
+        Route::put('cycles/{cycle}', [CycleController::class, 'update'])->name('cycles.update');
+        Route::patch('cycles/{cycle}', [CycleController::class, 'update']);
+    });
+
+    // Delete
+    Route::middleware(PermissionMiddleware::using('delete cycles'))->group(function () {
+        Route::delete('cycles/{cycle}', [CycleController::class, 'destroy'])->name('cycles.destroy');
+    });
+
+    // Receive
+    Route::middleware(PermissionMiddleware::using('receive cycles'))->group(function () {
         Route::post('cycles/{cycle}/receive', [CycleController::class, 'receive'])->name('cycles.receive');
-        Route::resource('cycles', CycleController::class);
+    });
+
+    // Import
+    Route::middleware(PermissionMiddleware::using('import cycles'))->group(function () {
+        Route::post('cycles/import/preview', [CycleController::class, 'importPreview'])->name('cycles.import.preview');
+        Route::post('cycles/import', [CycleController::class, 'import'])->name('cycles.import');
+        Route::get('cycles/import-template', [CycleController::class, 'importTemplate'])->name('cycles.import-template');
+    });
+
+    // Export
+    Route::middleware(PermissionMiddleware::using('export cycles'))->group(function () {
+        Route::get('cycles/export', [CycleController::class, 'export'])->name('cycles.export');
     });
 
     // ── Transactions: Shopping ──────────────────────────────
+    // View
     Route::middleware(PermissionMiddleware::using('view shoppings'))->group(function () {
+        Route::get('shoppings', [ShoppingController::class, 'index'])->name('shoppings.index');
+        Route::get('shoppings/{shopping}', [ShoppingController::class, 'show'])->name('shoppings.show');
+    });
+
+    // Create
+    Route::middleware(PermissionMiddleware::using('create shoppings'))->group(function () {
+        Route::get('shoppings/create', [ShoppingController::class, 'create'])->name('shoppings.create');
+        Route::post('shoppings', [ShoppingController::class, 'store'])->name('shoppings.store');
+    });
+
+    // Edit
+    Route::middleware(PermissionMiddleware::using('edit shoppings'))->group(function () {
+        Route::get('shoppings/{shopping}/edit', [ShoppingController::class, 'edit'])->name('shoppings.edit');
+        Route::put('shoppings/{shopping}', [ShoppingController::class, 'update'])->name('shoppings.update');
+        Route::patch('shoppings/{shopping}', [ShoppingController::class, 'update']);
+    });
+
+    // Delete
+    Route::middleware(PermissionMiddleware::using('delete shoppings'))->group(function () {
+        Route::delete('shoppings/{shopping}', [ShoppingController::class, 'destroy'])->name('shoppings.destroy');
+    });
+
+    // Ship
+    Route::middleware(PermissionMiddleware::using('ship shoppings'))->group(function () {
         Route::post('shoppings/{shopping}/ship', [ShoppingController::class, 'ship'])->name('shoppings.ship');
-        Route::resource('shoppings', ShoppingController::class);
     });
 
     // ── Transactions: Stocks ────────────────────────────────
@@ -228,14 +284,54 @@ Route::middleware('auth')->group(function () {
 
     // ── System (superadmin only) ────────────────────────────
     Route::middleware(RoleMiddleware::using('superadmin'))->group(function () {
-        Route::resource('menus', MenuController::class);
-        Route::resource('users', UserController::class);
-        Route::post('users/import/preview', [UserController::class, 'importPreview'])->name('users.import.preview');
-        Route::post('users/import', [UserController::class, 'import'])->name('users.import');
-        Route::get('users/export', [UserController::class, 'export'])->name('users.export');
-        Route::get('users/import-template', [UserController::class, 'importTemplate'])->name('users.import-template');
-        Route::resource('roles', RoleController::class);
-        Route::resource('permissions', PermissionController::class);
+
+        // Menus
+        Route::middleware(PermissionMiddleware::using('view menus'))->group(function () {
+            Route::get('menus', [MenuController::class, 'index'])->name('menus.index');
+        });
+        Route::middleware(PermissionMiddleware::using('manage menus'))->group(function () {
+            Route::post('menus', [MenuController::class, 'store'])->name('menus.store');
+            Route::put('menus/{menu}', [MenuController::class, 'update'])->name('menus.update');
+            Route::patch('menus/{menu}', [MenuController::class, 'update']);
+            Route::delete('menus/{menu}', [MenuController::class, 'destroy'])->name('menus.destroy');
+        });
+
+        // Users
+        Route::middleware(PermissionMiddleware::using('view users'))->group(function () {
+            Route::get('users', [UserController::class, 'index'])->name('users.index');
+            Route::get('users/export', [UserController::class, 'export'])->name('users.export');
+        });
+        Route::middleware(PermissionMiddleware::using('manage users'))->group(function () {
+            Route::post('users', [UserController::class, 'store'])->name('users.store');
+            Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
+            Route::patch('users/{user}', [UserController::class, 'update']);
+            Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+            Route::post('users/import/preview', [UserController::class, 'importPreview'])->name('users.import.preview');
+            Route::post('users/import', [UserController::class, 'import'])->name('users.import');
+            Route::get('users/import-template', [UserController::class, 'importTemplate'])->name('users.import-template');
+        });
+
+        // Roles
+        Route::middleware(PermissionMiddleware::using('view roles'))->group(function () {
+            Route::get('roles', [RoleController::class, 'index'])->name('roles.index');
+        });
+        Route::middleware(PermissionMiddleware::using('manage roles'))->group(function () {
+            Route::post('roles', [RoleController::class, 'store'])->name('roles.store');
+            Route::put('roles/{role}', [RoleController::class, 'update'])->name('roles.update');
+            Route::patch('roles/{role}', [RoleController::class, 'update']);
+            Route::delete('roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy');
+        });
+
+        // Permissions
+        Route::middleware(PermissionMiddleware::using('view permissions'))->group(function () {
+            Route::get('permissions', [PermissionController::class, 'index'])->name('permissions.index');
+        });
+        Route::middleware(PermissionMiddleware::using('manage permissions'))->group(function () {
+            Route::post('permissions', [PermissionController::class, 'store'])->name('permissions.store');
+            Route::put('permissions/{permission}', [PermissionController::class, 'update'])->name('permissions.update');
+            Route::patch('permissions/{permission}', [PermissionController::class, 'update']);
+            Route::delete('permissions/{permission}', [PermissionController::class, 'destroy'])->name('permissions.destroy');
+        });
 
         Route::get('/test-broadcast', function () {
             $user = auth()->user();

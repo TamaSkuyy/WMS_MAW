@@ -53,6 +53,8 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        abort_unless(auth()->user()->can('manage users'), 403);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
@@ -80,6 +82,8 @@ class UserController extends Controller
 
     public function update(Request $request, string $id)
     {
+        abort_unless(auth()->user()->can('manage users'), 403);
+
         $user = User::findOrFail($id);
 
         $validated = $request->validate([
@@ -114,6 +118,8 @@ class UserController extends Controller
 
     public function destroy(string $id)
     {
+        abort_unless(auth()->user()->can('manage users'), 403);
+
         $user = User::findOrFail($id);
         if ($user->id === Auth::user()->id) {
             return redirect()->route('users.index')->with('error', 'You cannot delete yourself.');
