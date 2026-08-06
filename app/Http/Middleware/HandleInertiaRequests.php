@@ -36,20 +36,24 @@ class HandleInertiaRequests extends Middleware
         if ($user) {
             $allMenus = \App\Models\Menu::with('subMenus')->whereNull('parent_id')->orderBy('sort_order')->get();
             $menus = $allMenus->filter(function ($menu) use ($user) {
-                // If it has a permission name, check if user has it
                 if ($menu->permission_name && !$user->can($menu->permission_name)) {
                     return false;
                 }
                 return true;
             })->map(function ($menu) use ($user) {
-                // Filter submenus
-                $menu->subMenus = $menu->subMenus->filter(function ($subMenu) use ($user) {
+                $filtered = $menu->subMenus->filter(function ($subMenu) use ($user) {
                     if ($subMenu->permission_name && !$user->can($subMenu->permission_name)) {
                         return false;
                     }
                     return true;
                 })->values();
+                // Gunakan setRelation() — Laravel 13 __set() tidak lagi memanggil setRelation()
+                $menu->setRelation('subMenus', $filtered);
                 return $menu;
+            })->filter(function ($menu) {
+                if ($menu->path) return true;
+                if ($menu->subMenus->isNotEmpty()) return true;
+                return false;
             })->values();
         }
 

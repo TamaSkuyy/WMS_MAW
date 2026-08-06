@@ -36,9 +36,18 @@ class UserController extends Controller
     public function index()
     {
         $users = User::with(['roles', 'employee.jobPosition'])->get();
+        $employees = \App\Models\Employee::with('jobPosition')
+            ->orderBy('name')
+            ->get()
+            ->map(fn($e) => [
+                'id' => $e->id,
+                'label' => $e->name . ($e->jobPosition ? ' — ' . $e->jobPosition->name : ''),
+                'role_name' => $e->jobPosition?->role_name,
+            ]);
 
         return Inertia::render('Users/Index', [
             'users' => $users,
+            'employees' => $employees,
         ]);
     }
 

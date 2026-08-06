@@ -23,6 +23,7 @@ class MenuSeeder extends Seeder
             'path' => '/dashboard',
             'sort_order' => 1,
             'group' => 'main',
+            'permission_name' => 'view dashboard',
         ]);
 
         // === MASTER DATA (parent) ===
@@ -40,6 +41,7 @@ class MenuSeeder extends Seeder
             'parent_id' => $masterData->id,
             'sort_order' => 1,
             'group' => 'main',
+            'permission_name' => 'view suppliers',
         ]);
 
         Menu::create([
@@ -49,6 +51,7 @@ class MenuSeeder extends Seeder
             'parent_id' => $masterData->id,
             'sort_order' => 2,
             'group' => 'main',
+            'permission_name' => 'view products',
         ]);
 
         Menu::create([
@@ -58,6 +61,7 @@ class MenuSeeder extends Seeder
             'parent_id' => $masterData->id,
             'sort_order' => 3,
             'group' => 'main',
+            'permission_name' => 'view racks',
         ]);
 
         Menu::create([
@@ -67,6 +71,7 @@ class MenuSeeder extends Seeder
             'parent_id' => $masterData->id,
             'sort_order' => 4,
             'group' => 'main',
+            'permission_name' => 'view vehicle models',
         ]);
 
         Menu::create([
@@ -76,6 +81,7 @@ class MenuSeeder extends Seeder
             'parent_id' => $masterData->id,
             'sort_order' => 5,
             'group' => 'main',
+            'permission_name' => 'view product categories',
         ]);
 
         Menu::create([
@@ -85,6 +91,7 @@ class MenuSeeder extends Seeder
             'parent_id' => $masterData->id,
             'sort_order' => 6,
             'group' => 'main',
+            'permission_name' => 'view job positions',
         ]);
 
         Menu::create([
@@ -94,6 +101,7 @@ class MenuSeeder extends Seeder
             'parent_id' => $masterData->id,
             'sort_order' => 7,
             'group' => 'main',
+            'permission_name' => 'view work locations',
         ]);
 
         Menu::create([
@@ -103,6 +111,7 @@ class MenuSeeder extends Seeder
             'parent_id' => $masterData->id,
             'sort_order' => 8,
             'group' => 'main',
+            'permission_name' => 'view departments',
         ]);
 
         Menu::create([
@@ -112,6 +121,7 @@ class MenuSeeder extends Seeder
             'parent_id' => $masterData->id,
             'sort_order' => 81,
             'group' => 'main',
+            'permission_name' => 'view shopping locations',
         ]);
 
         Menu::create([
@@ -121,6 +131,7 @@ class MenuSeeder extends Seeder
             'parent_id' => $masterData->id,
             'sort_order' => 9,
             'group' => 'main',
+            'permission_name' => 'view employees',
         ]);
 
         Menu::create([
@@ -130,6 +141,7 @@ class MenuSeeder extends Seeder
             'parent_id' => $masterData->id,
             'sort_order' => 10,
             'group' => 'main',
+            'permission_name' => 'view shifts',
         ]);
 
         Menu::create([
@@ -139,6 +151,7 @@ class MenuSeeder extends Seeder
             'parent_id' => $masterData->id,
             'sort_order' => 11,
             'group' => 'main',
+            'permission_name' => 'view delivery slots',
         ]);
 
         // === TRANSACTIONS (parent) ===
@@ -156,6 +169,7 @@ class MenuSeeder extends Seeder
             'parent_id' => $transactions->id,
             'sort_order' => 1,
             'group' => 'main',
+            'permission_name' => 'view cycles',
         ]);
 
         Menu::create([
@@ -165,6 +179,7 @@ class MenuSeeder extends Seeder
             'parent_id' => $transactions->id,
             'sort_order' => 2,
             'group' => 'main',
+            'permission_name' => 'view stocks',
         ]);
 
         Menu::create([
@@ -174,6 +189,7 @@ class MenuSeeder extends Seeder
             'parent_id' => $transactions->id,
             'sort_order' => 3,
             'group' => 'main',
+            'permission_name' => 'view shoppings',
         ]);
 
         // === REPORT TRANSACTION (parent) ===
@@ -191,6 +207,7 @@ class MenuSeeder extends Seeder
             'parent_id' => $reportTransaction->id,
             'sort_order' => 1,
             'group' => 'main',
+            'permission_name' => 'view receiving report',
         ]);
 
         Menu::create([
@@ -200,6 +217,7 @@ class MenuSeeder extends Seeder
             'parent_id' => $reportTransaction->id,
             'sort_order' => 2,
             'group' => 'main',
+            'permission_name' => 'view shopping report',
         ]);
 
         Menu::create([
@@ -209,6 +227,7 @@ class MenuSeeder extends Seeder
             'parent_id' => $reportTransaction->id,
             'sort_order' => 3,
             'group' => 'main',
+            'permission_name' => 'view supplier performance',
         ]);
 
         // === OTHERS group ===
@@ -237,6 +256,7 @@ class MenuSeeder extends Seeder
             'parent_id' => $setupMenu->id,
             'sort_order' => 1,
             'group' => 'others',
+            'permission_name' => 'view users',
         ]);
 
         Menu::create([
@@ -246,6 +266,7 @@ class MenuSeeder extends Seeder
             'parent_id' => $setupMenu->id,
             'sort_order' => 2,
             'group' => 'others',
+            'permission_name' => 'view roles',
         ]);
 
         Menu::create([
@@ -255,6 +276,7 @@ class MenuSeeder extends Seeder
             'parent_id' => $setupMenu->id,
             'sort_order' => 3,
             'group' => 'others',
+            'permission_name' => 'view permissions',
         ]);
     }
 }

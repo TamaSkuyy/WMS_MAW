@@ -6,10 +6,11 @@ import ComponentCard from '../../Tailadmin/components/common/ComponentCard';
 import Button from '../../Tailadmin/components/ui/button/Button';
 import Input from '../../Tailadmin/components/form/input/InputField';
 import Label from '../../Tailadmin/components/form/Label';
+import SearchableSelect from '../../Tailadmin/components/form/select/SearchableSelect';
 import ImportExportToolbar from '../../Components/ImportExport/ImportExportToolbar';
 import ImportModal from '../../Components/ImportExport/ImportModal';
 
-export default function Index({ users }: any) {
+export default function Index({ users, employees }: any) {
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState<number | null>(null);
     const [importModalOpen, setImportModalOpen] = useState(false);
@@ -130,16 +131,31 @@ export default function Index({ users }: any) {
                             </div>
 
                             <div>
-                                <Label>Employee ID</Label>
-                                <Input
-                                    type="text"
+                                <Label>Karyawan</Label>
+                                <SearchableSelect
+                                    options={employees.map((e: any) => ({
+                                        value: e.id,
+                                        label: e.label,
+                                    }))}
                                     value={data.employee_id}
-                                    onChange={(e) => setData('employee_id', e.target.value)}
-                                    placeholder="Employee ID (optional)"
+                                    onChange={(v) => setData('employee_id', v as string)}
+                                    placeholder="Cari nama karyawan..."
                                 />
                                 {errors.employee_id && <p className="mt-1 text-sm text-red-500">{errors.employee_id}</p>}
-                                <p className="text-[13px] text-[#6C757D] mt-1">
-                                    Role akan otomatis diisi dari jabatan karyawan yang dipilih.
+                                {data.employee_id && (() => {
+                                    const emp = employees.find((e: any) => String(e.id) === String(data.employee_id));
+                                    return emp?.role_name ? (
+                                        <p className="text-xs text-green-600 mt-1">
+                                            ✓ Role: <strong>{emp.role_name}</strong> (dari jabatan)
+                                        </p>
+                                    ) : (
+                                        <p className="text-xs text-yellow-600 mt-1">
+                                            ⚠ Karyawan ini belum punya role di jabatannya
+                                        </p>
+                                    );
+                                })()}
+                                <p className="text-[12px] text-[#6C757D] mt-1">
+                                    Role otomatis dari jabatan — tidak perlu input manual.
                                 </p>
                             </div>
 

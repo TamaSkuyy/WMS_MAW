@@ -28,15 +28,25 @@ class WmsRoleSeeder extends Seeder
             'view work locations', 'create work locations', 'edit work locations', 'delete work locations',
             'view departments', 'create departments', 'edit departments', 'delete departments',
             'view employees', 'create employees', 'edit employees', 'delete employees',
+            'view shifts', 'create shifts', 'edit shifts', 'delete shifts',
+            'view delivery slots', 'edit delivery slots',
+            'view shopping locations', 'create shopping locations', 'edit shopping locations', 'delete shopping locations',
 
             // Transactions
             'view cycles', 'create cycles', 'edit cycles', 'delete cycles', 'receive cycles',
             'view stocks',
             'view shoppings', 'create shoppings', 'edit shoppings', 'delete shoppings', 'ship shoppings',
 
+            // Import / Export
+            'import cycles', 'export cycles',
+
             // Reports
             'view receiving report', 'export receiving report',
             'view shopping report', 'export shopping report',
+            'view supplier performance',
+
+            // Delivery Monitor
+            'view delivery monitor',
 
             // System
             'view users', 'manage users',
@@ -60,19 +70,28 @@ class WmsRoleSeeder extends Seeder
         $leader->syncPermissions([
             'view dashboard',
 
-            // View all master data
+            // View all master data + create/edit (no delete)
             'view suppliers', 'view products', 'view racks',
             'view vehicle models', 'view product categories',
             'view job positions', 'view work locations', 'view departments', 'view employees',
+            'view shifts', 'view delivery slots',
+            'view shopping locations',
 
-            // Transactions (CRUD + approve)
+            // Transactions (full CRUD + ship/receive)
             'view cycles', 'create cycles', 'edit cycles', 'delete cycles', 'receive cycles',
             'view stocks',
             'view shoppings', 'create shoppings', 'edit shoppings', 'delete shoppings', 'ship shoppings',
 
+            // Import / Export
+            'import cycles', 'export cycles',
+
             // Reports
             'view receiving report', 'export receiving report',
             'view shopping report', 'export shopping report',
+            'view supplier performance',
+
+            // Delivery Monitor
+            'view delivery monitor',
         ]);
 
         // 3. Operator — view + create only, no edit/delete/approve
@@ -83,6 +102,10 @@ class WmsRoleSeeder extends Seeder
             // View master data (read-only)
             'view suppliers', 'view products', 'view racks',
             'view vehicle models', 'view product categories',
+            'view shopping locations', 'view shifts',
+
+            // Delivery Monitor
+            'view delivery monitor',
 
             // Transactions (create + view only)
             'view cycles', 'create cycles',

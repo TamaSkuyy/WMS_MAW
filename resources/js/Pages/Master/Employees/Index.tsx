@@ -100,7 +100,26 @@ export default function Index({ employees, filters }: any) {
                                             {e.status}
                                         </span>
                                     </td>
-                                    <td className="px-4 py-3 text-sm text-gray-500">{e.user?.name || '-'}</td>
+                                    <td className="px-4 py-3 text-sm">
+                                        {e.user ? (
+                                            <span className="text-gray-700">{e.user.name}</span>
+                                        ) : (
+                                            e.email ? (
+                                                <button
+                                                    onClick={() => {
+                                                        if (confirm(`Buat user untuk ${e.name}?`)) {
+                                                            router.post(route('employees.generate-user', e.id));
+                                                        }
+                                                    }}
+                                                    className="text-brand-500 hover:text-brand-700 text-xs font-medium"
+                                                >
+                                                    + Buat User
+                                                </button>
+                                            ) : (
+                                                <span className="text-gray-400 text-xs italic">isi email dulu</span>
+                                            )
+                                        )}
+                                    </td>
                                     <td className="px-4 py-3 text-sm font-medium">
                                         <TableActions
                                             viewRoute={route('employees.show', e.id)}

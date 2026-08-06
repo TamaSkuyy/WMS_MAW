@@ -78,11 +78,39 @@ class EmployeeController extends Controller
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
             'status' => 'required|string|in:Aktif,Nonaktif',
+            'auto_create_user' => 'nullable|boolean',
         ]);
 
         $validated['created_by'] = auth()->id();
 
-        Employee::create($validated);
+        // Auto-create user if requested
+        if ($request->boolean('auto_create_user') && !empty($validated['email'])) {
+            $existingUser = User::where('email', $validated['email'])->first();
+            if (!$existingUser) {
+                $defaultPassword = \Illuminate\Support\Str::random(12);
+                $user = User::create([
+                    'name' => $validated['name'],
+                    'email' => $validated['email'],
+                    'password' => bcrypt($defaultPassword),
+                ]);
+
+                // Auto-assign role from job position
+                $jobPosition = JobPosition::find($validated['job_position_id']);
+                if ($jobPosition?->role_name) {
+                    $this->assignRoleFromJobPosition($user, $jobPosition);
+                }
+
+                $validated['user_id'] = $user->id;
+                unset($validated['auto_create_user']);
+            }
+        }
+
+        $employee = Employee::create($validated);
+
+        // Sync role if user already linked
+        if ($employee->user_id && $employee->jobPosition?->role_name) {
+            $this->assignRoleFromJobPosition($employee->user, $employee->jobPosition);
+        }
 
         return redirect()->route('employees.index')->with('success', 'Karyawan berhasil dibuat.');
     }
@@ -128,6 +156,11 @@ class EmployeeController extends Controller
 
         $employee->update($validated);
 
+        // Sync user role if job position changed and user is linked
+        if ($employee->wasChanged('job_position_id') && $employee->user_id && $employee->jobPosition?->role_name) {
+            $this->assignRoleFromJobPosition($employee->user, $employee->jobPosition);
+        }
+
         return redirect()->route('employees.index')->with('success', 'Karyawan berhasil diupdate.');
     }
 
@@ -136,5 +169,56 @@ class EmployeeController extends Controller
         $employee->delete();
 
         return redirect()->route('employees.index')->with('success', 'Karyawan berhasil dihapus.');
+    }
+
+    public function generateUser(Employee $employee)
+    {
+        if ($employee->user_id) {
+            return back()->with('error', 'Karyawan ini sudah punya user.');
+        }
+        if (!$employee->email) {
+            return back()->with('error', 'Karyawan belum punya email. Isi email dulu.');
+        }
+        if (User::where('email', $employee->email)->exists()) {
+            return back()->with('error', "Email {$employee->email} sudah dipakai user lain.");
+        }
+
+        $user = User::create([
+            'name' => $employee->name,
+            'email' => $employee->email,
+            'password' => bcrypt(\Illuminate\Support\Str::random(32)),
+        ]);
+
+        $employee->update(['user_id' => $user->id]);
+
+        if ($employee->jobPosition?->role_name) {
+            $this->assignRoleFromJobPosition($user, $employee->jobPosition);
+        }
+
+        // Kirim link reset password via email (lebih aman dari plaintext)
+        try {
+            $token = app('auth.password.broker')->createToken($user);
+            $user->sendPasswordResetNotification($token);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        return back()->with('success', "User berhasil dibuat untuk {$employee->email}. Link reset password telah dikirim ke email tersebut.");
+    }
+
+    private function assignRoleFromJobPosition(User $user, JobPosition $jobPosition): void
+    {
+        if (!$jobPosition->role_name) return;
+
+        // Hanya role non-admin yang boleh auto-assign dari jabatan
+        $allowedRoles = ['operator', 'leader'];
+        if (!in_array($jobPosition->role_name, $allowedRoles)) {
+            return;
+        }
+
+        $user->syncRoles([$jobPosition->role_name]);
+
+        // Hapus session user — force re-login biar permission baru kepakai
+        \DB::table('sessions')->where('user_id', $user->id)->delete();
     }
 }
