@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
@@ -11,6 +11,10 @@ import ImportExportToolbar from '../../../Components/ImportExport/ImportExportTo
 import ImportModal from '../../../Components/ImportExport/ImportModal';
 
 export default function Index({ categories, filters }: any) {
+    const permissions = (usePage().props.auth as any)?.user?.permissions || [];
+    const canCreate = permissions.includes('create product categories');
+    const canEdit = permissions.includes('edit product categories');
+    const canDelete = permissions.includes('delete product categories');
     const [importModalOpen, setImportModalOpen] = useState(false);
 
     const handleDelete = (id: number) => {
@@ -25,19 +29,22 @@ export default function Index({ categories, filters }: any) {
             <PageBreadcrumb pageTitle="Kategori Produk" />
             <ComponentCard title="Daftar Kategori">
                 <div className="mb-3 flex flex-wrap items-center gap-3">
-                    <Link href={route('product-categories.create')}><Button>Tambah Kategori</Button></Link>
+                    {canCreate && (
+                        <Link href={route('product-categories.create')}><Button>Tambah Kategori</Button></Link>
+                    )}
                     <SearchInput
                         placeholder="Cari nama kategori..."
                         routeName="product-categories.index"
                         filters={filters}
                     />
-                    <ImportExportToolbar
+                    {canCreate && (<ImportExportToolbar
                         importUrl={route('product-categories.import')}
                         previewUrl={route('product-categories.import.preview')}
                         exportUrl={route('product-categories.export')}
-                        onImportClick={() => setImportModalOpen(true)}
-                    />
+                        onImportClick={() => setImportModalOpen(true)}/>
+                    )}
                 </div>
+                {canCreate && (
                 <ImportModal
                     isOpen={importModalOpen}
                     onClose={() => setImportModalOpen(false)}
@@ -51,13 +58,14 @@ export default function Index({ categories, filters }: any) {
                         { key: 'description', label: 'Deskripsi', required: false },
                     ]}
                 />
+                )}
                 {categories.data.length === 0 ? (
                     <EmptyState
                         icon="📂"
                         title="Belum ada kategori"
                         message="Tambahkan kategori produk seperti Body Parts, Engine."
-                        actionLabel="Tambah Kategori"
-                        actionRoute={route('product-categories.create')}
+                        actionLabel={canCreate ? "Tambah Kategori" : undefined}
+                        actionRoute={canCreate ? route('product-categories.create') : undefined}
                     />
                 ) : (
                 <div className="overflow-x-auto">
@@ -76,8 +84,8 @@ export default function Index({ categories, filters }: any) {
                                     <td className="px-4 py-3 text-sm text-gray-500">{c.description || '-'}</td>
                                     <td className="px-4 py-3 text-sm font-medium">
                                         <TableActions
-                                            editRoute={route('product-categories.edit', c.id)}
-                                            onDelete={() => handleDelete(c.id)}
+                                            editRoute={canEdit ? route('product-categories.edit', c.id) : undefined}
+                                            onDelete={canDelete ? () => handleDelete(c.id) : undefined}
                                         />
                                     </td>
                                 </tr>

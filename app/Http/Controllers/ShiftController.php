@@ -46,11 +46,13 @@ class ShiftController extends Controller
 
     public function create()
     {
+        abort_unless(auth()->user()->can('create shifts'), 403);
         return Inertia::render('Master/Shifts/Create');
     }
 
     public function store(Request $request)
     {
+        abort_unless(auth()->user()->can('create shifts'), 403);
         $validated = $request->validate([
             'name' => 'required|string|max:100|unique:shifts',
             'code' => 'required|string|max:10|unique:shifts',
@@ -68,6 +70,7 @@ class ShiftController extends Controller
 
     public function edit(Shift $shift)
     {
+        abort_unless(auth()->user()->can('edit shifts'), 403);
         return Inertia::render('Master/Shifts/Edit', [
             'shift' => $shift,
         ]);
@@ -75,6 +78,7 @@ class ShiftController extends Controller
 
     public function update(Request $request, Shift $shift)
     {
+        abort_unless(auth()->user()->can('edit shifts'), 403);
         $validated = $request->validate([
             'name' => 'required|string|max:100|unique:shifts,name,' . $shift->id,
             'code' => 'required|string|max:10|unique:shifts,code,' . $shift->id,
@@ -92,6 +96,7 @@ class ShiftController extends Controller
 
     public function destroy(Shift $shift)
     {
+        abort_unless(auth()->user()->can('delete shifts'), 403);
         $shift->delete();
 
         return redirect()->route('shifts.index')->with('success', 'Shift berhasil dihapus.');

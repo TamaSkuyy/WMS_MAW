@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { PencilIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
@@ -22,6 +22,8 @@ function beep() {
 }
 
 export default function Show({ cycle, racks, lastUsedRacks }: any) {
+    const permissions = (usePage().props.auth as any)?.user?.permissions || [];
+    const canEdit = permissions.includes('edit cycles');
     const [isReceiving, setIsReceiving] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [items, setItems] = useState<any[]>(
@@ -134,7 +136,7 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
                             {cycle.notes && <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Catatan</dt><dd className="text-sm text-[#1A1D23]">{cycle.notes}</dd></div>}
                         </dl>
                         <div className="mt-6 flex gap-2 pt-4 border-t border-[#F1F3F5]">
-                            {cycle.status === 'draft' && <Link href={route('cycles.edit', cycle.id)}><Button icon={<PencilIcon className="w-4 h-4" />} size="sm">Edit</Button></Link>}
+                            {cycle.status === 'draft' && canEdit && <Link href={route('cycles.edit', cycle.id)}><Button icon={<PencilIcon className="w-4 h-4" />} size="sm">Edit</Button></Link>}
                             {cycle.status !== 'completed' && !isReceiving && (
                                 <Button variant="outline" size="sm" onClick={() => setIsReceiving(true)}>Terima Barang</Button>
                             )}

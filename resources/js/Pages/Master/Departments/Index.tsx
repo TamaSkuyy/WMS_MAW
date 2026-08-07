@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
@@ -11,6 +11,10 @@ import ImportExportToolbar from '../../../Components/ImportExport/ImportExportTo
 import ImportModal from '../../../Components/ImportExport/ImportModal';
 
 export default function Index({ departments, filters }: any) {
+    const permissions = (usePage().props.auth as any)?.user?.permissions || [];
+    const canCreate = permissions.includes('create departments');
+    const canEdit = permissions.includes('edit departments');
+    const canDelete = permissions.includes('delete departments');
     const [importModalOpen, setImportModalOpen] = useState(false);
 
     const handleDelete = (id: number) => {
@@ -25,19 +29,22 @@ export default function Index({ departments, filters }: any) {
             <PageBreadcrumb pageTitle="Departemen" />
             <ComponentCard title="Daftar Departemen">
                 <div className="mb-3 flex flex-wrap items-center gap-3">
-                    <Link href={route('departments.create')}><Button>Tambah Departemen</Button></Link>
+                    {canCreate && (
+                        <Link href={route('departments.create')}><Button>Tambah Departemen</Button></Link>
+                    )}
                     <SearchInput
                         placeholder="Cari nama departemen..."
                         routeName="departments.index"
                         filters={filters}
                     />
-                    <ImportExportToolbar
+                    {canCreate && (<ImportExportToolbar
                         importUrl={route('departments.import')}
                         previewUrl={route('departments.import.preview')}
                         exportUrl={route('departments.export')}
-                        onImportClick={() => setImportModalOpen(true)}
-                    />
+                        onImportClick={() => setImportModalOpen(true)}/>
+                    )}
                 </div>
+                {canCreate && (
                 <ImportModal
                     isOpen={importModalOpen}
                     onClose={() => setImportModalOpen(false)}
@@ -50,13 +57,14 @@ export default function Index({ departments, filters }: any) {
                         { key: 'name', label: 'Nama', required: true },
                     ]}
                 />
+                )}
                 {departments.data.length === 0 ? (
                     <EmptyState
                         icon="🏢"
                         title="Belum ada departemen"
                         message="Tambahkan departemen untuk struktur organisasi."
-                        actionLabel="Tambah Departemen"
-                        actionRoute={route('departments.create')}
+                        actionLabel={canCreate ? "Tambah Departemen" : undefined}
+                        actionRoute={canCreate ? route('departments.create') : undefined}
                     />
                 ) : (
                 <div className="overflow-x-auto">
@@ -73,8 +81,8 @@ export default function Index({ departments, filters }: any) {
                                     <td className="px-4 py-3 text-sm font-medium">{d.name}</td>
                                     <td className="px-4 py-3 text-sm font-medium">
                                         <TableActions
-                                            editRoute={route('departments.edit', d.id)}
-                                            onDelete={() => handleDelete(d.id)}
+                                            editRoute={canEdit ? route('departments.edit', d.id) : undefined}
+                                            onDelete={canDelete ? () => handleDelete(d.id) : undefined}
                                         />
                                     </td>
                                 </tr>

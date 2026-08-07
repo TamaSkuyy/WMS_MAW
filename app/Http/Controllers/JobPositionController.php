@@ -47,6 +47,7 @@ class JobPositionController extends Controller
 
     public function create()
     {
+        abort_unless(auth()->user()->can('create job positions'), 403);
         return Inertia::render('Master/JobPositions/Create', [
             'roles' => \Spatie\Permission\Models\Role::pluck('name')->toArray(),
         ]);
@@ -54,6 +55,7 @@ class JobPositionController extends Controller
 
     public function store(Request $request)
     {
+        abort_unless(auth()->user()->can('create job positions'), 403);
         $roleNames = JobPosition::roleOptions();
         $validated = $request->validate([
             'name' => 'required|string|max:100|unique:job_positions',
@@ -68,6 +70,7 @@ class JobPositionController extends Controller
 
     public function edit(JobPosition $jobPosition)
     {
+        abort_unless(auth()->user()->can('edit job positions'), 403);
         return Inertia::render('Master/JobPositions/Edit', [
             'position' => $jobPosition,
             'roles' => \Spatie\Permission\Models\Role::pluck('name')->toArray(),
@@ -76,6 +79,7 @@ class JobPositionController extends Controller
 
     public function update(Request $request, JobPosition $jobPosition)
     {
+        abort_unless(auth()->user()->can('edit job positions'), 403);
         $roleNames = JobPosition::roleOptions();
         $validated = $request->validate([
             'name' => 'required|string|max:100|unique:job_positions,name,' . $jobPosition->id,
@@ -118,6 +122,7 @@ class JobPositionController extends Controller
 
     public function destroy(JobPosition $jobPosition)
     {
+        abort_unless(auth()->user()->can('delete job positions'), 403);
         $jobPosition->delete();
 
         return redirect()->route('job-positions.index')->with('success', 'Jabatan berhasil dihapus.');

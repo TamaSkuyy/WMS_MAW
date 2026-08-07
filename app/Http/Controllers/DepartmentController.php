@@ -45,11 +45,13 @@ class DepartmentController extends Controller
 
     public function create()
     {
+        abort_unless(auth()->user()->can('create departments'), 403);
         return Inertia::render('Master/Departments/Create');
     }
 
     public function store(Request $request)
     {
+        abort_unless(auth()->user()->can('create departments'), 403);
         $validated = $request->validate([
             'name' => 'required|string|max:100|unique:departments',
         ]);
@@ -61,6 +63,7 @@ class DepartmentController extends Controller
 
     public function edit(Department $department)
     {
+        abort_unless(auth()->user()->can('edit departments'), 403);
         return Inertia::render('Master/Departments/Edit', [
             'department' => $department,
         ]);
@@ -68,6 +71,7 @@ class DepartmentController extends Controller
 
     public function update(Request $request, Department $department)
     {
+        abort_unless(auth()->user()->can('edit departments'), 403);
         $validated = $request->validate([
             'name' => 'required|string|max:100|unique:departments,name,' . $department->id,
         ]);
@@ -79,6 +83,7 @@ class DepartmentController extends Controller
 
     public function destroy(Department $department)
     {
+        abort_unless(auth()->user()->can('delete departments'), 403);
         $department->delete();
 
         return redirect()->route('departments.index')->with('success', 'Departemen berhasil dihapus.');

@@ -53,6 +53,7 @@ class EmployeeController extends Controller
 
     public function create()
     {
+        abort_unless(auth()->user()->can('create employees'), 403);
         return Inertia::render('Master/Employees/Create', [
             'jobPositions' => JobPosition::orderBy('name')->get(['id', 'name']),
             'workLocations' => WorkLocation::orderBy('name')->get(['id', 'name']),
@@ -67,6 +68,7 @@ class EmployeeController extends Controller
 
     public function store(Request $request)
     {
+        abort_unless(auth()->user()->can('create employees'), 403);
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'nik' => 'nullable|string|max:50|unique:employees',
@@ -124,6 +126,7 @@ class EmployeeController extends Controller
 
     public function edit(Employee $employee)
     {
+        abort_unless(auth()->user()->can('edit employees'), 403);
         return Inertia::render('Master/Employees/Edit', [
             'employee' => $employee,
             'jobPositions' => JobPosition::orderBy('name')->get(['id', 'name']),
@@ -139,6 +142,7 @@ class EmployeeController extends Controller
 
     public function update(Request $request, Employee $employee)
     {
+        abort_unless(auth()->user()->can('edit employees'), 403);
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'nik' => 'nullable|string|max:50|unique:employees,nik,' . $employee->id,
@@ -166,6 +170,7 @@ class EmployeeController extends Controller
 
     public function destroy(Employee $employee)
     {
+        abort_unless(auth()->user()->can('delete employees'), 403);
         $employee->delete();
 
         return redirect()->route('employees.index')->with('success', 'Karyawan berhasil dihapus.');

@@ -82,6 +82,7 @@ class ProductController extends Controller
      */
     public function create()
     {
+        abort_unless(auth()->user()->can('create products'), 403);
         return Inertia::render('Master/Products/Create', [
             'vehicleModels' => VehicleModel::orderBy('brand')->orderBy('name')->get(),
             'categories' => ProductCategory::orderBy('name')->get(),
@@ -95,6 +96,7 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
+        abort_unless(auth()->user()->can('create products'), 403);
         $validated = $request->validate([
             'part_number' => 'required|string|max:50|unique:products',
             'name' => 'required|string|max:255',
@@ -130,6 +132,7 @@ class ProductController extends Controller
      */
     public function edit(Product $product)
     {
+        abort_unless(auth()->user()->can('edit products'), 403);
         return Inertia::render('Master/Products/Edit', [
             'product' => $product,
             'vehicleModels' => VehicleModel::orderBy('brand')->orderBy('name')->get(),
@@ -144,6 +147,7 @@ class ProductController extends Controller
      */
     public function update(Request $request, Product $product)
     {
+        abort_unless(auth()->user()->can('edit products'), 403);
         $validated = $request->validate([
             'part_number' => 'required|string|max:50|unique:products,part_number,' . $product->id,
             'name' => 'required|string|max:255',
@@ -169,6 +173,7 @@ class ProductController extends Controller
      */
     public function destroy(Product $product)
     {
+        abort_unless(auth()->user()->can('delete products'), 403);
         $product->delete();
 
         return redirect()->route('products.index')

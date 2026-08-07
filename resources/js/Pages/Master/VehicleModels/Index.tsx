@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
@@ -11,6 +11,10 @@ import ImportExportToolbar from '../../../Components/ImportExport/ImportExportTo
 import ImportModal from '../../../Components/ImportExport/ImportModal';
 
 export default function Index({ vehicleModels, filters }: any) {
+    const permissions = (usePage().props.auth as any)?.user?.permissions || [];
+    const canCreate = permissions.includes('create vehicle models');
+    const canEdit = permissions.includes('edit vehicle models');
+    const canDelete = permissions.includes('delete vehicle models');
     const [importModalOpen, setImportModalOpen] = useState(false);
 
     const handleDelete = (id: number) => {
@@ -25,19 +29,22 @@ export default function Index({ vehicleModels, filters }: any) {
             <PageBreadcrumb pageTitle="Model Kendaraan" />
             <ComponentCard title="Daftar Model Kendaraan">
                 <div className="mb-3 flex flex-wrap items-center gap-3">
-                    <Link href={route('vehicle-models.create')}><Button>Tambah Model</Button></Link>
+                    {canCreate && (
+                        <Link href={route('vehicle-models.create')}><Button>Tambah Model</Button></Link>
+                    )}
                     <SearchInput
                         placeholder="Cari model..."
                         routeName="vehicle-models.index"
                         filters={filters}
                     />
-                    <ImportExportToolbar
+                    {canCreate && (<ImportExportToolbar
                         importUrl={route('vehicle-models.import')}
                         previewUrl={route('vehicle-models.import.preview')}
                         exportUrl={route('vehicle-models.export')}
-                        onImportClick={() => setImportModalOpen(true)}
-                    />
+                        onImportClick={() => setImportModalOpen(true)}/>
+                    )}
                 </div>
+                {canCreate && (
                 <ImportModal
                     isOpen={importModalOpen}
                     onClose={() => setImportModalOpen(false)}
@@ -51,13 +58,14 @@ export default function Index({ vehicleModels, filters }: any) {
                         { key: 'suffix', label: 'Suffix', required: false },
                     ]}
                 />
+                )}
                 {vehicleModels.data.length === 0 ? (
                     <EmptyState
                         icon="🚗"
                         title="Belum ada model kendaraan"
                         message="Tambahkan model kendaraan seperti Fortuner, Avanza."
-                        actionLabel="Tambah Model"
-                        actionRoute={route('vehicle-models.create')}
+                        actionLabel={canCreate ? "Tambah Model" : undefined}
+                        actionRoute={canCreate ? route('vehicle-models.create') : undefined}
                     />
                 ) : (
                 <div className="overflow-x-auto">
@@ -76,8 +84,8 @@ export default function Index({ vehicleModels, filters }: any) {
                                     <td className="px-4 py-3 text-sm text-[#6C757D]">{m.suffix || '-'}</td>
                                     <td className="px-4 py-3 text-sm text-[#1A1D23]">
                                         <TableActions
-                                            editRoute={route('vehicle-models.edit', m.id)}
-                                            onDelete={() => handleDelete(m.id)}
+                                            editRoute={canEdit ? route('vehicle-models.edit', m.id) : undefined}
+                                            onDelete={canDelete ? () => handleDelete(m.id) : undefined}
                                         />
                                     </td>
                                 </tr>

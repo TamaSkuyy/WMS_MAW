@@ -42,10 +42,12 @@ class VehicleModelController extends Controller
     }
     public function create()
     {
+        abort_unless(auth()->user()->can('create vehicle models'), 403);
         return Inertia::render('Master/VehicleModels/Create');
     }
     public function store(Request $request)
     {
+        abort_unless(auth()->user()->can('create vehicle models'), 403);
         $validated = $request->validate([
             'name'   => 'required|string|max:100',
             'brand'  => 'nullable|string|max:100',
@@ -57,10 +59,12 @@ class VehicleModelController extends Controller
     }
     public function edit(VehicleModel $vehicleModel)
     {
+        abort_unless(auth()->user()->can('edit vehicle models'), 403);
         return Inertia::render('Master/VehicleModels/Edit', ['vehicleModel' => $vehicleModel]);
     }
     public function update(Request $request, VehicleModel $vehicleModel)
     {
+        abort_unless(auth()->user()->can('edit vehicle models'), 403);
         $validated = $request->validate([
             'name'   => [
                 'required', 'string', 'max:100',
@@ -78,6 +82,7 @@ class VehicleModelController extends Controller
     }
     public function destroy(VehicleModel $vehicleModel)
     {
+        abort_unless(auth()->user()->can('delete vehicle models'), 403);
         $vehicleModel->delete();
         return redirect()->route('vehicle-models.index')->with('success', 'Model kendaraan berhasil dihapus.');
     }

@@ -21,6 +21,7 @@ class DeliverySlotController extends Controller
 
     public function edit(DeliverySlot $deliverySlot)
     {
+        abort_unless(auth()->user()->can('edit delivery slots'), 403);
         return Inertia::render('Master/DeliverySlots/Edit', [
             'slot' => $deliverySlot,
         ]);
@@ -28,6 +29,7 @@ class DeliverySlotController extends Controller
 
     public function update(Request $request, DeliverySlot $deliverySlot)
     {
+        abort_unless(auth()->user()->can('edit delivery slots'), 403);
         $validated = $request->validate([
             'time_start' => 'required|date_format:H:i',
             'time_end' => 'required|date_format:H:i|after:time_start',

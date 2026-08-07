@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
@@ -12,6 +12,10 @@ import ImportExportToolbar from '../../../Components/ImportExport/ImportExportTo
 import ImportModal from '../../../Components/ImportExport/ImportModal';
 
 export default function Index({ products, categories, suppliers, filters }: any) {
+    const permissions = (usePage().props.auth as any)?.user?.permissions || [];
+    const canCreate = permissions.includes('create products');
+    const canEdit = permissions.includes('edit products');
+    const canDelete = permissions.includes('delete products');
     const [importModalOpen, setImportModalOpen] = useState(false);
 
     const handleDelete = (id: number) => {
@@ -76,16 +80,17 @@ export default function Index({ products, categories, suppliers, filters }: any)
                 </div>
 
                 <div className="mb-3 flex flex-wrap items-center gap-3">
-                    <Link href={route('products.create')}>
-                        <Button>Tambah Produk</Button>
-                    </Link>
-                    <ImportExportToolbar
+                    {canCreate && (
+                        <Link href={route('products.create')}><Button>Tambah Produk</Button></Link>
+                    )}
+                    {canCreate && (<ImportExportToolbar
                         importUrl={route('products.import')}
                         previewUrl={route('products.import.preview')}
                         exportUrl={route('products.export')}
-                        onImportClick={() => setImportModalOpen(true)}
-                    />
+                        onImportClick={() => setImportModalOpen(true)}/>
+                    )}
                 </div>
+                {canCreate && (
                 <ImportModal
                     isOpen={importModalOpen}
                     onClose={() => setImportModalOpen(false)}
@@ -108,13 +113,14 @@ export default function Index({ products, categories, suppliers, filters }: any)
                     ]}
                 />
 
+                )}
                 {products.data.length === 0 ? (
                     <EmptyState
                         icon="🏷️"
                         title="Belum ada produk"
                         message="Tambahkan produk pertama dari data Excel."
-                        actionLabel="Tambah Produk"
-                        actionRoute={route('products.create')}
+                        actionLabel={canCreate ? "Tambah Produk" : undefined}
+                        actionRoute={canCreate ? route('products.create') : undefined}
                     />
                 ) : (
                 <div className="overflow-x-auto">
@@ -167,8 +173,8 @@ export default function Index({ products, categories, suppliers, filters }: any)
                                     <td className="px-4 py-3 whitespace-nowrap text-sm text-[#1A1D23]">
                                         <TableActions
                                             viewRoute={route('products.show', product.id)}
-                                            editRoute={route('products.edit', product.id)}
-                                            onDelete={() => handleDelete(product.id)}
+                                            editRoute={canEdit ? route('products.edit', product.id) : undefined}
+                                            onDelete={canDelete ? () => handleDelete(product.id) : undefined}
                                         />
                                     </td>
                                 </tr>

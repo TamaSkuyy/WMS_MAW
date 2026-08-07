@@ -42,10 +42,12 @@ class ProductCategoryController extends Controller
     }
     public function create()
     {
+        abort_unless(auth()->user()->can('create product categories'), 403);
         return Inertia::render('Master/ProductCategories/Create');
     }
     public function store(Request $request)
     {
+        abort_unless(auth()->user()->can('create product categories'), 403);
         $validated = $request->validate([
             'name' => 'required|string|max:100|unique:product_categories',
             'description' => 'nullable|string|max:500',
@@ -55,10 +57,12 @@ class ProductCategoryController extends Controller
     }
     public function edit(ProductCategory $productCategory)
     {
+        abort_unless(auth()->user()->can('edit product categories'), 403);
         return Inertia::render('Master/ProductCategories/Edit', ['category' => $productCategory]);
     }
     public function update(Request $request, ProductCategory $productCategory)
     {
+        abort_unless(auth()->user()->can('edit product categories'), 403);
         $validated = $request->validate([
             'name' => 'required|string|max:100|unique:product_categories,name,'.$productCategory->id,
             'description' => 'nullable|string|max:500',
@@ -68,6 +72,7 @@ class ProductCategoryController extends Controller
     }
     public function destroy(ProductCategory $productCategory)
     {
+        abort_unless(auth()->user()->can('delete product categories'), 403);
         $productCategory->delete();
         return redirect()->route('product-categories.index')->with('success', 'Kategori berhasil dihapus.');
     }

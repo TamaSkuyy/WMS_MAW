@@ -12,7 +12,7 @@ import ImportModal from '../../../Components/ImportExport/ImportModal';
 
 export default function Index({ suppliers, filters }: any) {
     const [importModalOpen, setImportModalOpen] = useState(false);
-    const permissions = (usePage().props.auth as any)?.permissions || [];
+    const permissions = (usePage().props.auth as any)?.user?.permissions || [];
 
     const canCreate = permissions.includes('create suppliers');
     const canEdit = permissions.includes('edit suppliers');

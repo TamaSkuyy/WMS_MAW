@@ -47,11 +47,13 @@ class RackController extends Controller
 
     public function create()
     {
+        abort_unless(auth()->user()->can('create racks'), 403);
         return Inertia::render('Master/Racks/Create');
     }
 
     public function store(Request $request)
     {
+        abort_unless(auth()->user()->can('create racks'), 403);
         $validated = $request->validate([
             'code' => 'required|string|max:20|unique:racks',
             'zone' => 'required|string|max:50',
@@ -70,11 +72,13 @@ class RackController extends Controller
 
     public function edit(Rack $rack)
     {
+        abort_unless(auth()->user()->can('edit racks'), 403);
         return Inertia::render('Master/Racks/Edit', ['rack' => $rack]);
     }
 
     public function update(Request $request, Rack $rack)
     {
+        abort_unless(auth()->user()->can('edit racks'), 403);
         $validated = $request->validate([
             'code' => 'required|string|max:20|unique:racks,code,' . $rack->id,
             'zone' => 'required|string|max:50',
@@ -86,6 +90,7 @@ class RackController extends Controller
 
     public function destroy(Rack $rack)
     {
+        abort_unless(auth()->user()->can('delete racks'), 403);
         $rack->delete();
         return redirect()->route('racks.index')->with('success', 'Rack deleted.');
     }

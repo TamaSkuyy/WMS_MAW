@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
@@ -11,6 +11,10 @@ import ImportExportToolbar from '../../../Components/ImportExport/ImportExportTo
 import ImportModal from '../../../Components/ImportExport/ImportModal';
 
 export default function Index({ locations, filters }: any) {
+    const permissions = (usePage().props.auth as any)?.user?.permissions || [];
+    const canCreate = permissions.includes('create work locations');
+    const canEdit = permissions.includes('edit work locations');
+    const canDelete = permissions.includes('delete work locations');
     const [importModalOpen, setImportModalOpen] = useState(false);
 
     const handleDelete = (id: number) => {
@@ -25,19 +29,22 @@ export default function Index({ locations, filters }: any) {
             <PageBreadcrumb pageTitle="Lokasi Kerja" />
             <ComponentCard title="Daftar Lokasi Kerja">
                 <div className="mb-3 flex flex-wrap items-center gap-3">
-                    <Link href={route('work-locations.create')}><Button>Tambah Lokasi</Button></Link>
+                    {canCreate && (
+                        <Link href={route('work-locations.create')}><Button>Tambah Lokasi Kerja</Button></Link>
+                    )}
                     <SearchInput
                         placeholder="Cari nama lokasi..."
                         routeName="work-locations.index"
                         filters={filters}
                     />
-                    <ImportExportToolbar
+                    {canCreate && (<ImportExportToolbar
                         importUrl={route('work-locations.import')}
                         previewUrl={route('work-locations.import.preview')}
                         exportUrl={route('work-locations.export')}
-                        onImportClick={() => setImportModalOpen(true)}
-                    />
+                        onImportClick={() => setImportModalOpen(true)}/>
+                    )}
                 </div>
+                {canCreate && (
                 <ImportModal
                     isOpen={importModalOpen}
                     onClose={() => setImportModalOpen(false)}
@@ -50,13 +57,14 @@ export default function Index({ locations, filters }: any) {
                         { key: 'name', label: 'Nama', required: true },
                     ]}
                 />
+                )}
                 {locations.data.length === 0 ? (
                     <EmptyState
                         icon="📍"
                         title="Belum ada lokasi kerja"
                         message="Tambahkan lokasi kerja cabang atau kantor."
-                        actionLabel="Tambah Lokasi"
-                        actionRoute={route('work-locations.create')}
+                        actionLabel={canCreate ? "Tambah Lokasi Kerja" : undefined}
+                        actionRoute={canCreate ? route('work-locations.create') : undefined}
                     />
                 ) : (
                 <div className="overflow-x-auto">
@@ -73,8 +81,8 @@ export default function Index({ locations, filters }: any) {
                                     <td className="px-4 py-3 text-sm text-[#1A1D23] font-medium">{l.name}</td>
                                     <td className="px-4 py-3 text-sm text-[#1A1D23]">
                                         <TableActions
-                                            editRoute={route('work-locations.edit', l.id)}
-                                            onDelete={() => handleDelete(l.id)}
+                                            editRoute={canEdit ? route('work-locations.edit', l.id) : undefined}
+                                            onDelete={canDelete ? () => handleDelete(l.id) : undefined}
                                         />
                                     </td>
                                 </tr>

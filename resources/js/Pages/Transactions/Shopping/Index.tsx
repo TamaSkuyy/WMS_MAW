@@ -1,6 +1,6 @@
 import React from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
@@ -10,6 +10,10 @@ import TableActions from '../../../Tailadmin/components/common/TableActions';
 import EmptyState from '../../../Tailadmin/components/common/EmptyState';
 
 export default function Index({ shoppings, filters }: any) {
+    const permissions = (usePage().props.auth as any)?.user?.permissions || [];
+    const canCreate = permissions.includes('create shoppings');
+    const canEdit = permissions.includes('edit shoppings');
+    const canDelete = permissions.includes('delete shoppings');
     const handleDelete = (id: number) => {
         if (confirm('Hapus shopping ini?')) {
             router.delete(route('shoppings.destroy', id));
@@ -52,15 +56,17 @@ export default function Index({ shoppings, filters }: any) {
                     </div>
                 </div>
                 <div className="mb-3">
-                    <Link href={route('shoppings.create')}><Button>Shopping Baru</Button></Link>
+                    {canCreate && (
+                        <Link href={route('shoppings.create')}><Button>Tambah Shopping</Button></Link>
+                    )}
                 </div>
                 {shoppings.data.length === 0 ? (
                     <EmptyState
                         icon="📤"
                         title="Belum ada shopping"
                         message="Buat shopping pengiriman barang ke lokasi tujuan."
-                        actionLabel="Buat Shopping"
-                        actionRoute={route('shoppings.create')}
+                        actionLabel={canCreate ? "Tambah Shopping" : undefined}
+                        actionRoute={canCreate ? route('shoppings.create') : undefined}
                     />
                 ) : (
                 <div className="overflow-x-auto">
@@ -90,6 +96,7 @@ export default function Index({ shoppings, filters }: any) {
                                             />
                                             {s.status === 'draft' && (
                                                 <>
+                                                    {canEdit && (
                                                     <Link
                                                         href={route('shoppings.edit', s.id)}
                                                         className="group relative inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/20 transition-colors"
@@ -102,6 +109,8 @@ export default function Index({ shoppings, filters }: any) {
                                                             Edit
                                                         </span>
                                                     </Link>
+                                                    )}
+                                                    {canDelete && (
                                                     <button
                                                         onClick={() => handleDelete(s.id)}
                                                         className="group relative inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/20 transition-colors"
@@ -114,6 +123,7 @@ export default function Index({ shoppings, filters }: any) {
                                                             Hapus
                                                         </span>
                                                     </button>
+                                                    )}
                                                 </>
                                             )}
                                         </div>

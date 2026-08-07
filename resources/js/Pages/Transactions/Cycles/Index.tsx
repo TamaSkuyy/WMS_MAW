@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
@@ -11,6 +11,10 @@ import ImportExportToolbar from '../../../Components/ImportExport/ImportExportTo
 import ImportModal from '../../../Components/ImportExport/ImportModal';
 
 export default function Index({ cycles, suppliers, filters }: any) {
+    const permissions = (usePage().props.auth as any)?.user?.permissions || [];
+    const canCreate = permissions.includes('create cycles');
+    const canEdit = permissions.includes('edit cycles');
+    const canDelete = permissions.includes('delete cycles');
     const [importModalOpen, setImportModalOpen] = useState(false);
     const handleDelete = (id: number) => {
         if (confirm('Hapus cycle ini?')) {
@@ -53,17 +57,22 @@ export default function Index({ cycles, suppliers, filters }: any) {
                     </div>
                 </div>
                 <div className="mb-3 flex flex-wrap gap-2 items-center">
-                    <Link href={route('cycles.create')}><Button>Cycle Baru</Button></Link>
+                    {canCreate && (
+                        <Link href={route('cycles.create')}><Button>Tambah Cycle</Button></Link>
+                    )}
+                    {canCreate && (
                     <Link href={route('cycles.quick-receive.form')}>
                         <Button variant="outline">📷 Terima Cepat</Button>
                     </Link>
-                    <ImportExportToolbar
+                    )}
+                    {canCreate && (<ImportExportToolbar
                         importUrl={route('cycles.import')}
                         previewUrl={route('cycles.import.preview')}
                         exportUrl={route('cycles.export')}
-                        onImportClick={() => setImportModalOpen(true)}
-                    />
+                        onImportClick={() => setImportModalOpen(true)}/>
+                    )}
                 </div>
+                {canCreate && (
                 <ImportModal
                     isOpen={importModalOpen}
                     onClose={() => setImportModalOpen(false)}
@@ -81,13 +90,14 @@ export default function Index({ cycles, suppliers, filters }: any) {
                         { key: 'notes', label: 'Notes', required: false },
                     ]}
                 />
+                )}
                 {cycles.data.length === 0 ? (
                     <EmptyState
                         icon="📥"
                         title="Belum ada cycle"
                         message="Buat cycle penerimaan barang dari supplier."
-                        actionLabel="Buat Cycle"
-                        actionRoute={route('cycles.create')}
+                        actionLabel={canCreate ? "Tambah Cycle" : undefined}
+                        actionRoute={canCreate ? route('cycles.create') : undefined}
                     />
                 ) : (
                 <div className="overflow-x-auto">
@@ -123,6 +133,7 @@ export default function Index({ cycles, suppliers, filters }: any) {
                                             />
                                             {cycle.status === 'draft' && (
                                                 <>
+                                                    {canEdit && (
                                                     <Link
                                                         href={route('cycles.edit', cycle.id)}
                                                         className="group relative inline-flex items-center justify-center w-8 h-8 rounded-lg p-2 text-[#F59F00] bg-[#FFF9DB] hover:bg-[#FFF3BF] transition-all duration-150"
@@ -135,6 +146,8 @@ export default function Index({ cycles, suppliers, filters }: any) {
                                                             Edit
                                                         </span>
                                                     </Link>
+                                                    )}
+                                                    {canDelete && (
                                                     <button
                                                         onClick={() => handleDelete(cycle.id)}
                                                         className="group relative inline-flex items-center justify-center w-8 h-8 rounded-lg p-2 text-[#FA5252] bg-[#FFF5F5] hover:bg-[#FFE3E3] transition-all duration-150"
@@ -147,6 +160,7 @@ export default function Index({ cycles, suppliers, filters }: any) {
                                                             Hapus
                                                         </span>
                                                     </button>
+                                                    )}
                                                 </>
                                             )}
                                         </div>

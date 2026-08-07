@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
@@ -9,6 +9,10 @@ import TableActions from '../../../Tailadmin/components/common/TableActions';
 import EmptyState from '../../../Tailadmin/components/common/EmptyState';
 
 export default function Index({ locations, filters }: any) {
+    const permissions = (usePage().props.auth as any)?.user?.permissions || [];
+    const canCreate = permissions.includes('create shopping locations');
+    const canEdit = permissions.includes('edit shopping locations');
+    const canDelete = permissions.includes('delete shopping locations');
     const handleDelete = (id: number) => {
         if (confirm('Hapus lokasi tujuan ini?')) {
             router.delete(route('shopping-locations.destroy', id));
@@ -21,7 +25,9 @@ export default function Index({ locations, filters }: any) {
             <PageBreadcrumb pageTitle="Lokasi Tujuan" />
             <ComponentCard title="Daftar Lokasi Tujuan">
                 <div className="mb-3 flex flex-wrap items-center gap-3">
-                    <Link href={route('shopping-locations.create')}><Button>Tambah Lokasi</Button></Link>
+                    {canCreate && (
+                        <Link href={route('shopping-locations.create')}><Button>Tambah Lokasi Tujuan</Button></Link>
+                    )}
                     <SearchInput
                         placeholder="Cari lokasi..."
                         routeName="shopping-locations.index"
@@ -33,8 +39,8 @@ export default function Index({ locations, filters }: any) {
                         icon="📍"
                         title="Belum ada lokasi tujuan"
                         message="Tambahkan lokasi tujuan pengiriman."
-                        actionLabel="Tambah Lokasi"
-                        actionRoute={route('shopping-locations.create')}
+                        actionLabel={canCreate ? "Tambah Lokasi Tujuan" : undefined}
+                        actionRoute={canCreate ? route('shopping-locations.create') : undefined}
                     />
                 ) : (
                 <div className="overflow-x-auto">
@@ -51,8 +57,8 @@ export default function Index({ locations, filters }: any) {
                                     <td className="px-4 py-3 text-sm text-[#1A1D23] font-medium">{l.name}</td>
                                     <td className="px-4 py-3 text-sm text-[#1A1D23]">
                                         <TableActions
-                                            editRoute={route('shopping-locations.edit', l.id)}
-                                            onDelete={() => handleDelete(l.id)}
+                                            editRoute={canEdit ? route('shopping-locations.edit', l.id) : undefined}
+                                            onDelete={canDelete ? () => handleDelete(l.id) : undefined}
                                         />
                                     </td>
                                 </tr>

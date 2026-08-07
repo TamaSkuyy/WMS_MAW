@@ -45,11 +45,13 @@ class WorkLocationController extends Controller
 
     public function create()
     {
+        abort_unless(auth()->user()->can('create work locations'), 403);
         return Inertia::render('Master/WorkLocations/Create');
     }
 
     public function store(Request $request)
     {
+        abort_unless(auth()->user()->can('create work locations'), 403);
         $validated = $request->validate([
             'name' => 'required|string|max:100|unique:work_locations',
         ]);
@@ -61,6 +63,7 @@ class WorkLocationController extends Controller
 
     public function edit(WorkLocation $workLocation)
     {
+        abort_unless(auth()->user()->can('edit work locations'), 403);
         return Inertia::render('Master/WorkLocations/Edit', [
             'location' => $workLocation,
         ]);
@@ -68,6 +71,7 @@ class WorkLocationController extends Controller
 
     public function update(Request $request, WorkLocation $workLocation)
     {
+        abort_unless(auth()->user()->can('edit work locations'), 403);
         $validated = $request->validate([
             'name' => 'required|string|max:100|unique:work_locations,name,' . $workLocation->id,
         ]);
@@ -79,6 +83,7 @@ class WorkLocationController extends Controller
 
     public function destroy(WorkLocation $workLocation)
     {
+        abort_unless(auth()->user()->can('delete work locations'), 403);
         $workLocation->delete();
 
         return redirect()->route('work-locations.index')->with('success', 'Lokasi kerja berhasil dihapus.');

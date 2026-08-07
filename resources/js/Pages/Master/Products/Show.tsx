@@ -1,12 +1,15 @@
 import React from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { PencilIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
 
 export default function Show({ product }: any) {
+    const permissions = (usePage().props.auth as any)?.user?.permissions || [];
+    const canEdit = permissions.includes('edit products');
+
     return (
         <>
             <Head title={`Produk - ${product.part_number}`} />
@@ -65,9 +68,11 @@ export default function Show({ product }: any) {
                         </dl>
 
                         <div className="mt-6 flex gap-2 pt-4 border-t border-[#F1F3F5]">
-                            <Link href={route('products.edit', product.id)}>
-                                <Button icon={<PencilIcon className="w-4 h-4" />} size="sm">Edit</Button>
-                            </Link>
+                            {canEdit && (
+                                <Link href={route('products.edit', product.id)}>
+                                    <Button icon={<PencilIcon className="w-4 h-4" />} size="sm">Edit</Button>
+                                </Link>
+                            )}
                             <Link href={route('products.index')}>
                                 <Button variant="outline" size="sm">Kembali</Button>
                             </Link>
