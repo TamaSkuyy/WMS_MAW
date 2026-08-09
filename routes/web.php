@@ -35,6 +35,18 @@ use Spatie\Permission\Middleware\RoleMiddleware;
 // ── Public ──────────────────────────────────────────────────
 Route::get('/', fn () => redirect()->route('login'));
 
+// Manual Book — static HTML docs (akses: /docs, /docs/, /docs/supplier-management.html)
+Route::get('/docs/{file?}', function (?string $file = null) {
+    // /docs atau /docs/ → index.html
+    if ($file === null || $file === '') {
+        return response()->file(public_path('docs/index.html'));
+    }
+    if (! str_ends_with($file, '.html') || ! file_exists(public_path("docs/{$file}"))) {
+        abort(404);
+    }
+    return response()->file(public_path("docs/{$file}"));
+});
+
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])->name('dashboard');
 

@@ -1,0 +1,233 @@
+<title>WMS MAW — Manual Book</title>
+
+<style>
+  :root {
+    --ink: #1e293b; --ink-muted: #64748b;
+    --ground: #f8f9fb; --surface: #ffffff;
+    --border: #e2e8f0;
+    --shadow: 0 1px 3px rgba(0,0,0,.06);
+    --radius: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #e2e8f0; --ink-muted: #94a3b8;
+      --ground: #0f172a; --surface: #1e293b;
+      --border: #334155;
+      --shadow: 0 1px 3px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #e2e8f0; --ink-muted: #94a3b8;
+    --ground: #0f172a; --surface: #1e293b;
+    --border: #334155;
+    --shadow: 0 1px 3px rgba(0,0,0,.3);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--ground); color: var(--ink); line-height: 1.7;
+    max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem;
+  }
+
+  /* ── Header ── */
+  header { text-align: center; margin-bottom: 3rem; }
+  header h1 { font-size: 2rem; font-weight: 700; color: #1e40af; letter-spacing: -.02em; }
+  header p  { color: var(--ink-muted); margin-top: .5rem; font-size: 1rem; }
+  .search-wrap { margin: 1.5rem auto 0; max-width: 480px; }
+  .search-wrap input {
+    width: 100%; padding: .7rem 1rem;
+    border: 1px solid var(--border); border-radius: 99px;
+    background: var(--surface); color: var(--ink); font-size: .92rem;
+  }
+  .search-wrap input:focus { outline: 2px solid #3b82f6; outline-offset: 2px; }
+
+  /* ── Phase grid ── */
+  .phase { margin-bottom: 2.5rem; }
+  .phase-title {
+    font-size: 1.1rem; font-weight: 700; margin-bottom: .75rem;
+    display: flex; align-items: center; gap: .5rem;
+  }
+  .phase-badge {
+    display: inline-block; padding: .2em .6em; border-radius: 4px;
+    font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+  }
+  .badge-master  { background: #fef3c7; color: #92400e; }
+  .badge-trans   { background: #fee2e2; color: #991b1b; }
+  .badge-report  { background: #d1fae5; color: #065f46; }
+  .badge-admin   { background: #ede9fe; color: #6d28d9; }
+  .badge-appx    { background: #f1f5f9; color: #475569; }
+
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.25rem 1.4rem;
+    box-shadow: var(--shadow);
+    text-decoration: none; color: inherit;
+    transition: transform .12s, box-shadow .12s;
+    display: flex; gap: .8rem; align-items: flex-start;
+  }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+  .card-icon { font-size: 1.6rem; flex-shrink: 0; line-height: 1; }
+  .card-body h3 { font-size: .95rem; font-weight: 650; color: var(--ink); margin-bottom: .2rem; }
+  .card-body p  { font-size: .8rem; color: var(--ink-muted); line-height: 1.5; }
+  .card-body .meta-tag { font-size: .7rem; color: var(--ink-muted); margin-top: .3rem; display: flex; gap: .5rem; flex-wrap: wrap; }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .badge-master { background: #292112; color: #fcd34d; }
+    :root:not([data-theme="light"]) .badge-trans  { background: #2d1414; color: #fca5a5; }
+    :root:not([data-theme="light"]) .badge-report { background: #0d2e1c; color: #6ee7b7; }
+    :root:not([data-theme="light"]) .badge-admin  { background: #1e1733; color: #c4b5fd; }
+    :root:not([data-theme="light"]) .badge-appx   { background: #1e293b; color: #94a3b8; }
+  }
+  :root[data-theme="dark"] .badge-master { background: #292112; color: #fcd34d; }
+  :root[data-theme="dark"] .badge-trans  { background: #2d1414; color: #fca5a5; }
+  :root[data-theme="dark"] .badge-report { background: #0d2e1c; color: #6ee7b7; }
+  :root[data-theme="dark"] .badge-admin  { background: #1e1733; color: #c4b5fd; }
+  :root[data-theme="dark"] .badge-appx   { background: #1e293b; color: #94a3b8; }
+
+  @media (max-width: 640px) {
+    body { padding: 1rem; }
+    header h1 { font-size: 1.5rem; }
+    .card-grid { grid-template-columns: 1fr; }
+  }
+  .nav-float { position: fixed; bottom: 1.5rem; right: 1.5rem; display: flex; flex-direction: column; gap: .5rem; z-index: 999; }
+  .nav-float a, .nav-float button { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--ink-muted); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.2rem; box-shadow: var(--shadow); transition: all .15s; text-decoration: none; }
+  .nav-float a:hover, .nav-float button:hover { background: var(--primary-soft); color: var(--primary); border-color: var(--primary); transform: translateY(-1px); }
+  #back-to-top { opacity: 0; pointer-events: none; transition: opacity .2s; }
+  #back-to-top.show { opacity: 1; pointer-events: auto; }
+</style>
+
+<header>
+  <h1>📖 WMS MAW — Manual Book</h1>
+  <p>Panduan lengkap penggunaan Warehouse Management System</p>
+  <div class="search-wrap">
+    <input type="text" id="search" placeholder="🔍 Cari manual... (contoh: supplier, receiving, role)" oninput="filterCards()">
+  </div>
+</header>
+
+<div class="phase">
+  <div class="phase-title"><span class="phase-badge badge-master">Phase 1</span> Master Data</div>
+  <div class="card-grid">
+    <a href="/docs/supplier-management.html" class="card" data-keywords="supplier pemasok vendor alamat delivery slot import export">
+      <div class="card-icon">📦</div>
+      <div class="card-body">
+        <h3>Supplier Management</h3>
+        <p>Tambah, edit, hapus supplier. Alamat, delivery slot, import/export Excel.</p>
+        <div class="meta-tag"><span>👥 Semua Role</span></div>
+      </div>
+    </a>
+    <a href="/docs/product-management.html" class="card" data-keywords="produk part number barang model kendaraan kategori stok min max import export">
+      <div class="card-icon">🏷️</div>
+      <div class="card-body">
+        <h3>Product Management</h3>
+        <p>Part number, spesifikasi, relasi supplier/model/kategori. Status stok (Normal/Low/Out/Over).</p>
+        <div class="meta-tag"><span>👥 Semua Role</span></div>
+      </div>
+    </a>
+    <a href="/docs/rack-management.html" class="card" data-keywords="rak rack zona kapasitas gudang lokasi penyimpanan">
+      <div class="card-icon">🗄️</div>
+      <div class="card-body">
+        <h3>Rack Management</h3>
+        <p>Kode, zona, kapasitas. Progress bar monitoring keterisian real-time.</p>
+        <div class="meta-tag"><span>🧑‍💼 Leader & Admin</span></div>
+      </div>
+    </a>
+    <a href="/docs/referensi-pendukung.html" class="card" data-keywords="model kendaraan vehicle kategori jabatan lokasi kerja departemen referensi">
+      <div class="card-icon">📚</div>
+      <div class="card-body">
+        <h3>Referensi Pendukung</h3>
+        <p>Vehicle Model, Product Category, Job Position, Work Location, Department.</p>
+        <div class="meta-tag"><span>🧑‍💼 Leader & Admin</span></div>
+      </div>
+    </a>
+    <a href="/docs/employee-management.html" class="card" data-keywords="karyawan employee pegawai user login role jabatan generate">
+      <div class="card-icon">👥</div>
+      <div class="card-body">
+        <h3>Employee Management</h3>
+        <p>Data karyawan, auto-create user login, role otomatis dari jabatan, audit trail.</p>
+        <div class="meta-tag"><span>🔐 Superadmin Only</span></div>
+      </div>
+    </a>
+    <a href="/docs/shift-deliveryslot-shoppinglocation.html" class="card" data-keywords="shift kerja delivery slot jadwal pengiriman shopping location lokasi tujuan">
+      <div class="card-icon">🕒</div>
+      <div class="card-body">
+        <h3>Shift, Delivery Slot & Shopping Location</h3>
+        <p>Shift kerja, slot jadwal pengiriman, dan lokasi tujuan shopping.</p>
+        <div class="meta-tag"><span>🧑‍💼 Leader & Admin</span></div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="phase-title"><span class="phase-badge badge-trans">Phase 2</span> Transactions</div>
+  <div class="card-grid">
+    <a href="/docs/transactions.html" class="card" data-keywords="receiving cycle penerimaan shopping pengiriman stok stock scan qr barcode ship">
+      <div class="card-icon">🔄</div>
+      <div class="card-body">
+        <h3>Transactions</h3>
+        <p>Receiving (penerimaan + QR scan), Shopping (pengiriman keluar), dan Stocks (monitoring stok).</p>
+        <div class="meta-tag"><span>👥 Semua Role</span></div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="phase-title"><span class="phase-badge badge-report">Phase 3</span> Reports & Monitoring</div>
+  <div class="card-grid">
+    <a href="/docs/reports-monitoring.html" class="card" data-keywords="laporan report receiving shopping supplier performance performa tv monitor display">
+      <div class="card-icon">📈</div>
+      <div class="card-body">
+        <h3>Reports & Monitoring</h3>
+        <p>Receiving Report, Shopping Report, Supplier Performance metrics, Delivery Monitor TV.</p>
+        <div class="meta-tag"><span>🧑‍💼 Leader & Admin</span></div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="phase-title"><span class="phase-badge badge-admin">Phase 4</span> System Administration</div>
+  <div class="card-grid">
+    <a href="/docs/system-administration.html" class="card" data-keywords="user role permission rbac menu sidebar spatie setup admin">
+      <div class="card-icon">⚙️</div>
+      <div class="card-body">
+        <h3>System Administration</h3>
+        <p>User management, Role & Permission (RBAC), 74 permission matrix, Menu sidebar configuration.</p>
+        <div class="meta-tag"><span>🔐 Superadmin Only</span></div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="phase-title"><span class="phase-badge badge-appx">Phase 5</span> Appendix</div>
+  <div class="card-grid">
+    <a href="/docs/appendix.html" class="card" data-keywords="import export excel template dashboard deployment backup backup production server docker maintenance">
+      <div class="card-icon">📋</div>
+      <div class="card-body">
+        <h3>Appendix</h3>
+        <p>Import/Export guide umum, Dashboard overview, Deployment & Backup (Docker).</p>
+        <div class="meta-tag"><span>👥 Semua Role</span></div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<footer style="text-align:center; margin-top:3rem; padding-top:1.5rem; border-top:1px solid var(--border); color:var(--ink-muted); font-size:.82rem;">
+  <p>WMS MAW Manual Book — v1.0 — 2026</p>
+  <p>Akses langsung: <code>/docs</code> &nbsp;|&nbsp; 10 manual book</p>
+</footer>
+
+<script>
+  function filterCards() {
+    const q = document.getElementById('search').value.toLowerCase();
+    document.querySelectorAll('.card').forEach(card => {
+      const kw = (card.dataset.keywords || '') + ' ' + (card.textContent || '');
+      card.style.display = !q || kw.toLowerCase().includes(q) ? '' : 'none';
+    });
+  }
+</script>
