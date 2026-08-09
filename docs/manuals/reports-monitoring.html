@@ -1,0 +1,322 @@
+<title>Reports & Monitoring — WMS MAW Manual Book</title>
+
+<style>
+  :root {
+    --ink: #1e293b; --ink-muted: #64748b;
+    --ground: #f8f9fb; --surface: #ffffff;
+    --border: #e2e8f0; --border-strong: #cbd5e1;
+    --accent: #0f766e; --accent-soft: #f0fdfa;
+    --primary: #115e59; --primary-soft: #f0fdfa;
+    --success: #0d9488; --success-soft: #f0fdfa;
+    --danger: #dc2626; --danger-soft: #fef2f2;
+    --warning: #d97706; --warning-soft: #fffbeb;
+    --code-bg: #f1f5f9;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --radius: 8px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #e2e8f0; --ink-muted: #94a3b8;
+      --ground: #0f172a; --surface: #1e293b;
+      --border: #334155; --border-strong: #475569;
+      --accent: #2dd4bf; --accent-soft: #0d2e2b;
+      --primary: #5eead4; --primary-soft: #0d2e2b;
+      --success: #2dd4bf; --success-soft: #0d2e2b;
+      --danger: #f87171; --danger-soft: #2d1414;
+      --warning: #fbbf24; --warning-soft: #292112;
+      --code-bg: #1e293b; --shadow: 0 1px 3px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #e2e8f0; --ink-muted: #94a3b8;
+    --ground: #0f172a; --surface: #1e293b;
+    --border: #334155; --border-strong: #475569;
+    --accent: #2dd4bf; --accent-soft: #0d2e2b;
+    --primary: #5eead4; --primary-soft: #0d2e2b;
+    --success: #2dd4bf; --success-soft: #0d2e2b;
+    --danger: #f87171; --danger-soft: #2d1414;
+    --warning: #fbbf24; --warning-soft: #292112;
+    --code-bg: #1e293b; --shadow: 0 1px 3px rgba(0,0,0,.3);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; font-size: 16px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: var(--ground); color: var(--ink); line-height: 1.7; max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem 6rem; }
+  h1 { font-size: 1.9rem; font-weight: 700; letter-spacing: -.02em; margin-bottom: .25rem; color: var(--primary); }
+  h2 { font-size: 1.4rem; font-weight: 650; margin: 2.5rem 0 1rem; padding-bottom: .5rem; border-bottom: 2px solid var(--border); }
+  h3 { font-size: 1.15rem; font-weight: 600; margin: 1.75rem 0 .6rem; }
+  p { margin: .75rem 0; color: var(--ink-muted); } strong { color: var(--ink); }
+  a { color: var(--primary); } a:hover { text-decoration: underline; }
+  header { margin-bottom: 2rem; }
+  .meta { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: .5rem; }
+  .meta span { font-size: .8rem; color: var(--ink-muted); background: var(--surface); border: 1px solid var(--border); padding: .2rem .7rem; border-radius: 99px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin: 1.25rem 0; box-shadow: var(--shadow); } .card h3 { margin-top: 0; }
+  .callout { border-left: 4px solid; border-radius: 0 var(--radius) var(--radius) 0; padding: .9rem 1.2rem; margin: 1.25rem 0; font-size: .92rem; }
+  .callout.info    { border-color: var(--primary);  background: var(--primary-soft);  }
+  .callout.warning { border-color: var(--warning); background: var(--warning-soft); }
+  .callout.success { border-color: var(--success); background: var(--success-soft); }
+  .callout strong { display: block; margin-bottom: .3rem; }
+  ol.steps { counter-reset: step; list-style: none; padding: 0; }
+  ol.steps li { counter-increment: step; position: relative; padding-left: 3rem; margin: 1.5rem 0; }
+  ol.steps li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 2rem; height: 2rem; background: var(--primary-soft); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .85rem; }
+  .screenshot { background: var(--border); border: 2px dashed var(--border-strong); border-radius: var(--radius); padding: 2.5rem; text-align: center; color: var(--ink-muted); font-size: .85rem; margin: 1rem 0; } .screenshot::before { content: "📸 "; font-size: 2rem; display: block; margin-bottom: .5rem; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .9rem; }
+  th, td { padding: .65rem .9rem; text-align: left; border-bottom: 1px solid var(--border); }
+  th { font-weight: 600; color: var(--ink); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
+  td { color: var(--ink-muted); } tr:last-child td { border-bottom: none; }
+  code, kbd { background: var(--code-bg); border: 1px solid var(--border); border-radius: 4px; padding: .15em .45em; font-family: "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace; font-size: .88em; }
+  .perm-badge { display: inline-block; font-size: .75rem; font-weight: 600; padding: .2em .6em; border-radius: 4px; margin: .15rem; }
+  .perm-badge.view   { background: #dbeafe; color: #1e40af; }
+  .perm-badge.export { background: #ede9fe; color: #6d28d9; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .perm-badge.view { background: #172033; color: #93c5fd; } :root:not([data-theme="light"]) .perm-badge.export { background: #1e1733; color: #c4b5fd; } }
+  :root[data-theme="dark"] .perm-badge.view { background: #172033; color: #93c5fd; } :root[data-theme="dark"] .perm-badge.export { background: #1e1733; color: #c4b5fd; }
+
+  .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0; }
+  .metric-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.2rem; text-align: center; }
+  .metric-value { font-size: 1.8rem; font-weight: 700; color: var(--primary); }
+  .metric-label { font-size: .78rem; color: var(--ink-muted); margin-top: .25rem; text-transform: uppercase; letter-spacing: .04em; }
+
+  nav.toc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 2rem; }
+  nav.toc h3 { margin-top: 0; font-size: .85rem; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-muted); }
+  nav.toc ol { list-style: none; padding: 0; margin: .5rem 0 0; } nav.toc ol li { margin: .35rem 0; font-size: .9rem; }
+  nav.toc ol li a { color: var(--ink-muted); } nav.toc ol li a:hover { color: var(--primary); text-decoration: none; }
+  ol.inner-toc { list-style: disc; padding-left: 1.5rem; margin: .3rem 0; }
+  ol.inner-toc li { font-size: .85rem; margin: .2rem 0; }
+  @media (max-width: 640px) { body { padding: 1rem; } h1 { font-size: 1.5rem; } h2 { font-size: 1.2rem; } .card { padding: 1rem; } .metric-grid { grid-template-columns: 1fr 1fr; } }
+</style>
+
+<header>
+  <h1>📈 Reports & Monitoring</h1>
+  <p>Panduan modul laporan dan pemantauan: Receiving Report, Shopping Report, Supplier Performance, dan Delivery Monitor (TV).</p>
+  <div class="meta">
+    <span>📖 Manual Book</span>
+    <span>🧑‍💼 Leader & Admin</span>
+    <span>📅 2026-08-09</span>
+    <span>🔖 v1.0</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <h3>Daftar Isi</h3>
+  <ol>
+    <li><strong>Receiving Report</strong>
+      <ol class="inner-toc"><li><a href="#rec-rep-overview">Overview & Permission</a></li><li><a href="#rec-rep-filter">Filter & Export</a></li></ol>
+    </li>
+    <li><strong>Shopping Report</strong>
+      <ol class="inner-toc"><li><a href="#shop-rep-overview">Overview & Permission</a></li></ol>
+    </li>
+    <li><strong>Supplier Performance</strong>
+      <ol class="inner-toc"><li><a href="#perf-overview">Overview & Metrik</a></li><li><a href="#perf-metrics">Memahami Metrik Performa</a></li></ol>
+    </li>
+    <li><strong>Delivery Monitor (TV)</strong>
+      <ol class="inner-toc"><li><a href="#tv-overview">Overview & Setup</a></li><li><a href="#tv-usage">Penggunaan TV Display</a></li></ol>
+    </li>
+    <li><a href="#troubleshooting">Troubleshooting</a></li>
+  </ol>
+</nav>
+
+<!-- ═══════════ 1. RECEIVING REPORT ═══════════ -->
+
+<h2 id="rec-rep-overview">1. Receiving Report</h2>
+
+<p>Laporan penerimaan barang dari supplier dalam periode tertentu. Cocok untuk audit, rekonsiliasi, dan evaluasi supplier. Akses: sidebar <strong>Report Transaction → Receiving Report</strong> atau <code>/reports/receiving</code>.</p>
+
+<div class="card">
+  <h3>Permission</h3>
+  <table>
+    <tr><th>Permission</th><th>Fungsi</th><th>Superadmin</th><th>Leader</th><th>Operator</th></tr>
+    <tr><td><span class="perm-badge view">view receiving report</span></td><td>Lihat laporan</td><td>✅</td><td>✅</td><td>❌</td></tr>
+    <tr><td><span class="perm-badge export">export receiving report</span></td><td>Export Excel</td><td>✅</td><td>✅</td><td>❌</td></tr>
+  </table>
+</div>
+
+<h3 id="rec-rep-filter">Filter & Export</h3>
+
+<div class="screenshot">Screenshot: Halaman Receiving Report — filter Supplier + Date Range + Status, tabel hasil, tombol Export</div>
+
+<div class="card">
+  <h3>Fitur Halaman</h3>
+  <table>
+    <tr><th>Elemen</th><th>Fungsi</th></tr>
+    <tr><td>🏭 Filter Supplier</td><td>Dropdown — tampilkan hanya penerimaan dari supplier tertentu</td></tr>
+    <tr><td>📅 Date Range</td><td>Filter berdasarkan rentang tanggal penerimaan</td></tr>
+    <tr><td>📊 Filter Status</td><td>Filter: All / Draft / Receiving / Completed</td></tr>
+    <tr><td>📤 Export</td><td>Download file Excel hasil filter yang sedang aktif</td></tr>
+  </table>
+</div>
+
+<div class="callout info">
+  <strong>💡 Export mengikuti filter</strong>
+  Export hanya mengeluarkan data sesuai filter yang aktif. Untuk export seluruh data, kosongkan semua filter lalu klik Export.
+</div>
+
+<!-- ═══════════ 2. SHOPPING REPORT ═══════════ -->
+
+<h2 id="shop-rep-overview">2. Shopping Report</h2>
+
+<p>Laporan pengiriman barang keluar ke lokasi tujuan. Akses: sidebar <strong>Report Transaction → Shopping Report</strong> atau <code>/reports/shopping</code>.</p>
+
+<div class="card">
+  <h3>Permission</h3>
+  <table>
+    <tr><th>Permission</th><th>Fungsi</th><th>Superadmin</th><th>Leader</th><th>Operator</th></tr>
+    <tr><td><span class="perm-badge view">view shopping report</span></td><td>Lihat laporan</td><td>✅</td><td>✅</td><td>❌</td></tr>
+    <tr><td><span class="perm-badge export">export shopping report</span></td><td>Export Excel</td><td>✅</td><td>✅</td><td>❌</td></tr>
+  </table>
+</div>
+
+<div class="screenshot">Screenshot: Halaman Shopping Report — filter Shopping Location + Date Range, tabel, Export</div>
+
+<div class="card">
+  <h3>Fitur</h3>
+  <table>
+    <tr><th>Elemen</th><th>Fungsi</th></tr>
+    <tr><td>📍 Filter Lokasi</td><td>Dropdown Shopping Location — tampilkan pengiriman ke lokasi tertentu</td></tr>
+    <tr><td>📅 Date Range</td><td>Filter rentang tanggal pengiriman</td></tr>
+    <tr><td>📤 Export</td><td>Export hasil filter ke Excel</td></tr>
+  </table>
+</div>
+
+<!-- ═══════════ 3. SUPPLIER PERFORMANCE ═══════════ -->
+
+<h2 id="perf-overview">3. Supplier Performance</h2>
+
+<p>Dashboard analitik untuk mengukur performa supplier berdasarkan data penerimaan historis. Akses: sidebar <strong>Report Transaction → Performa Supplier</strong> atau <code>/reports/supplier-performance</code>.</p>
+
+<div class="card">
+  <h3>Permission</h3>
+  <table>
+    <tr><th>Permission</th><th>Fungsi</th><th>Superadmin</th><th>Leader</th><th>Operator</th></tr>
+    <tr><td><span class="perm-badge view">view supplier performance</span></td><td>Lihat dashboard performa</td><td>✅</td><td>✅</td><td>❌</td></tr>
+  </table>
+</div>
+
+<div class="screenshot">Screenshot: Halaman Supplier Performance — metric cards (Total Cycles, On-Time Rate, Incomplete), filter Supplier + Date, tabel ringkasan per supplier, detail incomplete items</div>
+
+<h3 id="perf-metrics">Memahami Metrik Performa</h3>
+
+<div class="metric-grid">
+  <div class="metric-card">
+    <div class="metric-value">Total Cycles</div>
+    <div class="metric-label">Jumlah cycle completed</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-value">On-Time Rate</div>
+    <div class="metric-label">% cycle selesai tepat waktu</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-value">Incomplete</div>
+    <div class="metric-label">Item dengan shortfall</div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Definisi Metrik</h3>
+  <table>
+    <tr><th>Metrik</th><th>Definisi</th><th>Cara baca</th></tr>
+    <tr>
+      <td><strong>On-Time Delivery Rate</strong></td>
+      <td>Persentase cycle yang diselesaikan (completed) tepat atau sebelum delivery date yang dijanjikan</td>
+      <td>Rate tinggi (>80%) = supplier handal. Rate rendah (<50%) = supplier sering terlambat. Pertimbangkan penjadwalan ulang.</td>
+    </tr>
+    <tr>
+      <td><strong>Incomplete Items</strong></td>
+      <td>Item yang quantity diterima < quantity di dokumen (shortfall)</td>
+      <td>Item incomplete tinggi = supplier sering kirim kurang. Tindak lanjuti dengan klaim atau penyesuaian order.</td>
+    </tr>
+    <tr>
+      <td><strong>Total Cycles</strong></td>
+      <td>Jumlah total cycle completed untuk supplier tersebut</td>
+      <td>Konteks — supplier dengan 100 cycle dan 90% on-time lebih baik dari supplier dengan 5 cycle dan 100%.</td>
+    </tr>
+  </table>
+</div>
+
+<div class="callout info">
+  <strong>💡 Filter & Analisis</strong>
+  Gunakan filter <strong>Supplier</strong> + <strong>Rentang Tanggal</strong> untuk analisis spesifik. Contoh: "Bagaimana performa Supplier X dalam 3 bulan terakhir?" — pilih supplier, set date range 3 bulan, lihat metriknya.
+</div>
+
+<!-- ═══════════ 4. DELIVERY MONITOR ═══════════ -->
+
+<h2 id="tv-overview">4. Delivery Monitor (TV Display)</h2>
+
+<p>Layar monitor publik (TV) yang menampilkan jadwal kedatangan supplier secara real-time. Cocok dipasang di area bongkar muat gudang. <strong>Tidak memerlukan login.</strong></p>
+
+<div class="card">
+  <h3>Permission — Publik!</h3>
+  <table>
+    <tr><th>URL</th><th>Akses</th><th>Keterangan</th></tr>
+    <tr><td><code>/delivery-monitor</code></td><td>🔓 Publik (tanpa login)</td><td>Halaman utama — grid supplier card dengan status real-time</td></tr>
+    <tr><td><code>/delivery-monitor/suppliers/{id}/ledger</code></td><td>🔓 Publik</td><td>API JSON — riwayat cycle supplier (dipakai oleh panel detail)</td></tr>
+    <tr><td><code>/tv-dashboard</code></td><td>🔓 Publik</td><td>Dashboard TV alternatif</td></tr>
+  </table>
+</div>
+
+<div class="screenshot">Screenshot: Delivery Monitor — grid kartu supplier dengan slot waktu, status badge, progress bar penerimaan</div>
+
+<h3 id="tv-usage">Penggunaan TV Display</h3>
+
+<ol class="steps">
+  <li>
+    <strong>Setup di gudang</strong>
+    <p>Pasang TV/layar besar di area bongkar muat. Buka browser, akses <code>http://[SERVER_IP]:8090/delivery-monitor</code> (atau port production kamu).</p>
+  </li>
+  <li>
+    <strong>Supplier muncul otomatis</strong>
+    <p>Supplier yang sudah dikaitkan dengan <strong>Delivery Slot</strong> (via Edit Supplier) akan muncul di grid sesuai slot waktunya.</p>
+  </li>
+  <li>
+    <strong>Kartu Supplier</strong>
+    <p>Setiap kartu menampilkan: nama supplier, kode, slot waktu, dan status pengiriman hari ini.</p>
+  </li>
+  <li>
+    <strong>Panel Detail</strong>
+    <p>Klik kartu supplier untuk melihat detail: riwayat cycle, item yang diterima, status terkini.</p>
+  </li>
+</ol>
+
+<div class="callout warning">
+  <strong>⚠️ Delivery Monitor tidak butuh login</strong>
+  Karena ini akses publik, informasi yang ditampilkan terbatas pada data operasional (nama supplier, slot, status). Tidak ada data sensitif seperti harga, kontrak, atau data karyawan.
+</div>
+
+<!-- ═══════════ TROUBLESHOOTING ═══════════ -->
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<div class="card">
+  <h3>🚫 Tidak bisa akses halaman Report</h3>
+  <p><strong>Penyebab:</strong> Role Operator tidak punya akses ke modul Report.</p>
+  <p><strong>Solusi:</strong> Hanya Leader & Superadmin. Minta upgrade role jika diperlukan.</p>
+</div>
+
+<div class="card">
+  <h3>📊 Data report kosong / tidak sesuai</h3>
+  <p><strong>Penyebab:</strong> Filter terlalu ketat, atau memang belum ada data transaksi.</p>
+  <p><strong>Solusi:</strong> Kosongkan filter (pilih "All" di dropdown), atau perlebar date range.</p>
+</div>
+
+<div class="card">
+  <h3>📺 TV Monitor tidak muncul / blank</h3>
+  <p><strong>Penyebab:</strong> URL salah, server tidak terjangkau, atau browser tidak support.</p>
+  <p><strong>Solusi:</strong> Cek URL — harus <code>/delivery-monitor</code>. Pastikan TV terhubung ke jaringan yang sama dengan server. Coba refresh halaman.</p>
+</div>
+
+<div class="card">
+  <h3>🏭 Supplier tidak muncul di Delivery Monitor</h3>
+  <p><strong>Penyebab:</strong> Supplier belum dikaitkan dengan Delivery Slot apapun.</p>
+  <p><strong>Solusi:</strong> Edit supplier → centang slot pengiriman yang diinginkan. Supplier akan muncul di monitor sesuai slot.</p>
+</div>
+
+<div class="card">
+  <h3>📈 On-Time Rate tidak akurat</h3>
+  <p><strong>Penyebab:</strong> Delivery date di cycle mungkin tidak diisi dengan benar, atau cycle belum completed.</p>
+  <p><strong>Solusi:</strong> Pastikan delivery date diisi saat membuat cycle. Hanya cycle <strong>completed</strong> yang dihitung di metrik.</p>
+</div>
+
+<hr style="margin:3rem 0 1.5rem; border:none; border-top:1px solid var(--border)">
+
+<footer style="text-align:center; color:var(--ink-muted); font-size:.82rem;">
+  <p>WMS MAW — Reports & Monitoring Manual Book v1.0</p>
+  <p>⬅️ <a href="transactions.html">Phase 2: Transactions</a> &nbsp;|&nbsp; ➡️ <a href="#">Phase 4: System Administration</a></p>
+</footer>

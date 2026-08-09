@@ -1,0 +1,584 @@
+<title>Supplier Management — WMS MAW Manual Book</title>
+
+<style>
+  /* ── Token system ── */
+  :root {
+    --ink: #1e293b;
+    --ink-muted: #64748b;
+    --ground: #f8f9fb;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --border-strong: #cbd5e1;
+    --accent: #d97706;
+    --accent-soft: #fffbeb;
+    --primary: #1e40af;
+    --primary-soft: #eff6ff;
+    --success: #0d9488;
+    --success-soft: #f0fdfa;
+    --danger: #dc2626;
+    --danger-soft: #fef2f2;
+    --warning: #d97706;
+    --warning-soft: #fffbeb;
+    --code-bg: #f1f5f9;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --radius: 8px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #e2e8f0;
+      --ink-muted: #94a3b8;
+      --ground: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --border-strong: #475569;
+      --accent: #f59e0b;
+      --accent-soft: #292112;
+      --primary: #60a5fa;
+      --primary-soft: #172033;
+      --success: #2dd4bf;
+      --success-soft: #0d2e2b;
+      --danger: #f87171;
+      --danger-soft: #2d1414;
+      --warning: #fbbf24;
+      --warning-soft: #292112;
+      --code-bg: #1e293b;
+      --shadow: 0 1px 3px rgba(0,0,0,.3);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ink: #e2e8f0;
+    --ink-muted: #94a3b8;
+    --ground: #0f172a;
+    --surface: #1e293b;
+    --border: #334155;
+    --border-strong: #475569;
+    --accent: #f59e0b;
+    --accent-soft: #292112;
+    --primary: #60a5fa;
+    --primary-soft: #172033;
+    --success: #2dd4bf;
+    --success-soft: #0d2e2b;
+    --danger: #f87171;
+    --danger-soft: #2d1414;
+    --warning: #fbbf24;
+    --warning-soft: #292112;
+    --code-bg: #1e293b;
+    --shadow: 0 1px 3px rgba(0,0,0,.3);
+  }
+
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; font-size: 16px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--ground);
+    color: var(--ink);
+    line-height: 1.7;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 6rem;
+  }
+
+  /* ── Typography ── */
+  h1 { font-size: 1.9rem; font-weight: 700; letter-spacing: -.02em; margin-bottom: .25rem; color: var(--primary); }
+  h2 { font-size: 1.4rem; font-weight: 650; margin: 2.5rem 0 1rem; padding-bottom: .5rem; border-bottom: 2px solid var(--border); }
+  h3 { font-size: 1.15rem; font-weight: 600; margin: 1.75rem 0 .6rem; }
+  p { margin: .75rem 0; color: var(--ink-muted); }
+  strong { color: var(--ink); }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ── Layout ── */
+  header { margin-bottom: 2rem; }
+  .meta { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: .5rem; }
+  .meta span { font-size: .8rem; color: var(--ink-muted); background: var(--surface); border: 1px solid var(--border); padding: .2rem .7rem; border-radius: 99px; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin: 1.25rem 0;
+    box-shadow: var(--shadow);
+  }
+  .card h3 { margin-top: 0; }
+
+  /* ── Callouts ── */
+  .callout {
+    border-left: 4px solid;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: .9rem 1.2rem;
+    margin: 1.25rem 0;
+    font-size: .92rem;
+  }
+  .callout.info    { border-color: var(--primary); background: var(--primary-soft); }
+  .callout.warning { border-color: var(--warning); background: var(--warning-soft); }
+  .callout.danger  { border-color: var(--danger);  background: var(--danger-soft);  }
+  .callout.success { border-color: var(--success); background: var(--success-soft); }
+  .callout strong { display: block; margin-bottom: .3rem; }
+
+  /* ── Steps ── */
+  ol.steps { counter-reset: step; list-style: none; padding: 0; }
+  ol.steps li { counter-increment: step; position: relative; padding-left: 3rem; margin: 1.5rem 0; }
+  ol.steps li::before {
+    content: counter(step);
+    position: absolute; left: 0; top: 0;
+    width: 2rem; height: 2rem;
+    background: var(--primary-soft);
+    color: var(--primary);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: .85rem;
+  }
+
+  /* ── Screenshot placeholder ── */
+  .screenshot {
+    background: var(--border);
+    border: 2px dashed var(--border-strong);
+    border-radius: var(--radius);
+    padding: 2.5rem;
+    text-align: center;
+    color: var(--ink-muted);
+    font-size: .85rem;
+    margin: 1rem 0;
+  }
+  .screenshot::before { content: "📸 "; font-size: 2rem; display: block; margin-bottom: .5rem; }
+
+  /* ── Table ── */
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .9rem; }
+  th, td { padding: .65rem .9rem; text-align: left; border-bottom: 1px solid var(--border); }
+  th { font-weight: 600; color: var(--ink); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
+  td { color: var(--ink-muted); }
+  tr:last-child td { border-bottom: none; }
+
+  /* ── Code / keys ── */
+  code, kbd {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: .15em .45em;
+    font-family: "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
+    font-size: .88em;
+  }
+  kbd {
+    box-shadow: 0 1px 0 var(--border-strong);
+    font-size: .82em;
+  }
+
+  /* ── Permission badges ── */
+  .perm-badge {
+    display: inline-block;
+    font-size: .75rem;
+    font-weight: 600;
+    padding: .2em .6em;
+    border-radius: 4px;
+    margin: .15rem;
+  }
+  .perm-badge.view   { background: #dbeafe; color: #1e40af; }
+  .perm-badge.create { background: #d1fae5; color: #065f46; }
+  .perm-badge.edit   { background: #fef3c7; color: #92400e; }
+  .perm-badge.delete { background: #fee2e2; color: #991b1b; }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .perm-badge.view   { background: #172033; color: #93c5fd; }
+    :root:not([data-theme="light"]) .perm-badge.create { background: #0d2e1c; color: #6ee7b7; }
+    :root:not([data-theme="light"]) .perm-badge.edit   { background: #292112; color: #fcd34d; }
+    :root:not([data-theme="light"]) .perm-badge.delete { background: #2d1414; color: #fca5a5; }
+  }
+  :root[data-theme="dark"] .perm-badge.view   { background: #172033; color: #93c5fd; }
+  :root[data-theme="dark"] .perm-badge.create { background: #0d2e1c; color: #6ee7b7; }
+  :root[data-theme="dark"] .perm-badge.edit   { background: #292112; color: #fcd34d; }
+  :root[data-theme="dark"] .perm-badge.delete { background: #2d1414; color: #fca5a5; }
+
+  /* ── Sidebar TOC ── */
+  nav.toc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 2rem; }
+  nav.toc h3 { margin-top: 0; font-size: .85rem; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-muted); }
+  nav.toc ol { list-style: none; padding: 0; margin: .5rem 0 0; }
+  nav.toc ol li { margin: .35rem 0; font-size: .9rem; }
+  nav.toc ol li a { color: var(--ink-muted); }
+  nav.toc ol li a:hover { color: var(--primary); text-decoration: none; }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    body { padding: 1rem; }
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.2rem; }
+    .card { padding: 1rem; }
+  }
+</style>
+
+<!-- ─── PAGE CONTENT ──────────────────────────────────────────── -->
+
+<header>
+  <h1>📦 Supplier Management</h1>
+  <p>Panduan lengkap mengelola data supplier di Warehouse Management System MAW.</p>
+  <div class="meta">
+    <span>📖 Manual Book</span>
+    <span>🧑‍💼 Semua Role</span>
+    <span>📅 2026-08-09</span>
+    <span>🔖 v1.0</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <h3>Daftar Isi</h3>
+  <ol>
+    <li><a href="#overview">1. Overview</a></li>
+    <li><a href="#akses">2. Akses & Permission</a></li>
+    <li><a href="#daftar">3. Melihat Daftar Supplier</a></li>
+    <li><a href="#tambah">4. Menambah Supplier Baru</a></li>
+    <li><a href="#detail">5. Melihat Detail Supplier</a></li>
+    <li><a href="#edit">6. Mengedit Supplier</a></li>
+    <li><a href="#hapus">7. Menghapus Supplier</a></li>
+    <li><a href="#import">8. Import Supplier (Excel)</a></li>
+    <li><a href="#export">9. Export Supplier (Excel)</a></li>
+    <li><a href="#troubleshooting">10. Troubleshooting</a></li>
+  </ol>
+</nav>
+
+<!-- ─── 1. OVERVIEW ─────────────────────────────────────────── -->
+
+<h2 id="overview">1. Overview</h2>
+
+<p>Modul <strong>Supplier Management</strong> adalah pusat pengelolaan data pemasok (supplier) di sistem WMS MAW. Setiap barang yang masuk ke gudang dikaitkan dengan supplier tertentu, sehingga data supplier menjadi fondasi untuk proses <em>receiving</em>, pelacakan stok, dan laporan performa.</p>
+
+<div class="card">
+  <h3>Fitur Modul Supplier</h3>
+  <table>
+    <tr><th>Fitur</th><th>Deskripsi</th></tr>
+    <tr><td>📋 Daftar Supplier</td><td>Melihat semua supplier dengan pencarian dan pagination</td></tr>
+    <tr><td>➕ Tambah Supplier</td><td>Mendaftarkan supplier baru beserta alamat utama</td></tr>
+    <tr><td>🔍 Detail Supplier</td><td>Melihat info lengkap, kode, kontak, dan daftar alamat</td></tr>
+    <tr><td>✏️ Edit Supplier</td><td>Mengubah data supplier & mengatur jadwal delivery slot</td></tr>
+    <tr><td>🗑️ Hapus Supplier</td><td>Menghapus supplier yang tidak lagi digunakan</td></tr>
+    <tr><td>📥 Import Excel</td><td>Import banyak supplier sekaligus dari file .xlsx / .csv</td></tr>
+    <tr><td>📤 Export Excel</td><td>Export semua data supplier ke file Excel</td></tr>
+  </table>
+</div>
+
+<div class="callout info">
+  <strong>💡 Kode Supplier Otomatis</strong>
+  Saat membuat supplier baru, <strong>kode</strong> akan di-generate otomatis dari singkatan nama (3 huruf pertama kata signifikan). Prefix seperti "PT", "CV", "UD" akan dilewati. Contoh: <em>PT. Adi Jaya Makmur → AJM</em>. Jika kode sudah dipakai, sistem otomatis menambahkan angka (<em>AJM1</em>, <em>AJM2</em>, dst). Kamu juga bisa mengisi kode secara manual.
+</div>
+
+<!-- ─── 2. AKSES & PERMISSION ──────────────────────────────── -->
+
+<h2 id="akses">2. Akses & Permission</h2>
+
+<p>WMS MAW menggunakan sistem <strong>Role-Based Access Control (RBAC)</strong>. Tidak semua user bisa mengakses semua fitur supplier. Berikut permission yang mengatur akses modul ini:</p>
+
+<div class="card">
+  <h3>Permission Matrix — Supplier</h3>
+  <table>
+    <tr><th>Permission</th><th>Fungsi</th><th>Superadmin</th><th>Leader</th><th>Operator</th></tr>
+    <tr>
+      <td><span class="perm-badge view">view suppliers</span></td>
+      <td>Melihat daftar & detail supplier, export</td>
+      <td>✅</td><td>✅</td><td>✅</td>
+    </tr>
+    <tr>
+      <td><span class="perm-badge create">create suppliers</span></td>
+      <td>Menambah supplier baru, import Excel</td>
+      <td>✅</td><td>❌</td><td>❌</td>
+    </tr>
+    <tr>
+      <td><span class="perm-badge edit">edit suppliers</span></td>
+      <td>Mengedit data & delivery slot supplier</td>
+      <td>✅</td><td>❌</td><td>❌</td>
+    </tr>
+    <tr>
+      <td><span class="perm-badge delete">delete suppliers</span></td>
+      <td>Menghapus supplier</td>
+      <td>✅</td><td>❌</td><td>❌</td>
+    </tr>
+  </table>
+</div>
+
+<div class="callout warning">
+  <strong>⚠️ Tombol tidak muncul?</strong>
+  Jika kamu tidak melihat tombol <strong>Tambah Supplier</strong>, <strong>Edit</strong>, atau <strong>Hapus</strong>, artinya role kamu tidak memiliki permission tersebut. Hubungi administrator sistem untuk penyesuaian role.
+</div>
+
+<!-- ─── 3. MELIHAT DAFTAR SUPPLIER ────────────────────────── -->
+
+<h2 id="daftar">3. Melihat Daftar Supplier</h2>
+
+<p>Halaman daftar supplier bisa diakses melalui sidebar menu <strong>Master Data → Suppliers</strong>, atau langsung ke URL <code>/suppliers</code>.</p>
+
+<div class="screenshot">Screenshot: Halaman daftar supplier — tabel dengan kolom Kode, Nama, Kontak Person, Email, Telepon, dan Aksi</div>
+
+<div class="card">
+  <h3>Fitur di Halaman Daftar</h3>
+  <table>
+    <tr><th>Elemen</th><th>Fungsi</th></tr>
+    <tr><td>🔍 Search Input</td><td>Mencari supplier berdasarkan <strong>nama</strong>, <strong>kontak person</strong>, atau <strong>email</strong></td></tr>
+    <tr><td>➕ Tombol Tambah</td><td>Membuka form tambah supplier (hanya user dengan permission <code>create suppliers</code>)</td></tr>
+    <tr><td>📥 Import/Export</td><td>Toolbar untuk import dari Excel atau export ke Excel</td></tr>
+    <tr><td>👁️ View</td><td>Melihat halaman detail supplier</td></tr>
+    <tr><td>✏️ Edit</td><td>Mengedit data supplier (hanya dengan permission <code>edit suppliers</code>)</td></tr>
+    <tr><td>🗑️ Hapus</td><td>Menghapus supplier (hanya dengan permission <code>delete suppliers</code>)</td></tr>
+  </table>
+</div>
+
+<p>Setiap halaman menampilkan maksimal <strong>10 supplier</strong>. Navigasi halaman tersedia di bagian bawah tabel (Sebelumnya / Berikutnya).</p>
+
+<!-- ─── 4. MENAMBAH SUPPLIER ────────────────────────────────── -->
+
+<h2 id="tambah">4. Menambah Supplier Baru</h2>
+
+<div class="callout info">
+  <strong>🧑‍💼 Permission dibutuhkan:</strong> <span class="perm-badge create">create suppliers</span>
+</div>
+
+<ol class="steps">
+  <li>
+    <strong>Buka form tambah</strong>
+    <p>Klik tombol <strong>Tambah Supplier</strong> di halaman daftar supplier, atau langsung ke URL <code>/suppliers/create</code>.</p>
+  </li>
+  <li>
+    <strong>Isi data supplier</strong>
+    <div class="card">
+      <h3>Field Form — Data Supplier</h3>
+      <table>
+        <tr><th>Field</th><th>Wajib</th><th>Keterangan</th></tr>
+        <tr><td>Kode / Singkatan</td><td>Tidak</td><td>Maks 10 karakter. Otomatis di-generate jika dikosongkan.</td></tr>
+        <tr><td>Nama</td><td>✅ Ya</td><td>Nama lengkap supplier. Harus unik.</td></tr>
+        <tr><td>Kontak Person</td><td>Tidak</td><td>Nama orang yang bisa dihubungi.</td></tr>
+        <tr><td>Email</td><td>✅ Ya</td><td>Email supplier. Harus unik & format valid.</td></tr>
+        <tr><td>Telepon</td><td>Tidak</td><td>Nomor telepon, maks 20 karakter.</td></tr>
+      </table>
+    </div>
+  </li>
+  <li>
+    <strong>Isi alamat utama</strong>
+    <div class="card">
+      <h3>Field Form — Alamat</h3>
+      <table>
+        <tr><th>Field</th><th>Wajib</th><th>Keterangan</th></tr>
+        <tr><td>Jalan</td><td>✅ Ya</td><td>Nama jalan & nomor.</td></tr>
+        <tr><td>Kota</td><td>✅ Ya</td><td>Nama kota, maks 100 karakter.</td></tr>
+        <tr><td>Provinsi</td><td>✅ Ya</td><td>Nama provinsi, maks 100 karakter.</td></tr>
+        <tr><td>Kode Pos</td><td>✅ Ya</td><td>Kode pos, maks 20 karakter.</td></tr>
+        <tr><td>Negara</td><td>✅ Ya</td><td>Default: Indonesia.</td></tr>
+      </table>
+    </div>
+  </li>
+  <li>
+    <strong>Simpan</strong>
+    <p>Klik tombol <strong>Simpan</strong>. Sistem akan memvalidasi input. Jika ada error, field yang bermasalah akan ditandai merah.</p>
+  </li>
+  <li>
+    <strong>Redirect ke detail</strong>
+    <p>Setelah berhasil, kamu otomatis diarahkan ke halaman detail supplier yang baru dibuat, dengan pesan sukses <em>"Supplier created successfully."</em>.</p>
+  </li>
+</ol>
+
+<!-- ─── 5. DETAIL SUPPLIER ────────────────────────────────── -->
+
+<h2 id="detail">5. Melihat Detail Supplier</h2>
+
+<p>Halaman detail menampilkan informasi lengkap satu supplier. Bisa diakses dengan klik ikon <strong>👁️ View</strong> di tabel daftar supplier.</p>
+
+<div class="screenshot">Screenshot: Halaman detail supplier — kartu informasi (kiri) + kartu alamat (kanan)</div>
+
+<div class="card">
+  <h3>Informasi yang ditampilkan</h3>
+  <table>
+    <tr><th>Bagian</th><th>Isi</th></tr>
+    <tr><td>Kartu Informasi Supplier</td><td>Kode badge, Nama, Kontak Person, Email, Telepon</td></tr>
+    <tr><td>Kartu Alamat</td><td>Daftar semua alamat supplier. Tipe alamat ditandai badge: <strong>UTAMA</strong> (primary), <strong>PENGIRIMAN</strong> (shipping), <strong>BILLING</strong></td></tr>
+    <tr><td>Tombol Edit</td><td>Hanya muncul jika kamu punya permission <code>edit suppliers</code></td></tr>
+    <tr><td>Tombol Kembali</td><td>Kembali ke halaman daftar supplier</td></tr>
+  </table>
+</div>
+
+<!-- ─── 6. MENGEDIT SUPPLIER ─────────────────────────────── -->
+
+<h2 id="edit">6. Mengedit Supplier</h2>
+
+<div class="callout info">
+  <strong>🧑‍💼 Permission dibutuhkan:</strong> <span class="perm-badge edit">edit suppliers</span>
+</div>
+
+<ol class="steps">
+  <li>
+    <strong>Buka form edit</strong>
+    <p>Klik ikon <strong>✏️ Edit</strong> di tabel daftar supplier, atau tombol <strong>Edit</strong> di halaman detail supplier. Kamu juga bisa langsung ke URL <code>/suppliers/{id}/edit</code>.</p>
+  </li>
+  <li>
+    <strong>Ubah data yang diperlukan</strong>
+    <p>Form edit sama dengan form tambah — semua field bisa diubah. Aturan validasi tetap berlaku (nama unik, email unik, dll).</p>
+  </li>
+  <li>
+    <strong>Atur Delivery Slot (opsional)</strong>
+    <p>Di bagian bawah form edit, terdapat <strong>daftar checkbox delivery slot</strong>. Centang slot waktu pengiriman yang tersedia untuk supplier ini. Supplier hanya bisa mengirim di slot yang dipilih.</p>
+    <div class="callout info">
+      <strong>💡 Delivery Slot</strong>
+      Slot pengiriman digunakan oleh modul <em>Delivery Monitor</em> (TV display) untuk menjadwalkan kedatangan supplier. Supplier dengan slot yang sudah diatur akan muncul di jadwal monitor.
+    </div>
+  </li>
+  <li>
+    <strong>Simpan perubahan</strong>
+    <p>Klik <strong>Simpan</strong>. Kamu akan diarahkan kembali ke halaman detail supplier dengan pesan sukses.</p>
+  </li>
+</ol>
+
+<!-- ─── 7. MENGHAPUS SUPPLIER ──────────────────────────────── -->
+
+<h2 id="hapus">7. Menghapus Supplier</h2>
+
+<div class="callout danger">
+  <strong>🧑‍💼 Permission dibutuhkan:</strong> <span class="perm-badge delete">delete suppliers</span><br><br>
+  <strong>⚠️ Peringatan:</strong> Menghapus supplier bersifat <strong>permanen</strong>. Pastikan tidak ada data produk, cycle, atau transaksi yang masih terkait dengan supplier ini. Supplier yang masih digunakan oleh data lain mungkin gagal dihapus karena constraint database.
+</div>
+
+<ol class="steps">
+  <li>Di halaman daftar supplier, klik ikon <strong>🗑️ Hapus</strong> pada baris supplier yang ingin dihapus.</li>
+  <li>Sistem akan menampilkan dialog konfirmasi: <em>"Yakin ingin menghapus supplier ini?"</em></li>
+  <li>Klik <strong>OK</strong> untuk menghapus, atau <strong>Batal</strong> untuk membatalkan.</li>
+  <li>Setelah berhasil, halaman akan refresh dan supplier hilang dari daftar.</li>
+</ol>
+
+<!-- ─── 8. IMPORT SUPPLIER ─────────────────────────────────── -->
+
+<h2 id="import">8. Import Supplier (Excel)</h2>
+
+<div class="callout info">
+  <strong>🧑‍💼 Permission dibutuhkan:</strong> <span class="perm-badge create">create suppliers</span>
+</div>
+
+<p>Fitur import memungkinkan kamu menambahkan banyak supplier sekaligus dari file Excel (<code>.xlsx</code> atau <code>.csv</code>).</p>
+
+<ol class="steps">
+  <li>
+    <strong>Download template</strong>
+    <p>Klik tombol <strong>📥 Import/Export</strong> di toolbar, lalu pilih <strong>Download Template</strong>. File Excel template berisi header kolom yang sesuai dengan format impor.</p>
+  </li>
+  <li>
+    <strong>Isi data di template</strong>
+    <div class="card">
+      <h3>Kolom Template Import</h3>
+      <table>
+        <tr><th>Kolom</th><th>Wajib</th><th>Contoh</th></tr>
+        <tr><td>code</td><td>Tidak</td><td>AJM</td></tr>
+        <tr><td>name</td><td>✅ Ya</td><td>PT Adi Jaya Makmur</td></tr>
+        <tr><td>contact_person</td><td>Tidak</td><td>Budi Santoso</td></tr>
+        <tr><td>email</td><td>✅ Ya</td><td>budi@adijaya.co.id</td></tr>
+        <tr><td>phone</td><td>Tidak</td><td>021-5551234</td></tr>
+        <tr><td>street</td><td>✅ Ya</td><td>Jl. Industri Raya No. 12</td></tr>
+        <tr><td>city</td><td>✅ Ya</td><td>Jakarta</td></tr>
+        <tr><td>state</td><td>✅ Ya</td><td>DKI Jakarta</td></tr>
+        <tr><td>postal_code</td><td>✅ Ya</td><td>12345</td></tr>
+        <tr><td>country</td><td>✅ Ya</td><td>Indonesia</td></tr>
+      </table>
+    </div>
+  </li>
+  <li>
+    <strong>Upload & Preview</strong>
+    <p>Klik <strong>📥 Import/Export → Import</strong>. Pilih file Excel yang sudah diisi. Sistem akan menampilkan modal <strong>preview</strong> yang menunjukkan data yang akan diimpor.</p>
+    <div class="screenshot">Screenshot: Import Modal — preview data sebelum import</div>
+  </li>
+  <li>
+    <strong>Konfirmasi Import</strong>
+    <p>Periksa data di preview. Jika ada error (misal: nama duplikat, email tidak valid), baris bermasalah akan ditandai. Klik <strong>Import</strong> untuk memproses data yang valid.</p>
+  </li>
+  <li>
+    <strong>Selesai</strong>
+    <p>Setelah import berhasil, halaman akan refresh dan supplier baru muncul di daftar.</p>
+  </li>
+</ol>
+
+<div class="callout warning">
+  <strong>⚠️ Catatan Import</strong>
+  <ul>
+    <li>Supplier dengan <strong>nama yang sama</strong> dengan data yang sudah ada akan di-skip (tidak diduplikasi).</li>
+    <li>Setiap supplier yang diimpor otomatis dibuatkan <strong>alamat utama</strong> dari data alamat di file Excel.</li>
+    <li>Jika ada baris yang gagal, baris lain tetap diproses. Pesan error akan ditampilkan.</li>
+  </ul>
+</div>
+
+<!-- ─── 9. EXPORT SUPPLIER ─────────────────────────────────── -->
+
+<h2 id="export">9. Export Supplier (Excel)</h2>
+
+<div class="callout info">
+  <strong>🧑‍💼 Permission dibutuhkan:</strong> <span class="perm-badge view">view suppliers</span>
+</div>
+
+<p>Export semua data supplier ke file Excel dengan sekali klik.</p>
+
+<ol class="steps">
+  <li>Di halaman daftar supplier, klik tombol <strong>📥 Import/Export</strong> di toolbar.</li>
+  <li>Pilih <strong>Export</strong>.</li>
+  <li>Browser akan otomatis mengunduh file <code>suppliers-export.xlsx</code>.</li>
+</ol>
+
+<div class="card">
+  <h3>Data yang di-export</h3>
+  <p>File export berisi kolom: <strong>Nama, Kontak Person, Email, Telepon, Jalan, Kota, Provinsi, Kode Pos, Negara</strong> (9 kolom).</p>
+  <p>Data diambil dari seluruh supplier yang ada di database, <strong>tanpa filter</strong> pencarian.</p>
+</div>
+
+<!-- ─── 10. TROUBLESHOOTING ────────────────────────────────── -->
+
+<h2 id="troubleshooting">10. Troubleshooting</h2>
+
+<div class="card">
+  <h3>🚫 Error 403 — Forbidden</h3>
+  <p><strong>Penyebab:</strong> Role kamu tidak memiliki permission untuk aksi yang dicoba (tambah/edit/hapus).</p>
+  <p><strong>Solusi:</strong> Hubungi superadmin untuk mengecek role & permission kamu. Superadmin bisa mengelola permission di menu <strong>Setup → Roles</strong> atau <strong>Setup → Permissions</strong>.</p>
+</div>
+
+<div class="card">
+  <h3>🔘 Tombol tidak muncul</h3>
+  <p><strong>Penyebab:</strong> Sama seperti di atas — permission tidak dimiliki. Selain itu, pastikan kamu sudah <strong>logout dan login ulang</strong> setelah role diubah, karena permission di-cache di session.</p>
+</div>
+
+<div class="card">
+  <h3>📛 Nama supplier sudah digunakan</h3>
+  <p><strong>Penyebab:</strong> Validasi unik — nama supplier tidak boleh sama dengan yang sudah ada.</p>
+  <p><strong>Solusi:</strong> Gunakan nama yang berbeda, atau periksa apakah supplier tersebut sudah terdaftar sebelumnya.</p>
+</div>
+
+<div class="card">
+  <h3>📧 Email tidak valid / sudah terdaftar</h3>
+  <p><strong>Penyebab:</strong> Format email salah, atau email sudah dipakai supplier lain.</p>
+  <p><strong>Solusi:</strong> Perbaiki format email (harus mengandung <code>@</code> dan domain valid), atau gunakan email lain.</p>
+</div>
+
+<div class="card">
+  <h3>📥 Import gagal / data tidak muncul</h3>
+  <p><strong>Penyebab:</strong> Format file salah, atau kolom wajib kosong.</p>
+  <p><strong>Solusi:</strong>
+    <br>• Pastikan menggunakan <strong>template resmi</strong> (download dari tombol Download Template).
+    <br>• Pastikan kolom <strong>name, email, street, city, state, postal_code, country</strong> tidak kosong.
+    <br>• File harus berekstensi <code>.xlsx</code> atau <code>.csv</code>.
+    <br>• Cek pesan error di modal preview — baris yang error akan ditandai.
+  </p>
+</div>
+
+<div class="card">
+  <h3>🗑️ Tidak bisa menghapus supplier</h3>
+  <p><strong>Penyebab:</strong> Supplier masih terkait dengan data produk, cycle penerimaan, atau transaksi lain. Database menolak penghapusan untuk menjaga integritas data.</p>
+  <p><strong>Solusi:</strong> Hapus atau pindahkan data yang terkait terlebih dahulu (produk, cycle, dll), lalu coba hapus supplier kembali.</p>
+</div>
+
+<div class="card">
+  <h3>🔄 Setelah ganti role, permission belum update</h3>
+  <p><strong>Penyebab:</strong> Session user masih menyimpan role & permission lama. Sistem tidak otomatis me-refresh session saat role diubah.</p>
+  <p><strong>Solusi:</strong>
+    <br>• <strong>Logout</strong> dan <strong>login ulang</strong>.
+    <br>• Jika masih bermasalah, minta superadmin menjalankan <code>php artisan optimize:clear</code> di server.
+  </p>
+</div>
+
+<hr style="margin:3rem 0 1.5rem; border:none; border-top:1px solid var(--border)">
+
+<footer style="text-align:center; color:var(--ink-muted); font-size:.82rem;">
+  <p>WMS MAW — Supplier Management Manual Book v1.0</p>
+  <p>Manual book ini adalah bagian dari dokumentasi Warehouse Management System MAW.</p>
+  <p>➡️ <a href="#">Product Management</a> (Phase 1 — selanjutnya)</p>
+</footer>

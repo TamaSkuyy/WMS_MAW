@@ -1,0 +1,393 @@
+<title>Rack Management — WMS MAW Manual Book</title>
+
+<style>
+  :root {
+    --ink: #1e293b; --ink-muted: #64748b;
+    --ground: #f8f9fb; --surface: #ffffff;
+    --border: #e2e8f0; --border-strong: #cbd5e1;
+    --accent: #7c3aed; --accent-soft: #faf5ff;
+    --primary: #6d28d9; --primary-soft: #faf5ff;
+    --success: #0d9488; --success-soft: #f0fdfa;
+    --danger: #dc2626; --danger-soft: #fef2f2;
+    --warning: #d97706; --warning-soft: #fffbeb;
+    --code-bg: #f1f5f9;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --radius: 8px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #e2e8f0; --ink-muted: #94a3b8;
+      --ground: #0f172a; --surface: #1e293b;
+      --border: #334155; --border-strong: #475569;
+      --accent: #a78bfa; --accent-soft: #1e1733;
+      --primary: #c4b5fd; --primary-soft: #1e1733;
+      --success: #2dd4bf; --success-soft: #0d2e2b;
+      --danger: #f87171; --danger-soft: #2d1414;
+      --warning: #fbbf24; --warning-soft: #292112;
+      --code-bg: #1e293b; --shadow: 0 1px 3px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #e2e8f0; --ink-muted: #94a3b8;
+    --ground: #0f172a; --surface: #1e293b;
+    --border: #334155; --border-strong: #475569;
+    --accent: #a78bfa; --accent-soft: #1e1733;
+    --primary: #c4b5fd; --primary-soft: #1e1733;
+    --success: #2dd4bf; --success-soft: #0d2e2b;
+    --danger: #f87171; --danger-soft: #2d1414;
+    --warning: #fbbf24; --warning-soft: #292112;
+    --code-bg: #1e293b; --shadow: 0 1px 3px rgba(0,0,0,.3);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; font-size: 16px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--ground); color: var(--ink); line-height: 1.7;
+    max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem 6rem;
+  }
+
+  h1 { font-size: 1.9rem; font-weight: 700; letter-spacing: -.02em; margin-bottom: .25rem; color: var(--primary); }
+  h2 { font-size: 1.4rem; font-weight: 650; margin: 2.5rem 0 1rem; padding-bottom: .5rem; border-bottom: 2px solid var(--border); }
+  h3 { font-size: 1.15rem; font-weight: 600; margin: 1.75rem 0 .6rem; }
+  p { margin: .75rem 0; color: var(--ink-muted); }
+  strong { color: var(--ink); }
+  a { color: var(--primary); text-decoration: none; } a:hover { text-decoration: underline; }
+
+  header { margin-bottom: 2rem; }
+  .meta { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: .5rem; }
+  .meta span { font-size: .8rem; color: var(--ink-muted); background: var(--surface); border: 1px solid var(--border); padding: .2rem .7rem; border-radius: 99px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin: 1.25rem 0; box-shadow: var(--shadow); }
+  .card h3 { margin-top: 0; }
+
+  .callout { border-left: 4px solid; border-radius: 0 var(--radius) var(--radius) 0; padding: .9rem 1.2rem; margin: 1.25rem 0; font-size: .92rem; }
+  .callout.info    { border-color: var(--primary);  background: var(--primary-soft);  }
+  .callout.warning { border-color: var(--warning); background: var(--warning-soft); }
+  .callout.danger  { border-color: var(--danger);  background: var(--danger-soft);  }
+  .callout.success { border-color: var(--success); background: var(--success-soft); }
+  .callout strong { display: block; margin-bottom: .3rem; }
+
+  ol.steps { counter-reset: step; list-style: none; padding: 0; }
+  ol.steps li { counter-increment: step; position: relative; padding-left: 3rem; margin: 1.5rem 0; }
+  ol.steps li::before {
+    content: counter(step); position: absolute; left: 0; top: 0;
+    width: 2rem; height: 2rem; background: var(--primary-soft); color: var(--primary);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: .85rem;
+  }
+
+  .screenshot { background: var(--border); border: 2px dashed var(--border-strong); border-radius: var(--radius); padding: 2.5rem; text-align: center; color: var(--ink-muted); font-size: .85rem; margin: 1rem 0; }
+  .screenshot::before { content: "📸 "; font-size: 2rem; display: block; margin-bottom: .5rem; }
+
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .9rem; }
+  th, td { padding: .65rem .9rem; text-align: left; border-bottom: 1px solid var(--border); }
+  th { font-weight: 600; color: var(--ink); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
+  td { color: var(--ink-muted); } tr:last-child td { border-bottom: none; }
+
+  code, kbd { background: var(--code-bg); border: 1px solid var(--border); border-radius: 4px; padding: .15em .45em; font-family: "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace; font-size: .88em; }
+
+  .perm-badge { display: inline-block; font-size: .75rem; font-weight: 600; padding: .2em .6em; border-radius: 4px; margin: .15rem; }
+  .perm-badge.view   { background: #dbeafe; color: #1e40af; }
+  .perm-badge.create { background: #d1fae5; color: #065f46; }
+  .perm-badge.edit   { background: #fef3c7; color: #92400e; }
+  .perm-badge.delete { background: #fee2e2; color: #991b1b; }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .perm-badge.view   { background: #172033; color: #93c5fd; }
+    :root:not([data-theme="light"]) .perm-badge.create { background: #0d2e1c; color: #6ee7b7; }
+    :root:not([data-theme="light"]) .perm-badge.edit   { background: #292112; color: #fcd34d; }
+    :root:not([data-theme="light"]) .perm-badge.delete { background: #2d1414; color: #fca5a5; }
+  }
+  :root[data-theme="dark"] .perm-badge.view   { background: #172033; color: #93c5fd; }
+  :root[data-theme="dark"] .perm-badge.create { background: #0d2e1c; color: #6ee7b7; }
+  :root[data-theme="dark"] .perm-badge.edit   { background: #292112; color: #fcd34d; }
+  :root[data-theme="dark"] .perm-badge.delete { background: #2d1414; color: #fca5a5; }
+
+  .capacity-bar { display: flex; align-items: center; gap: .5rem; margin: .3rem 0; }
+  .capacity-track { flex: 1; height: 8px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .capacity-fill { height: 100%; border-radius: 99px; }
+  .capacity-fill.safe { background: #22c55e; }
+  .capacity-fill.warn { background: #f97316; }
+  .capacity-fill.full { background: #eab308; }
+  .capacity-fill.over { background: #ef4444; }
+  .capacity-label { font-size: .78rem; color: var(--ink-muted); white-space: nowrap; font-variant-numeric: tabular-nums; min-width: 4rem; text-align: right; }
+
+  nav.toc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 2rem; }
+  nav.toc h3 { margin-top: 0; font-size: .85rem; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-muted); }
+  nav.toc ol { list-style: none; padding: 0; margin: .5rem 0 0; }
+  nav.toc ol li { margin: .35rem 0; font-size: .9rem; }
+  nav.toc ol li a { color: var(--ink-muted); } nav.toc ol li a:hover { color: var(--primary); text-decoration: none; }
+
+  @media (max-width: 640px) { body { padding: 1rem; } h1 { font-size: 1.5rem; } h2 { font-size: 1.2rem; } .card { padding: 1rem; } }
+</style>
+
+<!-- ─── PAGE CONTENT ──────────────────────────────────────────── -->
+
+<header>
+  <h1>🗄️ Rack Management</h1>
+  <p>Panduan lengkap mengelola data rak penyimpanan — kode, zona, kapasitas, monitoring tingkat keterisian, dan daftar stok per rak.</p>
+  <div class="meta">
+    <span>📖 Manual Book</span>
+    <span>🧑‍💼 Leader & Admin</span>
+    <span>📅 2026-08-09</span>
+    <span>🔖 v1.0</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <h3>Daftar Isi</h3>
+  <ol>
+    <li><a href="#overview">1. Overview</a></li>
+    <li><a href="#akses">2. Akses & Permission</a></li>
+    <li><a href="#daftar">3. Melihat Daftar Rak</a></li>
+    <li><a href="#tambah">4. Menambah Rak Baru</a></li>
+    <li><a href="#detail">5. Melihat Detail Rak</a></li>
+    <li><a href="#edit">6. Mengedit Rak</a></li>
+    <li><a href="#hapus">7. Menghapus Rak</a></li>
+    <li><a href="#import">8. Import Rak (Excel)</a></li>
+    <li><a href="#export">9. Export Rak (Excel)</a></li>
+    <li><a href="#troubleshooting">10. Troubleshooting</a></li>
+  </ol>
+</nav>
+
+<!-- ─── 1. OVERVIEW ─────────────────────────────────────────── -->
+
+<h2 id="overview">1. Overview</h2>
+
+<p>Modul <strong>Rack Management</strong> adalah pusat pengelolaan lokasi fisik penyimpanan di gudang. Setiap rak punya kode unik, zona, dan kapasitas. Sistem otomatis memantau tingkat keterisian rak berdasarkan stok yang tersimpan di dalamnya.</p>
+
+<div class="card">
+  <h3>Fitur Modul Rack</h3>
+  <table>
+    <tr><th>Fitur</th><th>Deskripsi</th></tr>
+    <tr><td>📋 Daftar Rak</td><td>Melihat semua rak dengan progress bar keterisian & indikator warna</td></tr>
+    <tr><td>➕ Tambah Rak</td><td>Mendaftarkan rak baru dengan kode, zona, kapasitas</td></tr>
+    <tr><td>🔍 Detail Rak</td><td>Melihat info rak + daftar stok produk yang tersimpan di dalamnya</td></tr>
+    <tr><td>✏️ Edit Rak</td><td>Mengubah kode, zona, atau kapasitas rak</td></tr>
+    <tr><td>🗑️ Hapus Rak</td><td>Menghapus rak yang tidak digunakan</td></tr>
+    <tr><td>📊 Progress Bar</td><td>Visualisasi keterisian real-time per rak dengan kode warna</td></tr>
+    <tr><td>📥 Import Excel</td><td>Import banyak rak sekaligus</td></tr>
+    <tr><td>📤 Export Excel</td><td>Export semua data rak ke Excel</td></tr>
+  </table>
+</div>
+
+<div class="callout info">
+  <strong>💡 Zona & Kode Rak</strong>
+  Zona mengelompokkan rak berdasarkan area gudang (contoh: Zona A, Zona B, Zona Receiving). Kode rak adalah identitas unik setiap rak, ditampilkan dalam format <strong>monospace</strong> agar mudah dibaca dan di-scan. Contoh: <code>A-01</code>, <code>B-12</code>, <code>R-03</code>.
+</div>
+
+<!-- ─── 2. AKSES & PERMISSION ──────────────────────────────── -->
+
+<h2 id="akses">2. Akses & Permission</h2>
+
+<div class="card">
+  <h3>Permission Matrix — Rack</h3>
+  <table>
+    <tr><th>Permission</th><th>Fungsi</th><th>Superadmin</th><th>Leader</th><th>Operator</th></tr>
+    <tr><td><span class="perm-badge view">view racks</span></td><td>Melihat daftar & detail rak, export</td><td>✅</td><td>✅</td><td>✅</td></tr>
+    <tr><td><span class="perm-badge create">create racks</span></td><td>Menambah rak baru, import Excel</td><td>✅</td><td>❌</td><td>❌</td></tr>
+    <tr><td><span class="perm-badge edit">edit racks</span></td><td>Mengedit data rak</td><td>✅</td><td>❌</td><td>❌</td></tr>
+    <tr><td><span class="perm-badge delete">delete racks</span></td><td>Menghapus rak</td><td>✅</td><td>❌</td><td>❌</td></tr>
+  </table>
+</div>
+
+<!-- ─── 3. DAFTAR RAK ────────────────────────────────────── -->
+
+<h2 id="daftar">3. Melihat Daftar Rak</h2>
+
+<p>Akses melalui sidebar <strong>Master Data → Racks</strong>, atau URL <code>/racks</code>.</p>
+
+<div class="screenshot">Screenshot: Halaman daftar rak — tabel dengan kolom Kode, Zona, Kapasitas (progress bar), Aksi</div>
+
+<div class="card">
+  <h3>Memahami Progress Bar Keterisian</h3>
+  <p>Setiap rak menampilkan progress bar yang menunjukkan <strong>pemakaian vs kapasitas</strong>:</p>
+  <table>
+    <tr><th>Warna</th><th>Kondisi</th><th>Arti</th></tr>
+    <tr>
+      <td><span style="display:inline-block;width:16px;height:16px;background:#22c55e;border-radius:4px;"></span> Hijau</td>
+      <td>0% – 79%</td>
+      <td>Normal — masih banyak ruang tersedia</td>
+    </tr>
+    <tr>
+      <td><span style="display:inline-block;width:16px;height:16px;background:#f97316;border-radius:4px;"></span> Oranye</td>
+      <td>80% – 99%</td>
+      <td>Hampir penuh — perlu perhatian</td>
+    </tr>
+    <tr>
+      <td><span style="display:inline-block;width:16px;height:16px;background:#eab308;border-radius:4px;"></span> Kuning</td>
+      <td>100%</td>
+      <td>Penuh tepat — tidak ada sisa ruang</td>
+    </tr>
+    <tr>
+      <td><span style="display:inline-block;width:16px;height:16px;background:#ef4444;border-radius:4px;"></span> Merah</td>
+      <td>>100%</td>
+      <td>Over capacity! Rak melebihi kapasitas yang ditetapkan</td>
+    </tr>
+  </table>
+</div>
+
+<div class="callout warning">
+  <strong>⚠️ Rak tanpa kapasitas</strong>
+  Jika kapasitas tidak diatur (kosong), progress bar tidak muncul. Yang ditampilkan hanya jumlah stok saat ini dengan label <em>"(tanpa batas)"</em>.
+</div>
+
+<!-- ─── 4. MENAMBAH RAK ──────────────────────────────────── -->
+
+<h2 id="tambah">4. Menambah Rak Baru</h2>
+
+<div class="callout info">
+  <strong>🧑‍💼 Permission dibutuhkan:</strong> <span class="perm-badge create">create racks</span>
+</div>
+
+<ol class="steps">
+  <li>
+    <strong>Buka form tambah</strong>
+    <p>Klik <strong>Tambah Rak</strong> di halaman daftar rak, atau ke URL <code>/racks/create</code>.</p>
+  </li>
+  <li>
+    <strong>Isi data rak</strong>
+    <div class="card">
+      <h3>Field Form</h3>
+      <table>
+        <tr><th>Field</th><th>Wajib</th><th>Keterangan</th></tr>
+        <tr><td>Kode</td><td>✅ Ya</td><td>Kode unik rak, maks 20 karakter. Contoh: <code>A-01</code></td></tr>
+        <tr><td>Zona</td><td>✅ Ya</td><td>Nama zona/area gudang, maks 50 karakter. Contoh: <code>Zona A</code>, <code>Receiving</code></td></tr>
+        <tr><td>Kapasitas</td><td>Tidak</td><td>Jumlah maksimum unit yang bisa ditampung. Bilangan bulat minimal 1.</td></tr>
+      </table>
+    </div>
+  </li>
+  <li>
+    <strong>Simpan</strong>
+    <p>Klik <strong>Simpan</strong>. Rak baru muncul di daftar.</p>
+  </li>
+</ol>
+
+<div class="callout info">
+  <strong>💡 Tips penamaan kode rak</strong>
+  Gunakan format konsisten: <code>[ZONA]-[NOMOR]</code>. Contoh: <code>A-01</code>, <code>A-02</code>, <code>B-01</code>. Ini memudahkan identifikasi fisik di gudang.
+</div>
+
+<!-- ─── 5. DETAIL RAK ────────────────────────────────────── -->
+
+<h2 id="detail">5. Melihat Detail Rak</h2>
+
+<p>Akses dengan klik <strong>👁️ View</strong> di tabel daftar rak.</p>
+
+<div class="screenshot">Screenshot: Halaman detail rak — kartu info rak (kiri) + tabel stok produk (kanan)</div>
+
+<div class="card">
+  <h3>Informasi yang ditampilkan</h3>
+  <table>
+    <tr><th>Bagian</th><th>Isi</th></tr>
+    <tr><td>Kartu Info Rak</td><td>Kode (monospace), Zona, Kapasitas (X/Y unit), Progress bar, Total jenis produk</td></tr>
+    <tr><td>Tabel Stok</td><td>Daftar semua produk yang tersimpan di rak ini: Part Number, Nama Produk, Supplier, Quantity</td></tr>
+    <tr><td>Link Produk</td><td>Nama produk bisa diklik untuk melihat detail produk tersebut</td></tr>
+    <tr><td>Tombol Edit</td><td>Hanya muncul jika punya permission <code>edit racks</code></td></tr>
+  </table>
+</div>
+
+<div class="callout warning">
+  <strong>⚠️ Rak over capacity</strong>
+  Jika rak melebihi kapasitas (merah), progress bar tetap menampilkan persentase >100%. Ini tidak memblokir operasi, tapi sebaiknya segera ditangani — pindahkan stok atau tambah kapasitas.
+</div>
+
+<!-- ─── 6. MENGEDIT RAK ─────────────────────────────── -->
+
+<h2 id="edit">6. Mengedit Rak</h2>
+
+<div class="callout info">
+  <strong>🧑‍💼 Permission dibutuhkan:</strong> <span class="perm-badge edit">edit racks</span>
+</div>
+
+<ol class="steps">
+  <li>Klik <strong>✏️ Edit</strong> di tabel daftar rak atau di halaman detail.</li>
+  <li>Ubah kode, zona, atau kapasitas sesuai kebutuhan.</li>
+  <li><strong>Tips:</strong> Jika rak sering over capacity, naikkan nilai kapasitas. Jika rak jarang terpakai, turunkan kapasitas agar indikator lebih akurat.</li>
+  <li>Klik <strong>Simpan</strong>. Kamu diarahkan ke halaman detail rak yang sudah diupdate.</li>
+</ol>
+
+<!-- ─── 7. MENGHAPUS RAK ──────────────────────────────── -->
+
+<h2 id="hapus">7. Menghapus Rak</h2>
+
+<div class="callout danger">
+  <strong>🧑‍💼 Permission dibutuhkan:</strong> <span class="perm-badge delete">delete racks</span><br><br>
+  <strong>⚠️ Peringatan:</strong> Rak yang masih menyimpan stok produk <strong>tidak bisa dihapus</strong>. Pindahkan semua stok ke rak lain terlebih dahulu.
+</div>
+
+<ol class="steps">
+  <li>Di halaman daftar rak, klik <strong>🗑️ Hapus</strong> pada rak yang ingin dihapus.</li>
+  <li>Konfirmasi dialog penghapusan.</li>
+  <li>Jika rak kosong, penghapusan berhasil. Jika masih ada stok, sistem akan menolak.</li>
+</ol>
+
+<!-- ─── 8. IMPORT & EXPORT ────────────────────────────────── -->
+
+<h2 id="import">8. Import Rak (Excel)</h2>
+
+<div class="callout info"><strong>🧑‍💼 Permission:</strong> <span class="perm-badge create">create racks</span></div>
+
+<ol class="steps">
+  <li>Klik <strong>📥 Import/Export → Download Template</strong>.</li>
+  <li>Isi template dengan kolom: <strong>code</strong> (wajib), <strong>zone</strong> (wajib), <strong>capacity</strong> (opsional).</li>
+  <li>Klik <strong>Import</strong>, pilih file, preview data, lalu konfirmasi.</li>
+</ol>
+
+<div class="callout warning">
+  <strong>⚠️ Kode duplikat</strong> akan dilewati (skip). Pastikan setiap rak punya kode unik.
+</div>
+
+<h2 id="export">9. Export Rak (Excel)</h2>
+
+<div class="callout info"><strong>🧑‍💼 Permission:</strong> <span class="perm-badge view">view racks</span></div>
+
+<ol class="steps">
+  <li>Klik <strong>📥 Import/Export → Export</strong>.</li>
+  <li>File <code>racks-export.xlsx</code> otomatis terunduh.</li>
+</ol>
+
+<!-- ─── 10. TROUBLESHOOTING ────────────────────────────────── -->
+
+<h2 id="troubleshooting">10. Troubleshooting</h2>
+
+<div class="card">
+  <h3>🚫 Error 403</h3>
+  <p><strong>Solusi:</strong> Role Operator hanya read-only untuk rak. Hubungi superadmin jika butuh akses tambah/edit/hapus.</p>
+</div>
+
+<div class="card">
+  <h3>📊 Progress bar tidak muncul</h3>
+  <p><strong>Penyebab:</strong> Kapasitas rak belum diatur (kosong).</p>
+  <p><strong>Solusi:</strong> Edit rak dan isi field <strong>Kapasitas</strong> dengan angka.</p>
+</div>
+
+<div class="card">
+  <h3>🔴 Rak over capacity — apa yang harus dilakukan?</h3>
+  <p><strong>Solusi:</strong>
+    <br>• Pindahkan stok berlebih ke rak lain via proses Shopping.
+    <br>• Atau naikkan kapasitas rak jika kapasitas awal terlalu rendah.
+    <br>• Over capacity tidak memblokir operasi, tapi sebaiknya dihindari.
+  </p>
+</div>
+
+<div class="card">
+  <h3>🗑️ Tidak bisa menghapus rak</h3>
+  <p><strong>Penyebab:</strong> Masih ada stok produk di rak ini.</p>
+  <p><strong>Solusi:</strong> Pindahkan semua stok ke rak lain terlebih dahulu (via proses Shopping). Rak kosong baru bisa dihapus.</p>
+</div>
+
+<div class="card">
+  <h3>📥 Import gagal — kode sudah ada</h3>
+  <p><strong>Penyebab:</strong> Kode rak di file Excel sudah terdaftar di sistem.</p>
+  <p><strong>Solusi:</strong> Gunakan kode yang berbeda, atau edit rak yang sudah ada daripada mengimpor ulang.</p>
+</div>
+
+<hr style="margin:3rem 0 1.5rem; border:none; border-top:1px solid var(--border)">
+
+<footer style="text-align:center; color:var(--ink-muted); font-size:.82rem;">
+  <p>WMS MAW — Rack Management Manual Book v1.0</p>
+  <p>⬅️ <a href="product-management.html">Product Management</a> &nbsp;|&nbsp; ➡️ <a href="#">Referensi Pendukung</a> (selanjutnya)</p>
+</footer>

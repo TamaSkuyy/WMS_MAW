@@ -1,0 +1,391 @@
+<title>Employee Management — WMS MAW Manual Book</title>
+
+<style>
+  :root {
+    --ink: #1e293b; --ink-muted: #64748b;
+    --ground: #f8f9fb; --surface: #ffffff;
+    --border: #e2e8f0; --border-strong: #cbd5e1;
+    --accent: #2563eb; --accent-soft: #eff6ff;
+    --primary: #1d4ed8; --primary-soft: #eff6ff;
+    --success: #0d9488; --success-soft: #f0fdfa;
+    --danger: #dc2626; --danger-soft: #fef2f2;
+    --warning: #d97706; --warning-soft: #fffbeb;
+    --code-bg: #f1f5f9;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --radius: 8px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #e2e8f0; --ink-muted: #94a3b8;
+      --ground: #0f172a; --surface: #1e293b;
+      --border: #334155; --border-strong: #475569;
+      --accent: #60a5fa; --accent-soft: #172033;
+      --primary: #93c5fd; --primary-soft: #172033;
+      --success: #2dd4bf; --success-soft: #0d2e2b;
+      --danger: #f87171; --danger-soft: #2d1414;
+      --warning: #fbbf24; --warning-soft: #292112;
+      --code-bg: #1e293b; --shadow: 0 1px 3px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #e2e8f0; --ink-muted: #94a3b8;
+    --ground: #0f172a; --surface: #1e293b;
+    --border: #334155; --border-strong: #475569;
+    --accent: #60a5fa; --accent-soft: #172033;
+    --primary: #93c5fd; --primary-soft: #172033;
+    --success: #2dd4bf; --success-soft: #0d2e2b;
+    --danger: #f87171; --danger-soft: #2d1414;
+    --warning: #fbbf24; --warning-soft: #292112;
+    --code-bg: #1e293b; --shadow: 0 1px 3px rgba(0,0,0,.3);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; font-size: 16px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: var(--ground); color: var(--ink); line-height: 1.7; max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem 6rem; }
+  h1 { font-size: 1.9rem; font-weight: 700; letter-spacing: -.02em; margin-bottom: .25rem; color: var(--primary); }
+  h2 { font-size: 1.4rem; font-weight: 650; margin: 2.5rem 0 1rem; padding-bottom: .5rem; border-bottom: 2px solid var(--border); }
+  h3 { font-size: 1.15rem; font-weight: 600; margin: 1.75rem 0 .6rem; }
+  p { margin: .75rem 0; color: var(--ink-muted); } strong { color: var(--ink); }
+  a { color: var(--primary); } a:hover { text-decoration: underline; }
+  header { margin-bottom: 2rem; }
+  .meta { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: .5rem; }
+  .meta span { font-size: .8rem; color: var(--ink-muted); background: var(--surface); border: 1px solid var(--border); padding: .2rem .7rem; border-radius: 99px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin: 1.25rem 0; box-shadow: var(--shadow); } .card h3 { margin-top: 0; }
+  .callout { border-left: 4px solid; border-radius: 0 var(--radius) var(--radius) 0; padding: .9rem 1.2rem; margin: 1.25rem 0; font-size: .92rem; }
+  .callout.info    { border-color: var(--primary);  background: var(--primary-soft);  }
+  .callout.warning { border-color: var(--warning); background: var(--warning-soft); }
+  .callout.danger  { border-color: var(--danger);  background: var(--danger-soft);  }
+  .callout.success { border-color: var(--success); background: var(--success-soft); }
+  .callout strong { display: block; margin-bottom: .3rem; }
+  ol.steps { counter-reset: step; list-style: none; padding: 0; }
+  ol.steps li { counter-increment: step; position: relative; padding-left: 3rem; margin: 1.5rem 0; }
+  ol.steps li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 2rem; height: 2rem; background: var(--primary-soft); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .85rem; }
+  .screenshot { background: var(--border); border: 2px dashed var(--border-strong); border-radius: var(--radius); padding: 2.5rem; text-align: center; color: var(--ink-muted); font-size: .85rem; margin: 1rem 0; } .screenshot::before { content: "📸 "; font-size: 2rem; display: block; margin-bottom: .5rem; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .9rem; }
+  th, td { padding: .65rem .9rem; text-align: left; border-bottom: 1px solid var(--border); }
+  th { font-weight: 600; color: var(--ink); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
+  td { color: var(--ink-muted); } tr:last-child td { border-bottom: none; }
+  code, kbd { background: var(--code-bg); border: 1px solid var(--border); border-radius: 4px; padding: .15em .45em; font-family: "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace; font-size: .88em; }
+  .perm-badge { display: inline-block; font-size: .75rem; font-weight: 600; padding: .2em .6em; border-radius: 4px; margin: .15rem; }
+  .perm-badge.view   { background: #dbeafe; color: #1e40af; }
+  .perm-badge.create { background: #d1fae5; color: #065f46; }
+  .perm-badge.edit   { background: #fef3c7; color: #92400e; }
+  .perm-badge.delete { background: #fee2e2; color: #991b1b; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .perm-badge.view { background: #172033; color: #93c5fd; } :root:not([data-theme="light"]) .perm-badge.create { background: #0d2e1c; color: #6ee7b7; } :root:not([data-theme="light"]) .perm-badge.edit { background: #292112; color: #fcd34d; } :root:not([data-theme="light"]) .perm-badge.delete { background: #2d1414; color: #fca5a5; } }
+  :root[data-theme="dark"] .perm-badge.view { background: #172033; color: #93c5fd; } :root[data-theme="dark"] .perm-badge.create { background: #0d2e1c; color: #6ee7b7; } :root[data-theme="dark"] .perm-badge.edit { background: #292112; color: #fcd34d; } :root[data-theme="dark"] .perm-badge.delete { background: #2d1414; color: #fca5a5; }
+  nav.toc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 2rem; }
+  nav.toc h3 { margin-top: 0; font-size: .85rem; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-muted); }
+  nav.toc ol { list-style: none; padding: 0; margin: .5rem 0 0; } nav.toc ol li { margin: .35rem 0; font-size: .9rem; }
+  nav.toc ol li a { color: var(--ink-muted); } nav.toc ol li a:hover { color: var(--primary); text-decoration: none; }
+  @media (max-width: 640px) { body { padding: 1rem; } h1 { font-size: 1.5rem; } h2 { font-size: 1.2rem; } .card { padding: 1rem; } }
+
+  .flow { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; padding: 1rem; background: var(--primary-soft); border-radius: var(--radius); margin: 1rem 0; }
+  .flow-step { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: .5rem .9rem; font-size: .85rem; font-weight: 600; }
+  .flow-arrow { color: var(--primary); font-weight: 700; font-size: 1.2rem; }
+</style>
+
+<header>
+  <h1>👥 Employee Management</h1>
+  <p>Panduan lengkap mengelola data karyawan — dari data personal, penempatan organisasi, hingga pembuatan akun login dengan role otomatis.</p>
+  <div class="meta">
+    <span>📖 Manual Book</span>
+    <span>🧑‍💼 Leader & Admin</span>
+    <span>📅 2026-08-09</span>
+    <span>🔖 v1.0</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <h3>Daftar Isi</h3>
+  <ol>
+    <li><a href="#overview">1. Overview</a></li>
+    <li><a href="#akses">2. Akses & Permission</a></li>
+    <li><a href="#konsep">3. Konsep: Employee → User → Role</a></li>
+    <li><a href="#daftar">4. Melihat Daftar Karyawan</a></li>
+    <li><a href="#tambah">5. Menambah Karyawan Baru</a></li>
+    <li><a href="#detail">6. Melihat Detail Karyawan</a></li>
+    <li><a href="#edit">7. Mengedit Karyawan</a></li>
+    <li><a href="#generate">8. Generate User Login</a></li>
+    <li><a href="#hapus">9. Menghapus Karyawan</a></li>
+    <li><a href="#import">10. Import & Export</a></li>
+    <li><a href="#troubleshooting">11. Troubleshooting</a></li>
+  </ol>
+</nav>
+
+<!-- ─── 1 ───────────────────────────────────────────────────── -->
+
+<h2 id="overview">1. Overview</h2>
+
+<p>Modul Employee Management menghubungkan <strong>data karyawan</strong> dengan <strong>sistem login & RBAC</strong>. Setiap karyawan bisa punya akun user, dan role user otomatis mengikuti jabatan (Job Position) yang dipegang.</p>
+
+<div class="card">
+  <h3>Fitur Utama</h3>
+  <table>
+    <tr><th>Fitur</th><th>Deskripsi</th></tr>
+    <tr><td>📋 Data Karyawan</td><td>Nama, NIK, jabatan, departemen, lokasi kerja, shift, kontak, status</td></tr>
+    <tr><td>🔗 Auto User</td><td>Bisa langsung buat akun login saat tambah karyawan (opsional)</td></tr>
+    <tr><td>🔑 Generate User</td><td>Buatkan akun login untuk karyawan yang sudah ada — kirim link reset password</td></tr>
+    <tr><td>🎖️ Auto Role</td><td>Role user otomatis mengikuti <code>role_name</code> di Job Position</td></tr>
+    <tr><td>📜 Audit Trail</td><td>Catatan siapa yang membuat & terakhir mengupdate data karyawan</td></tr>
+    <tr><td>📥 Import Excel</td><td>Import banyak karyawan sekaligus</td></tr>
+    <tr><td>📤 Export Excel</td><td>Export seluruh data karyawan</td></tr>
+  </table>
+</div>
+
+<!-- ─── 2 ───────────────────────────────────────────────────── -->
+
+<h2 id="akses">2. Akses & Permission</h2>
+
+<div class="card">
+  <h3>Permission Matrix — Employee</h3>
+  <table>
+    <tr><th>Permission</th><th>Superadmin</th><th>Leader</th><th>Operator</th></tr>
+    <tr><td><span class="perm-badge view">view employees</span></td><td>✅</td><td>✅</td><td>❌</td></tr>
+    <tr><td><span class="perm-badge create">create employees</span></td><td>✅</td><td>❌</td><td>❌</td></tr>
+    <tr><td><span class="perm-badge edit">edit employees</span></td><td>✅</td><td>❌</td><td>❌</td></tr>
+    <tr><td><span class="perm-badge delete">delete employees</span></td><td>✅</td><td>❌</td><td>❌</td></tr>
+  </table>
+</div>
+
+<div class="callout info">
+  <strong>🧑‍💼 Hanya Superadmin</strong>
+  Modul Employee hanya bisa dikelola penuh oleh <strong>Superadmin</strong>. Leader hanya bisa melihat (read-only). Operator tidak punya akses sama sekali.
+</div>
+
+<!-- ─── 3 ───────────────────────────────────────────────────── -->
+
+<h2 id="konsep">3. Konsep: Employee → User → Role</h2>
+
+<p>Ini adalah alur paling penting untuk dipahami:</p>
+
+<div class="flow">
+  <span class="flow-step">👤 Employee</span>
+  <span class="flow-arrow">→</span>
+  <span class="flow-step">🎖️ Job Position</span>
+  <span class="flow-arrow">→</span>
+  <span class="flow-step">🔑 Role (Spatie)</span>
+  <span class="flow-arrow">→</span>
+  <span class="flow-step">🔐 User Login</span>
+  <span class="flow-arrow">→</span>
+  <span class="flow-step">✅ Permission</span>
+</div>
+
+<div class="card">
+  <h3>Penjelasan Alur</h3>
+  <table>
+    <tr><th>Langkah</th><th>Keterangan</th></tr>
+    <tr><td>1. Employee dibuat</td><td>Data karyawan diisi: nama, NIK, jabatan, departemen, dll.</td></tr>
+    <tr><td>2. Job Position punya <code>role_name</code></td><td>Saat memilih jabatan, sistem lihat apakah jabatan itu punya role (contoh: <code>leader</code>, <code>operator</code>).</td></tr>
+    <tr><td>3. User dibuat (opsional)</td><td>Bisa langsung saat tambah karyawan (centang <em>Auto Create User</em>) atau nanti via tombol <strong>Generate User</strong>.</td></tr>
+    <tr><td>4. Role otomatis terpasang</td><td>User login langsung dapat role sesuai jabatan. Tidak perlu setting manual.</td></tr>
+    <tr><td>5. Permission mengikuti role</td><td>Role <code>leader</code> dapat permission leader, role <code>operator</code> dapat permission operator.</td></tr>
+  </table>
+</div>
+
+<div class="callout warning">
+  <strong>⚠️ Role superadmin tidak auto-assign</strong>
+  Untuk keamanan, role <code>superadmin</code> tidak bisa diberikan otomatis via Job Position. Harus diberikan manual melalui menu <strong>Setup → Users</strong> atau <strong>Setup → Roles</strong>.
+</div>
+
+<!-- ─── 4 ───────────────────────────────────────────────────── -->
+
+<h2 id="daftar">4. Melihat Daftar Karyawan</h2>
+
+<p>Akses: sidebar <strong>Master Data → Karyawan</strong> atau <code>/employees</code>.</p>
+
+<div class="screenshot">Screenshot: Halaman daftar karyawan — tabel: Nama, NIK, Jabatan, Departemen, Lokasi, Status, Aksi</div>
+
+<div class="card">
+  <h3>Fitur Halaman Daftar</h3>
+  <table>
+    <tr><th>Elemen</th><th>Fungsi</th></tr>
+    <tr><td>🔍 Search</td><td>Mencari berdasarkan nama atau NIK</td></tr>
+    <tr><td>➕ Tambah</td><td>Form tambah karyawan baru (permission <code>create employees</code>)</td></tr>
+    <tr><td>👁️ View</td><td>Detail karyawan + audit trail</td></tr>
+    <tr><td>✏️ Edit</td><td>Edit data karyawan (permission <code>edit employees</code>)</td></tr>
+    <tr><td>🔑 Generate User</td><td>Buat akun login untuk karyawan ini</td></tr>
+    <tr><td>🗑️ Hapus</td><td>Hapus karyawan (permission <code>delete employees</code>)</td></tr>
+    <tr><td>📥📤 Import/Export</td><td>Toolbar Excel</td></tr>
+  </table>
+</div>
+
+<!-- ─── 5 ───────────────────────────────────────────────────── -->
+
+<h2 id="tambah">5. Menambah Karyawan Baru</h2>
+
+<div class="callout info"><strong>🧑‍💼 Permission:</strong> <span class="perm-badge create">create employees</span></div>
+
+<ol class="steps">
+  <li>
+    <strong>Buka form tambah</strong>
+    <p>Klik <strong>Tambah Karyawan</strong> atau ke <code>/employees/create</code>.</p>
+  </li>
+  <li>
+    <strong>Isi data karyawan</strong>
+    <div class="card">
+      <h3>Field Form — Karyawan</h3>
+      <table>
+        <tr><th>Field</th><th>Wajib</th><th>Keterangan</th></tr>
+        <tr><td>Nama</td><td>✅ Ya</td><td>Nama lengkap karyawan.</td></tr>
+        <tr><td>NIK</td><td>Tidak</td><td>Nomor Induk Karyawan — opsional tapi disarankan diisi.</td></tr>
+        <tr><td>Jabatan</td><td>✅ Ya</td><td>Dropdown dari <strong>Job Position</strong>. Menentukan role user nanti.</td></tr>
+        <tr><td>Departemen</td><td>✅ Ya</td><td>Dropdown dari <strong>Department</strong>.</td></tr>
+        <tr><td>Lokasi Kerja</td><td>✅ Ya</td><td>Dropdown dari <strong>Work Location</strong>.</td></tr>
+        <tr><td>Shift</td><td>Tidak</td><td>Dropdown dari <strong>Shift</strong>.</td></tr>
+        <tr><td>Telepon</td><td>Tidak</td><td>Nomor kontak.</td></tr>
+        <tr><td>Email</td><td>Tidak*</td><td>Email untuk login. Wajib jika centang <em>Auto Create User</em>.</td></tr>
+        <tr><td>Status</td><td>Tidak</td><td>Aktif / Nonaktif. Default: Aktif.</td></tr>
+        <tr><td>Auto Create User</td><td>Tidak</td><td>Centang untuk langsung buat akun login. Email wajib diisi. Password acak akan dikirim.</td></tr>
+      </table>
+    </div>
+  </li>
+  <li>
+    <strong>Auto Create User</strong>
+    <p>Jika dicentang, sistem otomatis membuat user login dengan:</p>
+    <ul style="margin:.5rem 0 .5rem 1.5rem;color:var(--ink-muted);font-size:.92rem;">
+      <li>Email = email yang diisi di form</li>
+      <li>Password = random (dikirim via email/password reset)</li>
+      <li>Role = otomatis dari <code>role_name</code> di Job Position</li>
+    </ul>
+    <p>Jika tidak dicentang, kamu bisa membuat user nanti via tombol <strong>Generate User</strong>.</p>
+  </li>
+  <li><strong>Simpan</strong> — karyawan baru muncul di daftar.</li>
+</ol>
+
+<!-- ─── 6 ───────────────────────────────────────────────────── -->
+
+<h2 id="detail">6. Melihat Detail Karyawan</h2>
+
+<p>Akses dengan klik <strong>👁️ View</strong> di tabel daftar.</p>
+
+<div class="screenshot">Screenshot: Halaman detail karyawan — kartu info (kiri) + kartu audit trail (kanan)</div>
+
+<div class="card">
+  <h3>Informasi yang ditampilkan</h3>
+  <table>
+    <tr><th>Bagian</th><th>Isi</th></tr>
+    <tr><td>Kartu Informasi</td><td>Nama, NIK, Jabatan, Level Jabatan, Lokasi Kerja, Departemen, Shift, Telepon, Email, Status (Aktif/Nonaktif), Nama User Login</td></tr>
+    <tr><td>Kartu Audit Trail</td><td>Dibuat oleh (nama + timestamp), Diupdate oleh (nama + timestamp)</td></tr>
+    <tr><td>Tombol Edit</td><td>Hanya muncul jika punya permission <code>edit employees</code></td></tr>
+  </table>
+</div>
+
+<div class="callout info">
+  <strong>💡 User Login di Detail</strong>
+  Jika karyawan sudah punya akun user, nama & email user ditampilkan di bagian bawah kartu info: <em>"Nama User (email@domain.com)"</em>. Jika belum, tampil <em>"-"</em>.
+</div>
+
+<!-- ─── 7 ───────────────────────────────────────────────────── -->
+
+<h2 id="edit">7. Mengedit Karyawan</h2>
+
+<div class="callout info"><strong>🧑‍💼 Permission:</strong> <span class="perm-badge edit">edit employees</span></div>
+
+<ol class="steps">
+  <li>Klik <strong>✏️ Edit</strong> di tabel daftar atau halaman detail.</li>
+  <li>Ubah data yang diperlukan.</li>
+  <li>Jika mengubah <strong>Jabatan</strong> dan jabatan baru punya role berbeda, role user akan otomatis di-sync ulang. Karyawan harus logout & login ulang agar role baru berlaku.</li>
+  <li>Klik <strong>Simpan</strong>.</li>
+</ol>
+
+<div class="callout warning">
+  <strong>⚠️ Ganti jabatan = ganti role</strong>
+  Saat jabatan karyawan diubah, sistem otomatis meng-update role user-nya dan menghapus semua session aktif. Karyawan akan dipaksa login ulang dengan role baru.
+</div>
+
+<!-- ─── 8 ───────────────────────────────────────────────────── -->
+
+<h2 id="generate">8. Generate User Login</h2>
+
+<div class="callout info"><strong>🧑‍💼 Permission:</strong> <span class="perm-badge edit">edit employees</span></div>
+
+<p>Fitur ini membuatkan akun login untuk karyawan yang <strong>sudah ada tapi belum punya user</strong>.</p>
+
+<ol class="steps">
+  <li>Di halaman daftar karyawan, klik tombol <strong>🔑 Generate User</strong> pada baris karyawan (hanya muncul jika karyawan belum punya user).</li>
+  <li>Sistem akan:
+    <ul style="margin:.5rem 0 .5rem 1.5rem;color:var(--ink-muted);font-size:.92rem;">
+      <li>Membuat user baru dengan email dari data karyawan</li>
+      <li>Password random</li>
+      <li>Role otomatis dari Job Position</li>
+      <li>Mengirim link reset password ke email karyawan (jika mailer dikonfigurasi)</li>
+    </ul>
+  </li>
+  <li>Karyawan bisa login dengan email tersebut dan melakukan reset password.</li>
+</ol>
+
+<div class="callout warning">
+  <strong>⚠️ Email wajib diisi</strong>
+  Generate User akan gagal jika field <strong>Email</strong> di data karyawan kosong. Edit karyawan dan isi email terlebih dahulu.
+</div>
+
+<!-- ─── 9 ───────────────────────────────────────────────────── -->
+
+<h2 id="hapus">9. Menghapus Karyawan</h2>
+
+<div class="callout danger">
+  <strong>🧑‍💼 Permission:</strong> <span class="perm-badge delete">delete employees</span><br><br>
+  <strong>⚠️ Perhatian:</strong> Menghapus karyawan tidak otomatis menghapus user login-nya. User tetap bisa login meski data karyawan sudah dihapus. Nonaktifkan user secara terpisah jika diperlukan.
+</div>
+
+<ol class="steps">
+  <li>Klik <strong>🗑️ Hapus</strong> pada baris karyawan.</li>
+  <li>Konfirmasi dialog.</li>
+</ol>
+
+<!-- ─── 10 ──────────────────────────────────────────────────── -->
+
+<h2 id="import">10. Import & Export</h2>
+
+<div class="card">
+  <h3>Import Karyawan</h3>
+  <p><strong>Permission:</strong> <span class="perm-badge create">create employees</span></p>
+  <p>Download template, isi data, upload via <strong>Import/Export → Import</strong>. Kolom template: nama, nik, jabatan, departemen, lokasi_kerja, shift, telepon, email, status.</p>
+</div>
+
+<div class="card">
+  <h3>Export Karyawan</h3>
+  <p><strong>Permission:</strong> <span class="perm-badge view">view employees</span></p>
+  <p>Klik <strong>Import/Export → Export</strong>. File <code>employees-export.xlsx</code> otomatis terunduh.</p>
+</div>
+
+<!-- ─── 11 ──────────────────────────────────────────────────── -->
+
+<h2 id="troubleshooting">11. Troubleshooting</h2>
+
+<div class="card">
+  <h3>🚫 Error 403</h3>
+  <p><strong>Penyebab:</strong> Hanya Superadmin yang bisa kelola karyawan. Leader hanya read-only.</p>
+</div>
+
+<div class="card">
+  <h3>🔑 Generate User gagal</h3>
+  <p><strong>Penyebab:</strong> Email karyawan kosong, atau email sudah dipakai user lain.</p>
+  <p><strong>Solusi:</strong> Isi email unik di data karyawan, lalu coba generate lagi.</p>
+</div>
+
+<div class="card">
+  <h3>🔄 Role tidak berubah setelah edit jabatan</h3>
+  <p><strong>Penyebab:</strong> Job Position yang baru tidak punya <code>role_name</code>.</p>
+  <p><strong>Solusi:</strong> Edit Job Position dan pilih role di dropdown <strong>Role Name</strong>.</p>
+</div>
+
+<div class="card">
+  <h3>📧 Karyawan tidak terima email reset password</h3>
+  <p><strong>Penyebab:</strong> Mailer belum dikonfigurasi (production pakai <code>MAIL_MAILER=log</code>).</p>
+  <p><strong>Solusi:</strong> Konfigurasi SMTP di <code>.env.prod</code>, atau superadmin bisa reset password manual via <strong>Setup → Users</strong>.</p>
+</div>
+
+<div class="card">
+  <h3>👻 User tetap bisa login setelah karyawan dihapus</h3>
+  <p><strong>Penyebab:</strong> User dan Employee adalah entitas terpisah. Hapus karyawan tidak menghapus user.</p>
+  <p><strong>Solusi:</strong> Nonaktifkan atau hapus user secara manual di <strong>Setup → Users</strong>.</p>
+</div>
+
+<hr style="margin:3rem 0 1.5rem; border:none; border-top:1px solid var(--border)">
+
+<footer style="text-align:center; color:var(--ink-muted); font-size:.82rem;">
+  <p>WMS MAW — Employee Management Manual Book v1.0</p>
+  <p>⬅️ <a href="referensi-pendukung.html">Referensi Pendukung</a> &nbsp;|&nbsp; ➡️ <a href="#">Shift, Delivery Slot, Shopping Location</a> (selanjutnya)</p>
+</footer>

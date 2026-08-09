@@ -1,0 +1,333 @@
+<title>Appendix — WMS MAW Manual Book</title>
+
+<style>
+  :root {
+    --ink: #1e293b; --ink-muted: #64748b;
+    --ground: #f8f9fb; --surface: #ffffff;
+    --border: #e2e8f0; --border-strong: #cbd5e1;
+    --accent: #52525b; --accent-soft: #fafafa;
+    --primary: #3f3f46; --primary-soft: #fafafa;
+    --success: #0d9488; --success-soft: #f0fdfa;
+    --danger: #dc2626; --danger-soft: #fef2f2;
+    --warning: #d97706; --warning-soft: #fffbeb;
+    --code-bg: #f1f5f9;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --radius: 8px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #e2e8f0; --ink-muted: #94a3b8;
+      --ground: #0f172a; --surface: #1e293b;
+      --border: #334155; --border-strong: #475569;
+      --accent: #a1a1aa; --accent-soft: #18181b;
+      --primary: #d4d4d8; --primary-soft: #18181b;
+      --success: #2dd4bf; --success-soft: #0d2e2b;
+      --danger: #f87171; --danger-soft: #2d1414;
+      --warning: #fbbf24; --warning-soft: #292112;
+      --code-bg: #1e293b; --shadow: 0 1px 3px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #e2e8f0; --ink-muted: #94a3b8;
+    --ground: #0f172a; --surface: #1e293b;
+    --border: #334155; --border-strong: #475569;
+    --accent: #a1a1aa; --accent-soft: #18181b;
+    --primary: #d4d4d8; --primary-soft: #18181b;
+    --success: #2dd4bf; --success-soft: #0d2e2b;
+    --danger: #f87171; --danger-soft: #2d1414;
+    --warning: #fbbf24; --warning-soft: #292112;
+    --code-bg: #1e293b; --shadow: 0 1px 3px rgba(0,0,0,.3);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; font-size: 16px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: var(--ground); color: var(--ink); line-height: 1.7; max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem 6rem; }
+  h1 { font-size: 1.9rem; font-weight: 700; letter-spacing: -.02em; margin-bottom: .25rem; color: var(--primary); }
+  h2 { font-size: 1.4rem; font-weight: 650; margin: 2.5rem 0 1rem; padding-bottom: .5rem; border-bottom: 2px solid var(--border); }
+  h3 { font-size: 1.15rem; font-weight: 600; margin: 1.75rem 0 .6rem; }
+  p { margin: .75rem 0; color: var(--ink-muted); } strong { color: var(--ink); }
+  a { color: var(--primary); } a:hover { text-decoration: underline; }
+  header { margin-bottom: 2rem; }
+  .meta { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: .5rem; }
+  .meta span { font-size: .8rem; color: var(--ink-muted); background: var(--surface); border: 1px solid var(--border); padding: .2rem .7rem; border-radius: 99px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin: 1.25rem 0; box-shadow: var(--shadow); } .card h3 { margin-top: 0; }
+  .callout { border-left: 4px solid; border-radius: 0 var(--radius) var(--radius) 0; padding: .9rem 1.2rem; margin: 1.25rem 0; font-size: .92rem; }
+  .callout.info    { border-color: var(--primary);  background: var(--primary-soft);  }
+  .callout.warning { border-color: var(--warning); background: var(--warning-soft); }
+  .callout.danger  { border-color: var(--danger);  background: var(--danger-soft);  }
+  .callout.success { border-color: var(--success); background: var(--success-soft); }
+  .callout strong { display: block; margin-bottom: .3rem; }
+  ol.steps { counter-reset: step; list-style: none; padding: 0; }
+  ol.steps li { counter-increment: step; position: relative; padding-left: 3rem; margin: 1.5rem 0; }
+  ol.steps li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 2rem; height: 2rem; background: var(--primary-soft); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .85rem; }
+  .screenshot { background: var(--border); border: 2px dashed var(--border-strong); border-radius: var(--radius); padding: 2.5rem; text-align: center; color: var(--ink-muted); font-size: .85rem; margin: 1rem 0; } .screenshot::before { content: "📸 "; font-size: 2rem; display: block; margin-bottom: .5rem; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .9rem; }
+  th, td { padding: .65rem .9rem; text-align: left; border-bottom: 1px solid var(--border); }
+  th { font-weight: 600; color: var(--ink); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
+  td { color: var(--ink-muted); } tr:last-child td { border-bottom: none; }
+  code, kbd { background: var(--code-bg); border: 1px solid var(--border); border-radius: 4px; padding: .15em .45em; font-family: "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace; font-size: .88em; }
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.2rem; overflow-x: auto; font-size: .85em; line-height: 1.6; color: var(--ink); margin: 1rem 0; }
+  pre code { background: none; border: none; padding: 0; }
+
+  nav.toc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 2rem; }
+  nav.toc h3 { margin-top: 0; font-size: .85rem; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-muted); }
+  nav.toc ol { list-style: none; padding: 0; margin: .5rem 0 0; } nav.toc ol li { margin: .35rem 0; font-size: .9rem; }
+  nav.toc ol li a { color: var(--ink-muted); } nav.toc ol li a:hover { color: var(--primary); text-decoration: none; }
+  ol.inner-toc { list-style: disc; padding-left: 1.5rem; margin: .3rem 0; }
+  ol.inner-toc li { font-size: .85rem; margin: .2rem 0; }
+  @media (max-width: 640px) { body { padding: 1rem; } h1 { font-size: 1.5rem; } h2 { font-size: 1.2rem; } .card { padding: 1rem; } pre { font-size: .78em; } }
+</style>
+
+<header>
+  <h1>📋 Appendix</h1>
+  <p>Panduan referensi: Import/Export Guide (umum), Dashboard Overview, dan Deployment & Backup.</p>
+  <div class="meta">
+    <span>📖 Manual Book</span>
+    <span>🧑‍💼 Semua Role</span>
+    <span>📅 2026-08-09</span>
+    <span>🔖 v1.0</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <h3>Daftar Isi</h3>
+  <ol>
+    <li><strong>Import/Export Guide</strong>
+      <ol class="inner-toc"><li><a href="#import-export-overview">Overview</a></li><li><a href="#import-flow">Alur Import</a></li><li><a href="#export-flow">Alur Export</a></li><li><a href="#import-tips">Tips & Troubleshooting</a></li></ol>
+    </li>
+    <li><strong>Dashboard Overview</strong>
+      <ol class="inner-toc"><li><a href="#dashboard-overview">Navigasi & Widget</a></li><li><a href="#notifications">Notifikasi</a></li></ol>
+    </li>
+    <li><strong>Deployment & Backup</strong>
+      <ol class="inner-toc"><li><a href="#deploy">Deploy ke Production</a></li><li><a href="#backup">Backup Database & Storage</a></li><li><a href="#maintenance">Maintenance Mode</a></li></ol>
+    </li>
+  </ol>
+</nav>
+
+<!-- ═══════════ 1. IMPORT/EXPORT ═══════════ -->
+
+<h2 id="import-export-overview">1. Import/Export Guide</h2>
+
+<p>Hampir semua modul Master Data mendukung <strong>import dari Excel</strong> dan <strong>export ke Excel</strong>. Pola operasinya seragam di semua modul. Halaman ini menjelaskan alur umum yang berlaku untuk semua modul.</p>
+
+<div class="card">
+  <h3>Modul dengan Import/Export</h3>
+  <table>
+    <tr><th>Modul</th><th>Import</th><th>Export</th><th>Permission Import</th></tr>
+    <tr><td>Suppliers</td><td>✅</td><td>✅</td><td><code>create suppliers</code></td></tr>
+    <tr><td>Products</td><td>✅</td><td>✅</td><td><code>create products</code></td></tr>
+    <tr><td>Racks</td><td>✅</td><td>✅</td><td><code>create racks</code></td></tr>
+    <tr><td>Vehicle Models</td><td>✅</td><td>✅</td><td><code>create vehicle models</code></td></tr>
+    <tr><td>Product Categories</td><td>✅</td><td>✅</td><td><code>create product categories</code></td></tr>
+    <tr><td>Job Positions</td><td>✅</td><td>✅</td><td><code>create job positions</code></td></tr>
+    <tr><td>Work Locations</td><td>✅</td><td>✅</td><td><code>create work locations</code></td></tr>
+    <tr><td>Departments</td><td>✅</td><td>✅</td><td><code>create departments</code></td></tr>
+    <tr><td>Employees</td><td>✅</td><td>✅</td><td><code>create employees</code></td></tr>
+    <tr><td>Shifts</td><td>✅</td><td>✅</td><td><code>create shifts</code></td></tr>
+    <tr><td>Cycles</td><td>✅</td><td>✅</td><td><code>import cycles</code></td></tr>
+    <tr><td>Users</td><td>✅</td><td>✅</td><td><code>manage users</code></td></tr>
+    <tr><td colspan="4" style="text-align:center;color:var(--ink-muted);font-style:italic;">Shopping Locations, Delivery Slots, Stocks, Shopping — tidak ada import/export</td></tr>
+  </table>
+</div>
+
+<h3 id="import-flow">Alur Import</h3>
+
+<ol class="steps">
+  <li>
+    <strong>Download Template</strong>
+    <p>Di halaman daftar modul, klik <strong>📥 Import/Export → Download Template</strong>. File Excel template berisi header kolom yang sesuai format import modul tersebut.</p>
+  </li>
+  <li>
+    <strong>Isi data di template</strong>
+    <p>Buka file Excel, isi data sesuai kolom. Kolom <strong>wajib</strong> tidak boleh kosong. Simpan sebagai <code>.xlsx</code> atau <code>.csv</code>.</p>
+  </li>
+  <li>
+    <strong>Upload & Preview</strong>
+    <p>Klik <strong>Import/Export → Import</strong>. Pilih file. Modal preview muncul menampilkan data yang akan diimpor.</p>
+    <div class="screenshot">Screenshot: Import Modal — tabel preview dengan baris valid & error</div>
+  </li>
+  <li>
+    <strong>Review error</strong>
+    <p>Baris yang bermasalah (nama duplikat, field wajib kosong, format salah) akan <strong>ditandai</strong>. Baris ini akan di-skip saat import.</p>
+  </li>
+  <li>
+    <strong>Konfirmasi Import</strong>
+    <p>Klik <strong>Import</strong>. Halaman refresh dan data baru muncul di daftar.</p>
+  </li>
+</ol>
+
+<h3 id="export-flow">Alur Export</h3>
+<ol class="steps">
+  <li>Di halaman daftar modul, klik <strong>📥 Import/Export → Export</strong>.</li>
+  <li>Browser otomatis mengunduh file Excel (<code>[module]-export.xlsx</code>).</li>
+  <li>Export mengambil <strong>seluruh data</strong> — tidak terpengaruh filter atau pencarian yang sedang aktif (kecuali modul Report: export mengikuti filter).</li>
+</ol>
+
+<h3 id="import-tips">Tips & Troubleshooting Import</h3>
+
+<div class="card">
+  <h3>✅ Best Practices</h3>
+  <ul style="margin:.5rem 0 .5rem 1.5rem;color:var(--ink-muted);font-size:.92rem;">
+    <li>Selalu gunakan <strong>template resmi</strong> — jangan buat file dari nol.</li>
+    <li>Isi data referensi (supplier, kategori, model) dulu SEBELUM import produk.</li>
+    <li>Nama referensi (supplier, model, kategori) bersifat <strong>case-sensitive</strong> — tulis persis seperti di sistem.</li>
+    <li>Import dalam batch kecil (max 100-200 baris) untuk menghindari timeout.</li>
+    <li>Test import dengan 2-3 baris dulu sebelum import massal.</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h3>❌ Error Umum</h3>
+  <table>
+    <tr><th>Error</th><th>Penyebab</th><th>Solusi</th></tr>
+    <tr><td>Baris diskip tanpa pesan</td><td>Data duplikat (unique constraint)</td><td>Cek apakah nama/part number sudah ada di database</td></tr>
+    <tr><td>"Supplier tidak ditemukan"</td><td>Nama supplier di Excel tidak cocok dengan di sistem</td><td>Pastikan penulisan persis sama (case-sensitive)</td></tr>
+    <tr><td>File tidak terbaca</td><td>Format file salah</td><td>Gunakan .xlsx atau .csv. Jangan .xls (format lama)</td></tr>
+    <tr><td>Import button tidak muncul</td><td>Tidak punya permission create</td><td>Hubungi superadmin</td></tr>
+  </table>
+</div>
+
+<!-- ═══════════ 2. DASHBOARD ═══════════ -->
+
+<h2 id="dashboard-overview">2. Dashboard Overview</h2>
+
+<p>Dashboard adalah halaman pertama yang muncul setelah login (<code>/dashboard</code>). Menampilkan ringkasan aktivitas gudang.</p>
+
+<div class="screenshot">Screenshot: Dashboard — widget recent cycles, pending cycles, stat cards, quick links</div>
+
+<div class="card">
+  <h3>Widget Dashboard</h3>
+  <table>
+    <tr><th>Widget</th><th>Deskripsi</th></tr>
+    <tr><td>Recent Cycles</td><td>Cycle penerimaan terbaru — supplier, status, jumlah item</td></tr>
+    <tr><td>Pending Cycles</td><td>Cycle dengan status <strong>Draft</strong> — perlu diproses</td></tr>
+    <tr><td>Quick Links</td><td>Link cepat ke modul utama: Suppliers, Products, Cycles</td></tr>
+  </table>
+</div>
+
+<div class="callout info">
+  <strong>💡 Permission:</strong> <code>view dashboard</code> — semua role (superadmin, leader, operator) punya akses.
+</div>
+
+<h3 id="notifications">Notifikasi</h3>
+
+<p>Sistem punya fitur notifikasi real-time via <strong>Laravel Reverb</strong> (WebSocket). Icon lonceng 🔔 di header. Notifikasi muncul untuk event seperti:</p>
+
+<ul style="margin:.5rem 0 .5rem 1.5rem;color:var(--ink-muted);font-size:.92rem;">
+  <li>Cycle selesai diterima</li>
+  <li>Shopping selesai dikirim</li>
+  <li>Notifikasi sistem / test broadcast</li>
+</ul>
+
+<p>Klik icon lonceng untuk melihat daftar notifikasi. Klik <strong>Tandai semua sudah dibaca</strong> untuk menghapus badge unread.</p>
+
+<!-- ═══════════ 3. DEPLOYMENT ═══════════ -->
+
+<h2 id="deploy">3. Deployment & Backup</h2>
+
+<p>Bagian ini untuk <strong>Admin IT / DevOps</strong> yang mengelola server production.</p>
+
+<div class="card">
+  <h3>Arsitektur Production</h3>
+  <table>
+    <tr><th>Komponen</th><th>Teknologi</th></tr>
+    <tr><td>Web Server</td><td>FrankenPHP (Laravel Octane)</td></tr>
+    <tr><td>Database</td><td>MySQL 8.0</td></tr>
+    <tr><td>Cache</td><td>Redis</td></tr>
+    <tr><td>Queue</td><td>Database (Laravel Queue)</td></tr>
+    <tr><td>WebSocket</td><td>Laravel Reverb</td></tr>
+    <tr><td>Reverse Proxy</td><td>Nginx (Alpine)</td></tr>
+    <tr><td>Orchestration</td><td>Docker Compose</td></tr>
+  </table>
+</div>
+
+<h3>Deploy ke Production</h3>
+
+<div class="card">
+  <h3>🚀 Quick Update (30-90 detik)</h3>
+  <p>Untuk perubahan kode PHP + React/Vite:</p>
+  <pre><code>./deploy-production.sh --update --with-assets</code></pre>
+  <p>Ini otomatis: maintenance mode → copy kode → build assets → migrate → clear cache → reload workers → maintenance off.</p>
+</div>
+
+<div class="card">
+  <h3>🔄 Smart Rebuild (2-3 menit)</h3>
+  <p>Untuk perubahan <code>composer.json</code> atau <code>package.json</code>:</p>
+  <pre><code>./deploy-production.sh --rebuild</code></pre>
+</div>
+
+<div class="card">
+  <h3>💥 Force Rebuild (10 menit)</h3>
+  <p>Untuk perubahan Dockerfile atau infrastruktur:</p>
+  <pre><code>./deploy-production.sh --build</code></pre>
+</div>
+
+<div class="callout warning">
+  <strong>⚠️ Setelah seeder, selalu reload worker</strong>
+  Jika kamu menjalankan seeder di production (misal <code>WmsRoleSeeder</code>), Octane worker menyimpan permission di memory. Jalankan ini setelah seeder:
+  <pre><code>docker compose -p wms-wma-prod -f docker-compose.prod.yml exec app php artisan optimize:clear
+docker compose -p wms-wma-prod -f docker-compose.prod.yml exec app php artisan config:cache
+docker compose -p wms-wma-prod -f docker-compose.prod.yml exec app php artisan route:cache
+docker compose -p wms-wma-prod -f docker-compose.prod.yml restart app</code></pre>
+</div>
+
+<h3 id="backup">Backup Database & Storage</h3>
+
+<div class="card">
+  <h3>Backup Storage Volume</h3>
+  <pre><code># Backup storage (uploads, logs, framework) ke ./backups/
+./deploy-production.sh --backup-storage
+
+# Cek isi volume
+./deploy-production.sh --check-storage</code></pre>
+</div>
+
+<div class="card">
+  <h3>Backup Database (manual)</h3>
+  <pre><code># Export database dari container MySQL
+docker compose -p wms-wma-prod -f docker-compose.prod.yml exec mysql \
+  mysqldump -u wms_user -p wms_wma > backup_$(date +%Y%m%d).sql</code></pre>
+</div>
+
+<div class="callout info">
+  <strong>💡 Spatie Backup Package</strong>
+  Sistem sudah terpasang <code>spatie/laravel-backup</code>. Backup otomatis bisa dijadwalkan via <code>BACKUP_SCHEDULE_ENABLED=true</code> di <code>.env.prod</code>. File backup tersimpan di <code>storage/app/backups/</code>.
+</div>
+
+<h3 id="maintenance">Maintenance Mode</h3>
+
+<div class="card">
+  <h3>Aktifkan Maintenance Mode</h3>
+  <pre><code>docker compose -p wms-wma-prod -f docker-compose.prod.yml exec app php artisan down --retry=5 --render="errors::503"</code></pre>
+  <p>Pengunjung akan melihat halaman 503. Deploy script otomatis mengaktifkan ini.</p>
+</div>
+
+<div class="card">
+  <h3>Nonaktifkan Maintenance Mode</h3>
+  <pre><code>docker compose -p wms-wma-prod -f docker-compose.prod.yml exec app php artisan up</code></pre>
+</div>
+
+<div class="card">
+  <h3>Command Berguna Lainnya</h3>
+  <table>
+    <tr><th>Command</th><th>Fungsi</th></tr>
+    <tr><td><code>docker compose ... ps</code></td><td>Status semua container</td></tr>
+    <tr><td><code>docker compose ... logs -f app</code></td><td>Streaming log aplikasi</td></tr>
+    <tr><td><code>docker compose ... restart app</code></td><td>Restart container app</td></tr>
+    <tr><td><code>docker compose ... exec app php artisan ...</code></td><td>Jalankan artisan command</td></tr>
+    <tr><td><code>./deploy-production.sh --down</code></td><td>Stop semua container production</td></tr>
+  </table>
+</div>
+
+<hr style="margin:3rem 0 1.5rem; border:none; border-top:1px solid var(--border)">
+
+<footer style="text-align:center; color:var(--ink-muted); font-size:.82rem;">
+  <p>WMS MAW — Appendix Manual Book v1.0</p>
+  <p>🎉 <strong>Semua Phase Selesai!</strong></p>
+  <p>
+    <a href="supplier-management.html">Supplier</a> · <a href="product-management.html">Product</a> · <a href="rack-management.html">Rack</a> ·
+    <a href="referensi-pendukung.html">Referensi</a> · <a href="employee-management.html">Employee</a> ·
+    <a href="shift-deliveryslot-shoppinglocation.html">Shift/Slot/Loc</a> ·
+    <a href="transactions.html">Transactions</a> · <a href="reports-monitoring.html">Reports</a> ·
+    <a href="system-administration.html">Admin</a>
+  </p>
+</footer>

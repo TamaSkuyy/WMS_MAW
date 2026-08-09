@@ -1,0 +1,257 @@
+<title>Shift, Delivery Slot & Shopping Location — WMS MAW Manual Book</title>
+
+<style>
+  :root {
+    --ink: #1e293b; --ink-muted: #64748b;
+    --ground: #f8f9fb; --surface: #ffffff;
+    --border: #e2e8f0; --border-strong: #cbd5e1;
+    --accent: #db2777; --accent-soft: #fdf2f8;
+    --primary: #be185d; --primary-soft: #fdf2f8;
+    --success: #0d9488; --success-soft: #f0fdfa;
+    --danger: #dc2626; --danger-soft: #fef2f2;
+    --warning: #d97706; --warning-soft: #fffbeb;
+    --code-bg: #f1f5f9;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --radius: 8px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #e2e8f0; --ink-muted: #94a3b8;
+      --ground: #0f172a; --surface: #1e293b;
+      --border: #334155; --border-strong: #475569;
+      --accent: #f472b6; --accent-soft: #2d1428;
+      --primary: #f9a8d4; --primary-soft: #2d1428;
+      --success: #2dd4bf; --success-soft: #0d2e2b;
+      --danger: #f87171; --danger-soft: #2d1414;
+      --warning: #fbbf24; --warning-soft: #292112;
+      --code-bg: #1e293b; --shadow: 0 1px 3px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #e2e8f0; --ink-muted: #94a3b8;
+    --ground: #0f172a; --surface: #1e293b;
+    --border: #334155; --border-strong: #475569;
+    --accent: #f472b6; --accent-soft: #2d1428;
+    --primary: #f9a8d4; --primary-soft: #2d1428;
+    --success: #2dd4bf; --success-soft: #0d2e2b;
+    --danger: #f87171; --danger-soft: #2d1414;
+    --warning: #fbbf24; --warning-soft: #292112;
+    --code-bg: #1e293b; --shadow: 0 1px 3px rgba(0,0,0,.3);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; font-size: 16px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: var(--ground); color: var(--ink); line-height: 1.7; max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem 6rem; }
+  h1 { font-size: 1.9rem; font-weight: 700; letter-spacing: -.02em; margin-bottom: .25rem; color: var(--primary); }
+  h2 { font-size: 1.4rem; font-weight: 650; margin: 2.5rem 0 1rem; padding-bottom: .5rem; border-bottom: 2px solid var(--border); }
+  h3 { font-size: 1.15rem; font-weight: 600; margin: 1.75rem 0 .6rem; }
+  p { margin: .75rem 0; color: var(--ink-muted); } strong { color: var(--ink); }
+  a { color: var(--primary); } a:hover { text-decoration: underline; }
+  header { margin-bottom: 2rem; }
+  .meta { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: .5rem; }
+  .meta span { font-size: .8rem; color: var(--ink-muted); background: var(--surface); border: 1px solid var(--border); padding: .2rem .7rem; border-radius: 99px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin: 1.25rem 0; box-shadow: var(--shadow); } .card h3 { margin-top: 0; }
+  .callout { border-left: 4px solid; border-radius: 0 var(--radius) var(--radius) 0; padding: .9rem 1.2rem; margin: 1.25rem 0; font-size: .92rem; }
+  .callout.info    { border-color: var(--primary);  background: var(--primary-soft);  }
+  .callout.warning { border-color: var(--warning); background: var(--warning-soft); }
+  .callout.danger  { border-color: var(--danger);  background: var(--danger-soft);  }
+  .callout strong { display: block; margin-bottom: .3rem; }
+  ol.steps { counter-reset: step; list-style: none; padding: 0; }
+  ol.steps li { counter-increment: step; position: relative; padding-left: 3rem; margin: 1.5rem 0; }
+  ol.steps li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 2rem; height: 2rem; background: var(--primary-soft); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .85rem; }
+  .screenshot { background: var(--border); border: 2px dashed var(--border-strong); border-radius: var(--radius); padding: 2.5rem; text-align: center; color: var(--ink-muted); font-size: .85rem; margin: 1rem 0; } .screenshot::before { content: "📸 "; font-size: 2rem; display: block; margin-bottom: .5rem; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .9rem; }
+  th, td { padding: .65rem .9rem; text-align: left; border-bottom: 1px solid var(--border); }
+  th { font-weight: 600; color: var(--ink); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
+  td { color: var(--ink-muted); } tr:last-child td { border-bottom: none; }
+  code, kbd { background: var(--code-bg); border: 1px solid var(--border); border-radius: 4px; padding: .15em .45em; font-family: "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace; font-size: .88em; }
+  .perm-badge { display: inline-block; font-size: .75rem; font-weight: 600; padding: .2em .6em; border-radius: 4px; margin: .15rem; }
+  .perm-badge.view   { background: #dbeafe; color: #1e40af; }
+  .perm-badge.create { background: #d1fae5; color: #065f46; }
+  .perm-badge.edit   { background: #fef3c7; color: #92400e; }
+  .perm-badge.delete { background: #fee2e2; color: #991b1b; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .perm-badge.view { background: #172033; color: #93c5fd; } :root:not([data-theme="light"]) .perm-badge.create { background: #0d2e1c; color: #6ee7b7; } :root:not([data-theme="light"]) .perm-badge.edit { background: #292112; color: #fcd34d; } :root:not([data-theme="light"]) .perm-badge.delete { background: #2d1414; color: #fca5a5; } }
+  :root[data-theme="dark"] .perm-badge.view { background: #172033; color: #93c5fd; } :root[data-theme="dark"] .perm-badge.create { background: #0d2e1c; color: #6ee7b7; } :root[data-theme="dark"] .perm-badge.edit { background: #292112; color: #fcd34d; } :root[data-theme="dark"] .perm-badge.delete { background: #2d1414; color: #fca5a5; }
+  nav.toc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 2rem; }
+  nav.toc h3 { margin-top: 0; font-size: .85rem; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-muted); }
+  nav.toc ol { list-style: none; padding: 0; margin: .5rem 0 0; } nav.toc ol li { margin: .35rem 0; font-size: .9rem; }
+  nav.toc ol li a { color: var(--ink-muted); } nav.toc ol li a:hover { color: var(--primary); text-decoration: none; }
+  @media (max-width: 640px) { body { padding: 1rem; } h1 { font-size: 1.5rem; } h2 { font-size: 1.2rem; } .card { padding: 1rem; } }
+</style>
+
+<header>
+  <h1>🕒 Shift, Delivery Slot & Shopping Location</h1>
+  <p>Panduan modul konfigurasi operasional: shift kerja, slot pengiriman, dan lokasi tujuan shopping.</p>
+  <div class="meta">
+    <span>📖 Manual Book</span>
+    <span>🧑‍💼 Leader & Admin</span>
+    <span>📅 2026-08-09</span>
+    <span>🔖 v1.0</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <h3>Daftar Isi</h3>
+  <ol>
+    <li><a href="#shift">1. Shift (Shift Kerja)</a></li>
+    <li><a href="#delivery-slot">2. Delivery Slot (Slot Pengiriman)</a></li>
+    <li><a href="#shopping-location">3. Shopping Location (Lokasi Tujuan)</a></li>
+    <li><a href="#troubleshooting">4. Troubleshooting</a></li>
+  </ol>
+</nav>
+
+<!-- ═══════════ 1. SHIFT ═══════════ -->
+
+<h2 id="shift">1. Shift (Shift Kerja)</h2>
+
+<p>Mendefinisikan shift kerja untuk penjadwalan karyawan. Contoh: <em>Pagi (06:00–14:00)</em>, <em>Siang (14:00–22:00)</em>, <em>Malam (22:00–06:00)</em>. Akses: sidebar <strong>Master Data → Shift</strong> atau <code>/shifts</code>.</p>
+
+<div class="card">
+  <h3>Permission — Shift</h3>
+  <table>
+    <tr><th>Permission</th><th>Superadmin</th><th>Leader</th><th>Operator</th></tr>
+    <tr><td><span class="perm-badge view">view shifts</span></td><td>✅</td><td>✅</td><td>✅</td></tr>
+    <tr><td><span class="perm-badge create">create shifts</span></td><td>✅</td><td>❌</td><td>❌</td></tr>
+    <tr><td><span class="perm-badge edit">edit shifts</span></td><td>✅</td><td>❌</td><td>❌</td></tr>
+    <tr><td><span class="perm-badge delete">delete shifts</span></td><td>✅</td><td>❌</td><td>❌</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h3>Field Form — Shift</h3>
+  <table>
+    <tr><th>Field</th><th>Wajib</th><th>Keterangan</th></tr>
+    <tr><td>Nama</td><td>✅ Ya</td><td>Nama shift. Contoh: <code>Pagi</code>, <code>Siang</code>. Unik, maks 100 karakter.</td></tr>
+    <tr><td>Kode</td><td>✅ Ya</td><td>Kode singkat. Contoh: <code>P</code>, <code>S</code>, <code>M</code>. Unik, maks 10 karakter.</td></tr>
+    <tr><td>Jam Mulai</td><td>✅ Ya</td><td>Format: <code>HH:MM</code>. Contoh: <code>06:00</code>.</td></tr>
+    <tr><td>Jam Selesai</td><td>✅ Ya</td><td>Format: <code>HH:MM</code>. Contoh: <code>14:00</code>.</td></tr>
+    <tr><td>Status</td><td>✅ Ya</td><td><code>Aktif</code> atau <code>Nonaktif</code>. Shift nonaktif tidak muncul di dropdown.</td></tr>
+  </table>
+</div>
+
+<div class="screenshot">Screenshot: Halaman daftar Shift — tabel: Nama, Kode, Jam Mulai, Jam Selesai, Status (badge hijau/merah), Aksi</div>
+
+<div class="callout info">
+  <strong>💡 Shift digunakan di modul Employee</strong>
+  Setiap karyawan bisa dikaitkan dengan satu shift. Data shift hanya referensi — tidak ada logika absensi atau penjadwalan otomatis.
+</div>
+
+<!-- ═══════════ 2. DELIVERY SLOT ═══════════ -->
+
+<h2 id="delivery-slot">2. Delivery Slot (Slot Pengiriman)</h2>
+
+<p>Mendefinisikan slot waktu pengiriman untuk menjadwalkan kedatangan supplier. Slot dikaitkan ke supplier dan ditampilkan di <strong>Delivery Monitor</strong> (TV display). Akses: sidebar <strong>Master Data → Jadwal Slot Pengiriman</strong> atau <code>/delivery-slots</code>.</p>
+
+<div class="card">
+  <h3>Permission — Delivery Slot</h3>
+  <table>
+    <tr><th>Permission</th><th>Superadmin</th><th>Leader</th><th>Operator</th></tr>
+    <tr><td><span class="perm-badge view">view delivery slots</span></td><td>✅</td><td>✅</td><td>❌</td></tr>
+    <tr><td><span class="perm-badge edit">edit delivery slots</span></td><td>✅</td><td>❌</td><td>❌</td></tr>
+  </table>
+</div>
+
+<div class="callout warning">
+  <strong>⚠️ Modul ini hanya bisa VIEW + EDIT</strong>
+  Tidak ada fitur tambah (create) dan hapus (delete) untuk Delivery Slot. Data slot biasanya sudah di-seed langsung ke database. Kamu hanya bisa mengubah label atau waktu slot yang sudah ada.
+</div>
+
+<div class="card">
+  <h3>Field Form — Delivery Slot (Edit only)</h3>
+  <table>
+    <tr><th>Field</th><th>Keterangan</th></tr>
+    <tr><td>Slot Number</td><td>Nomor urut slot. Format: <code>C-01</code>, <code>C-02</code>. Read-only — tidak bisa diubah.</td></tr>
+    <tr><td>Time Start</td><td>Jam mulai slot. Format: <code>HH:MM:SS</code>.</td></tr>
+    <tr><td>Time End</td><td>Jam selesai slot.</td></tr>
+    <tr><td>Label</td><td>Nama deskriptif. Contoh: <code>Pagi (06:00-08:00)</code>.</td></tr>
+  </table>
+</div>
+
+<div class="screenshot">Screenshot: Halaman daftar Delivery Slot — tabel: Slot Number, Time Start, Time End, Label, Aksi (Edit saja)</div>
+
+<div class="callout info">
+  <strong>🔗 Kaitan dengan modul lain</strong>
+  <ul>
+    <li><strong>Supplier Edit</strong> — kamu bisa mencentang slot mana yang tersedia untuk supplier tertentu.</li>
+    <li><strong>Delivery Monitor</strong> — TV display yang menampilkan jadwal supplier berdasarkan slot. Supplier dengan slot tertentu akan muncul di monitor sesuai waktunya.</li>
+  </ul>
+</div>
+
+<!-- ═══════════ 3. SHOPPING LOCATION ═══════════ -->
+
+<h2 id="shopping-location">3. Shopping Location (Lokasi Tujuan)</h2>
+
+<p>Mendaftarkan lokasi mitra/tujuan pengiriman barang. Digunakan saat membuat transaksi <strong>Shopping</strong> (pengiriman keluar). Contoh: <em>Toko Mitra A</em>, <em>Gudang Cabang B</em>. Akses: sidebar <strong>Master Data → Lokasi Tujuan</strong> atau <code>/shopping-locations</code>.</p>
+
+<div class="card">
+  <h3>Permission — Shopping Location</h3>
+  <table>
+    <tr><th>Permission</th><th>Superadmin</th><th>Leader</th><th>Operator</th></tr>
+    <tr><td><span class="perm-badge view">view shopping locations</span></td><td>✅</td><td>✅</td><td>✅</td></tr>
+    <tr><td><span class="perm-badge create">create shopping locations</span></td><td>✅</td><td>❌</td><td>❌</td></tr>
+    <tr><td><span class="perm-badge edit">edit shopping locations</span></td><td>✅</td><td>❌</td><td>❌</td></tr>
+    <tr><td><span class="perm-badge delete">delete shopping locations</span></td><td>✅</td><td>❌</td><td>❌</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h3>Field Form — Shopping Location</h3>
+  <table>
+    <tr><th>Field</th><th>Wajib</th><th>Keterangan</th></tr>
+    <tr><td>Nama</td><td>✅ Ya</td><td>Nama lokasi tujuan. Unik, maks 100 karakter.</td></tr>
+  </table>
+</div>
+
+<div class="screenshot">Screenshot: Halaman daftar Shopping Location — tabel: Nama Lokasi, Aksi (Edit, Hapus)</div>
+
+<div class="callout info">
+  <strong>💡 Digunakan di modul Shopping</strong>
+  Saat membuat transaksi Shopping (pengiriman barang keluar), kamu memilih <strong>Lokasi Tujuan</strong> dari daftar ini. Pastikan semua lokasi mitra sudah terdaftar sebelum membuat transaksi.
+</div>
+
+<div class="card">
+  <h3>Catatan: Tidak ada Import/Export</h3>
+  <p>Modul Shopping Location <strong>tidak</strong> memiliki fitur import/export Excel. Semua data harus diinput manual satu per satu melalui form tambah.</p>
+</div>
+
+<!-- ═══════════ 4. TROUBLESHOOTING ═══════════ -->
+
+<h2 id="troubleshooting">4. Troubleshooting</h2>
+
+<div class="card">
+  <h3>🚫 Tidak bisa tambah/hapus Delivery Slot</h3>
+  <p><strong>Penyebab:</strong> Delivery Slot memang didesain hanya untuk view & edit. Tidak ada permission <code>create</code> atau <code>delete</code>.</p>
+  <p><strong>Solusi:</strong> Jika perlu menambah slot baru, harus dilakukan via database seeder atau migration oleh developer.</p>
+</div>
+
+<div class="card">
+  <h3>📺 Supplier tidak muncul di Delivery Monitor</h3>
+  <p><strong>Penyebab:</strong> Supplier belum dikaitkan dengan delivery slot apapun.</p>
+  <p><strong>Solusi:</strong> Edit supplier, centang slot pengiriman yang tersedia untuk supplier tersebut.</p>
+</div>
+
+<div class="card">
+  <h3>🕐 Jam shift tidak sesuai urutan</h3>
+  <p><strong>Penyebab:</strong> Shift ditampilkan sesuai urutan di database (berdasarkan <code>id</code>), bukan berdasarkan jam.</p>
+  <p><strong>Solusi:</strong> Tidak ada sorting khusus. Beri nama/kode yang jelas agar mudah diidentifikasi di dropdown.</p>
+</div>
+
+<div class="card">
+  <h3>🗑️ Tidak bisa hapus Shopping Location</h3>
+  <p><strong>Penyebab:</strong> Lokasi sudah dipakai di transaksi Shopping.</p>
+  <p><strong>Solusi:</strong> Hapus atau pindahkan transaksi yang terkait terlebih dahulu.</p>
+</div>
+
+<div class="card">
+  <h3>🔘 Tombol Edit/Hapus tidak muncul</h3>
+  <p><strong>Penyebab:</strong> Permission tidak dimiliki. Semua modul ini memerlukan permission spesifik untuk edit/delete.</p>
+  <p><strong>Solusi:</strong> Hubungi superadmin. Cek permission yang dibutuhkan di section masing-masing modul.</p>
+</div>
+
+<hr style="margin:3rem 0 1.5rem; border:none; border-top:1px solid var(--border)">
+
+<footer style="text-align:center; color:var(--ink-muted); font-size:.82rem;">
+  <p>WMS MAW — Shift, Delivery Slot & Shopping Location Manual Book v1.0</p>
+  <p>⬅️ <a href="employee-management.html">Employee Management</a> &nbsp;|&nbsp; 🎉 <strong>Phase 1 Complete!</strong> &nbsp;|&nbsp; ➡️ <a href="#">Phase 2: Transactions</a></p>
+</footer>

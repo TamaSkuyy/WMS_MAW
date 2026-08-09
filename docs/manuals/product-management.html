@@ -1,0 +1,584 @@
+<title>Product Management — WMS MAW Manual Book</title>
+
+<style>
+  /* ── Token system ── */
+  :root {
+    --ink: #1e293b;
+    --ink-muted: #64748b;
+    --ground: #f8f9fb;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --border-strong: #cbd5e1;
+    --accent: #0891b2;
+    --accent-soft: #ecfeff;
+    --primary: #0e7490;
+    --primary-soft: #ecfeff;
+    --success: #0d9488;
+    --success-soft: #f0fdfa;
+    --danger: #dc2626;
+    --danger-soft: #fef2f2;
+    --warning: #d97706;
+    --warning-soft: #fffbeb;
+    --code-bg: #f1f5f9;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --radius: 8px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #e2e8f0;
+      --ink-muted: #94a3b8;
+      --ground: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --border-strong: #475569;
+      --accent: #22d3ee;
+      --accent-soft: #12212a;
+      --primary: #67e8f9;
+      --primary-soft: #12212a;
+      --success: #2dd4bf;
+      --success-soft: #0d2e2b;
+      --danger: #f87171;
+      --danger-soft: #2d1414;
+      --warning: #fbbf24;
+      --warning-soft: #292112;
+      --code-bg: #1e293b;
+      --shadow: 0 1px 3px rgba(0,0,0,.3);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ink: #e2e8f0;
+    --ink-muted: #94a3b8;
+    --ground: #0f172a;
+    --surface: #1e293b;
+    --border: #334155;
+    --border-strong: #475569;
+    --accent: #22d3ee;
+    --accent-soft: #12212a;
+    --primary: #67e8f9;
+    --primary-soft: #12212a;
+    --success: #2dd4bf;
+    --success-soft: #0d2e2b;
+    --danger: #f87171;
+    --danger-soft: #2d1414;
+    --warning: #fbbf24;
+    --warning-soft: #292112;
+    --code-bg: #1e293b;
+    --shadow: 0 1px 3px rgba(0,0,0,.3);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; font-size: 16px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--ground);
+    color: var(--ink);
+    line-height: 1.7;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 6rem;
+  }
+
+  h1 { font-size: 1.9rem; font-weight: 700; letter-spacing: -.02em; margin-bottom: .25rem; color: var(--primary); }
+  h2 { font-size: 1.4rem; font-weight: 650; margin: 2.5rem 0 1rem; padding-bottom: .5rem; border-bottom: 2px solid var(--border); }
+  h3 { font-size: 1.15rem; font-weight: 600; margin: 1.75rem 0 .6rem; }
+  p { margin: .75rem 0; color: var(--ink-muted); }
+  strong { color: var(--ink); }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  header { margin-bottom: 2rem; }
+  .meta { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: .5rem; }
+  .meta span { font-size: .8rem; color: var(--ink-muted); background: var(--surface); border: 1px solid var(--border); padding: .2rem .7rem; border-radius: 99px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin: 1.25rem 0; box-shadow: var(--shadow); }
+  .card h3 { margin-top: 0; }
+
+  .callout { border-left: 4px solid; border-radius: 0 var(--radius) var(--radius) 0; padding: .9rem 1.2rem; margin: 1.25rem 0; font-size: .92rem; }
+  .callout.info    { border-color: var(--primary);  background: var(--primary-soft);  }
+  .callout.warning { border-color: var(--warning); background: var(--warning-soft); }
+  .callout.danger  { border-color: var(--danger);  background: var(--danger-soft);  }
+  .callout.success { border-color: var(--success); background: var(--success-soft); }
+  .callout strong { display: block; margin-bottom: .3rem; }
+
+  ol.steps { counter-reset: step; list-style: none; padding: 0; }
+  ol.steps li { counter-increment: step; position: relative; padding-left: 3rem; margin: 1.5rem 0; }
+  ol.steps li::before {
+    content: counter(step);
+    position: absolute; left: 0; top: 0;
+    width: 2rem; height: 2rem;
+    background: var(--primary-soft);
+    color: var(--primary);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: .85rem;
+  }
+
+  .screenshot {
+    background: var(--border); border: 2px dashed var(--border-strong); border-radius: var(--radius);
+    padding: 2.5rem; text-align: center; color: var(--ink-muted); font-size: .85rem; margin: 1rem 0;
+  }
+  .screenshot::before { content: "📸 "; font-size: 2rem; display: block; margin-bottom: .5rem; }
+
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .9rem; }
+  th, td { padding: .65rem .9rem; text-align: left; border-bottom: 1px solid var(--border); }
+  th { font-weight: 600; color: var(--ink); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
+  td { color: var(--ink-muted); }
+  tr:last-child td { border-bottom: none; }
+
+  code, kbd {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 4px;
+    padding: .15em .45em; font-family: "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace; font-size: .88em;
+  }
+
+  .perm-badge {
+    display: inline-block; font-size: .75rem; font-weight: 600;
+    padding: .2em .6em; border-radius: 4px; margin: .15rem;
+  }
+  .perm-badge.view   { background: #dbeafe; color: #1e40af; }
+  .perm-badge.create { background: #d1fae5; color: #065f46; }
+  .perm-badge.edit   { background: #fef3c7; color: #92400e; }
+  .perm-badge.delete { background: #fee2e2; color: #991b1b; }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .perm-badge.view   { background: #172033; color: #93c5fd; }
+    :root:not([data-theme="light"]) .perm-badge.create { background: #0d2e1c; color: #6ee7b7; }
+    :root:not([data-theme="light"]) .perm-badge.edit   { background: #292112; color: #fcd34d; }
+    :root:not([data-theme="light"]) .perm-badge.delete { background: #2d1414; color: #fca5a5; }
+  }
+  :root[data-theme="dark"] .perm-badge.view   { background: #172033; color: #93c5fd; }
+  :root[data-theme="dark"] .perm-badge.create { background: #0d2e1c; color: #6ee7b7; }
+  :root[data-theme="dark"] .perm-badge.edit   { background: #292112; color: #fcd34d; }
+  :root[data-theme="dark"] .perm-badge.delete { background: #2d1414; color: #fca5a5; }
+
+  .stock-badge { display: inline-block; font-size: .78rem; font-weight: 600; padding: .15em .6em; border-radius: 99px; }
+  .stock-badge.normal { background: #d1fae5; color: #065f46; }
+  .stock-badge.low    { background: #fef3c7; color: #92400e; }
+  .stock-badge.out    { background: #fee2e2; color: #991b1b; }
+  .stock-badge.over   { background: #ede9fe; color: #5b21b6; }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .stock-badge.normal { background: #0d2e1c; color: #6ee7b7; }
+    :root:not([data-theme="light"]) .stock-badge.low    { background: #292112; color: #fcd34d; }
+    :root:not([data-theme="light"]) .stock-badge.out    { background: #2d1414; color: #fca5a5; }
+    :root:not([data-theme="light"]) .stock-badge.over   { background: #1e1733; color: #c4b5fd; }
+  }
+  :root[data-theme="dark"] .stock-badge.normal { background: #0d2e1c; color: #6ee7b7; }
+  :root[data-theme="dark"] .stock-badge.low    { background: #292112; color: #fcd34d; }
+  :root[data-theme="dark"] .stock-badge.out    { background: #2d1414; color: #fca5a5; }
+  :root[data-theme="dark"] .stock-badge.over   { background: #1e1733; color: #c4b5fd; }
+
+  nav.toc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 2rem; }
+  nav.toc h3 { margin-top: 0; font-size: .85rem; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-muted); }
+  nav.toc ol { list-style: none; padding: 0; margin: .5rem 0 0; }
+  nav.toc ol li { margin: .35rem 0; font-size: .9rem; }
+  nav.toc ol li a { color: var(--ink-muted); }
+  nav.toc ol li a:hover { color: var(--primary); text-decoration: none; }
+
+  @media (max-width: 640px) {
+    body { padding: 1rem; }
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.2rem; }
+    .card { padding: 1rem; }
+  }
+</style>
+
+<!-- ─── PAGE CONTENT ──────────────────────────────────────────── -->
+
+<header>
+  <h1>🏷️ Product Management</h1>
+  <p>Panduan lengkap mengelola data produk — part number, spesifikasi, stok, dan relasi dengan supplier, model kendaraan, kategori, dan rak.</p>
+  <div class="meta">
+    <span>📖 Manual Book</span>
+    <span>🧑‍💼 Semua Role</span>
+    <span>📅 2026-08-09</span>
+    <span>🔖 v1.0</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <h3>Daftar Isi</h3>
+  <ol>
+    <li><a href="#overview">1. Overview</a></li>
+    <li><a href="#akses">2. Akses & Permission</a></li>
+    <li><a href="#daftar">3. Melihat Daftar Produk</a></li>
+    <li><a href="#tambah">4. Menambah Produk Baru</a></li>
+    <li><a href="#detail">5. Melihat Detail Produk</a></li>
+    <li><a href="#edit">6. Mengedit Produk</a></li>
+    <li><a href="#hapus">7. Menghapus Produk</a></li>
+    <li><a href="#import">8. Import Produk (Excel)</a></li>
+    <li><a href="#export">9. Export Produk (Excel)</a></li>
+    <li><a href="#stok">10. Memahami Status Stok</a></li>
+    <li><a href="#troubleshooting">11. Troubleshooting</a></li>
+  </ol>
+</nav>
+
+<!-- ─── 1. OVERVIEW ─────────────────────────────────────────── -->
+
+<h2 id="overview">1. Overview</h2>
+
+<p>Modul <strong>Product Management</strong> adalah pusat data seluruh barang di gudang. Setiap produk punya <strong>part number unik</strong>, terkait dengan satu supplier, satu model kendaraan, satu kategori, dan bisa disimpan di rak default. Modul ini menjadi fondasi untuk transaksi <em>receiving</em>, <em>shopping</em>, dan pelacakan stok.</p>
+
+<div class="card">
+  <h3>Fitur Modul Product</h3>
+  <table>
+    <tr><th>Fitur</th><th>Deskripsi</th></tr>
+    <tr><td>📋 Daftar Produk</td><td>Melihat semua produk dengan filter kategori & supplier, pencarian, dan indikator status stok</td></tr>
+    <tr><td>➕ Tambah Produk</td><td>Mendaftarkan produk baru dengan spesifikasi lengkap</td></tr>
+    <tr><td>🔍 Detail Produk</td><td>Melihat info lengkap produk + data supplier terkait</td></tr>
+    <tr><td>✏️ Edit Produk</td><td>Mengubah data & spesifikasi produk</td></tr>
+    <tr><td>🗑️ Hapus Produk</td><td>Menghapus produk yang tidak lagi digunakan</td></tr>
+    <tr><td>📊 Status Stok</td><td>Indikator otomatis: Normal, Low, Out, Over berdasarkan min/max stok</td></tr>
+    <tr><td>📥 Import Excel</td><td>Import banyak produk sekaligus dari file .xlsx / .csv</td></tr>
+    <tr><td>📤 Export Excel</td><td>Export semua data produk ke file Excel</td></tr>
+  </table>
+</div>
+
+<div class="callout info">
+  <strong>🔗 Relasi Produk</strong>
+  Produk terhubung dengan beberapa modul lain:
+  <br>• <strong>Supplier</strong> — pemasok produk ini (wajib)
+  <br>• <strong>Model Kendaraan</strong> — model kendaraan yang menggunakan produk ini (wajib)
+  <br>• <strong>Kategori Produk</strong> — pengelompokan jenis produk (wajib)
+  <br>• <strong>Rak Default</strong> — lokasi penyimpanan utama (opsional)
+  <br><br>Pastikan data referensi (Supplier, Vehicle Model, Product Category, Rack) sudah diisi sebelum menambah produk.
+</div>
+
+<!-- ─── 2. AKSES & PERMISSION ──────────────────────────────── -->
+
+<h2 id="akses">2. Akses & Permission</h2>
+
+<div class="card">
+  <h3>Permission Matrix — Product</h3>
+  <table>
+    <tr><th>Permission</th><th>Fungsi</th><th>Superadmin</th><th>Leader</th><th>Operator</th></tr>
+    <tr>
+      <td><span class="perm-badge view">view products</span></td>
+      <td>Melihat daftar & detail produk, export</td>
+      <td>✅</td><td>✅</td><td>✅</td>
+    </tr>
+    <tr>
+      <td><span class="perm-badge create">create products</span></td>
+      <td>Menambah produk baru, import Excel</td>
+      <td>✅</td><td>❌</td><td>❌</td>
+    </tr>
+    <tr>
+      <td><span class="perm-badge edit">edit products</span></td>
+      <td>Mengedit data produk</td>
+      <td>✅</td><td>❌</td><td>❌</td>
+    </tr>
+    <tr>
+      <td><span class="perm-badge delete">delete products</span></td>
+      <td>Menghapus produk</td>
+      <td>✅</td><td>❌</td><td>❌</td>
+    </tr>
+  </table>
+</div>
+
+<div class="callout warning">
+  <strong>⚠️ Catatan Role</strong>
+  Role <strong>Operator</strong> hanya bisa melihat daftar produk (read-only). Fitur tambah, edit, hapus, import hanya tersedia untuk <strong>Superadmin</strong> di module Product.
+</div>
+
+<!-- ─── 3. DAFTAR PRODUK ─────────────────────────────────── -->
+
+<h2 id="daftar">3. Melihat Daftar Produk</h2>
+
+<p>Halaman daftar produk bisa diakses melalui sidebar <strong>Master Data → Products</strong>, atau URL <code>/products</code>.</p>
+
+<div class="screenshot">Screenshot: Halaman daftar produk — filter dropdown kategori & supplier, tabel dengan kolom Part Number, Nama, Model, Supplier, Kategori, Stok, Status, Aksi</div>
+
+<div class="card">
+  <h3>Fitur di Halaman Daftar</h3>
+  <table>
+    <tr><th>Elemen</th><th>Fungsi</th></tr>
+    <tr><td>🔍 Search Input</td><td>Mencari produk berdasarkan <strong>part number</strong> atau <strong>nama produk</strong></td></tr>
+    <tr><td>📂 Filter Kategori</td><td>Dropdown untuk menampilkan produk hanya dari kategori tertentu</td></tr>
+    <tr><td>🏭 Filter Supplier</td><td>Dropdown untuk menampilkan produk hanya dari supplier tertentu</td></tr>
+    <tr><td>➕ Tombol Tambah</td><td>Membuka form tambah produk (permission <code>create products</code>)</td></tr>
+    <tr><td>📥 Import/Export</td><td>Toolbar import dari Excel atau export ke Excel</td></tr>
+    <tr><td>👁️ View</td><td>Melihat halaman detail produk</td></tr>
+    <tr><td>✏️ Edit</td><td>Mengedit data produk (permission <code>edit products</code>)</td></tr>
+    <tr><td>🗑️ Hapus</td><td>Menghapus produk (permission <code>delete products</code>)</td></tr>
+  </table>
+</div>
+
+<p>Setiap halaman menampilkan maksimal <strong>15 produk</strong>. Filter kategori dan supplier bisa digunakan bersamaan dengan pencarian teks.</p>
+
+<!-- ─── 4. MENAMBAH PRODUK ────────────────────────────────── -->
+
+<h2 id="tambah">4. Menambah Produk Baru</h2>
+
+<div class="callout info">
+  <strong>🧑‍💼 Permission dibutuhkan:</strong> <span class="perm-badge create">create products</span>
+</div>
+
+<ol class="steps">
+  <li>
+    <strong>Buka form tambah</strong>
+    <p>Klik tombol <strong>Tambah Produk</strong> di halaman daftar produk, atau langsung ke URL <code>/products/create</code>.</p>
+  </li>
+  <li>
+    <strong>Isi data produk</strong>
+    <div class="card">
+      <h3>Field Form — Data Produk</h3>
+      <table>
+        <tr><th>Field</th><th>Tipe</th><th>Wajib</th><th>Keterangan</th></tr>
+        <tr><td>Part Number</td><td>Text</td><td>✅ Ya</td><td>Kode unik produk, maks 50 karakter. Tidak boleh duplikat.</td></tr>
+        <tr><td>Nama</td><td>Text</td><td>✅ Ya</td><td>Nama lengkap produk, maks 255 karakter.</td></tr>
+        <tr><td>Model Kendaraan</td><td>Dropdown</td><td>✅ Ya</td><td>Pilih dari daftar model kendaraan yang sudah terdaftar.</td></tr>
+        <tr><td>Supplier</td><td>Dropdown</td><td>✅ Ya</td><td>Pilih pemasok produk ini.</td></tr>
+        <tr><td>Kategori</td><td>Dropdown</td><td>✅ Ya</td><td>Pilih kategori produk (contoh: Body Parts, Electrical, dsb).</td></tr>
+        <tr><td>Satuan</td><td>Text</td><td>✅ Ya</td><td>Unit satuan: <code>pcs</code>, <code>set</code>, <code>box</code>, <code>unit</code>, dll. Maks 20 karakter.</td></tr>
+        <tr><td>Deskripsi</td><td>Textarea</td><td>Tidak</td><td>Keterangan tambahan, maks 1000 karakter.</td></tr>
+        <tr><td>Status Aktif</td><td>Toggle</td><td>Tidak</td><td>ON = produk aktif. OFF = produk nonaktif (tidak muncul di transaksi). Default: ON.</td></tr>
+        <tr><td>Rak Default</td><td>Dropdown</td><td>Tidak</td><td>Rak penyimpanan utama. Saat receiving, sistem otomatis mengarahkan ke rak ini.</td></tr>
+        <tr><td>Min Stok</td><td>Number</td><td>Tidak</td><td>Batas minimum stok. Di bawah ini → status <strong>Low</strong>.</td></tr>
+        <tr><td>Max Stok</td><td>Number</td><td>Tidak</td><td>Batas maksimum stok. Di atas ini → status <strong>Over</strong>.</td></tr>
+      </table>
+    </div>
+  </li>
+  <li>
+    <strong>Simpan</strong>
+    <p>Klik tombol <strong>Simpan</strong>. Sistem akan memvalidasi input — pastikan part number belum digunakan dan semua field wajib terisi.</p>
+  </li>
+  <li>
+    <strong>Redirect ke halaman produk</strong>
+    <p>Setelah berhasil, kamu diarahkan ke halaman daftar produk dengan pesan sukses <em>"Product created successfully."</em>.</p>
+  </li>
+</ol>
+
+<!-- ─── 5. DETAIL PRODUK ────────────────────────────────── -->
+
+<h2 id="detail">5. Melihat Detail Produk</h2>
+
+<p>Halaman detail menampilkan informasi lengkap satu produk beserta data supplier terkait. Akses dengan klik ikon <strong>👁️ View</strong> di tabel daftar produk.</p>
+
+<div class="screenshot">Screenshot: Halaman detail produk — kartu informasi produk (kiri) + kartu supplier (kanan)</div>
+
+<div class="card">
+  <h3>Informasi yang ditampilkan</h3>
+  <table>
+    <tr><th>Bagian</th><th>Isi</th></tr>
+    <tr><td>Kartu Informasi Produk</td><td>Part Number, Nama, Model Kendaraan, Kategori, Satuan, Status (Aktif/Nonaktif), Rak Default, Deskripsi</td></tr>
+    <tr><td>Kartu Supplier</td><td>Nama Supplier (link ke detail supplier), Kontak Person, Email, Telepon</td></tr>
+    <tr><td>Tombol Edit</td><td>Hanya muncul jika kamu punya permission <code>edit products</code></td></tr>
+    <tr><td>Tombol Kembali</td><td>Kembali ke halaman daftar produk</td></tr>
+  </table>
+</div>
+
+<div class="callout info">
+  <strong>💡 Klik nama supplier</strong>
+  Nama supplier di kartu detail adalah link — kamu bisa klik untuk langsung melihat detail supplier tersebut.
+</div>
+
+<!-- ─── 6. MENGEDIT PRODUK ─────────────────────────────── -->
+
+<h2 id="edit">6. Mengedit Produk</h2>
+
+<div class="callout info">
+  <strong>🧑‍💼 Permission dibutuhkan:</strong> <span class="perm-badge edit">edit products</span>
+</div>
+
+<ol class="steps">
+  <li>
+    <strong>Buka form edit</strong>
+    <p>Klik ikon <strong>✏️ Edit</strong> di tabel daftar produk, atau tombol <strong>Edit</strong> di halaman detail.</p>
+  </li>
+  <li>
+    <strong>Ubah data yang diperlukan</strong>
+    <p>Semua field bisa diubah, termasuk part number. Aturan validasi tetap berlaku (part number unik, dll).</p>
+  </li>
+  <li>
+    <strong>Atur Min/Max Stok</strong>
+    <p>Field <strong>Min Stok</strong> dan <strong>Max Stok</strong> menentukan indikator status stok. Lihat <a href="#stok">section 10 — Status Stok</a> untuk detailnya.</p>
+  </li>
+  <li>
+    <strong>Simpan perubahan</strong>
+    <p>Klik <strong>Simpan</strong>. Kamu akan diarahkan kembali ke halaman detail produk.</p>
+  </li>
+</ol>
+
+<!-- ─── 7. MENGHAPUS PRODUK ──────────────────────────────── -->
+
+<h2 id="hapus">7. Menghapus Produk</h2>
+
+<div class="callout danger">
+  <strong>🧑‍💼 Permission dibutuhkan:</strong> <span class="perm-badge delete">delete products</span><br><br>
+  <strong>⚠️ Peringatan:</strong> Produk yang sudah memiliki data stok, tercatat di cycle penerimaan, atau terkait transaksi shopping <strong>tidak bisa dihapus</strong>. Database menolak penghapusan untuk menjaga integritas data transaksi.
+</div>
+
+<ol class="steps">
+  <li>Di halaman daftar produk, klik ikon <strong>🗑️ Hapus</strong> pada baris produk yang ingin dihapus.</li>
+  <li>Sistem menampilkan dialog konfirmasi.</li>
+  <li>Klik <strong>OK</strong> untuk menghapus, atau <strong>Batal</strong> untuk membatalkan.</li>
+  <li>Produk yang berhasil dihapus akan hilang dari daftar.</li>
+</ol>
+
+<!-- ─── 8. IMPORT PRODUK ─────────────────────────────────── -->
+
+<h2 id="import">8. Import Produk (Excel)</h2>
+
+<div class="callout info">
+  <strong>🧑‍💼 Permission dibutuhkan:</strong> <span class="perm-badge create">create products</span>
+</div>
+
+<ol class="steps">
+  <li>
+    <strong>Download template</strong>
+    <p>Klik <strong>📥 Import/Export → Download Template</strong> untuk mendapatkan file Excel dengan header yang sesuai.</p>
+  </li>
+  <li>
+    <strong>Isi data di template</strong>
+    <div class="card">
+      <h3>Kolom Template Import</h3>
+      <table>
+        <tr><th>Kolom</th><th>Wajib</th><th>Contoh / Catatan</th></tr>
+        <tr><td>part_number</td><td>✅ Ya</td><td>BRK-001</td></tr>
+        <tr><td>name</td><td>✅ Ya</td><td>Brake Pad Set Front</td></tr>
+        <tr><td>brand</td><td>✅ Ya</td><td>Toyota</td></tr>
+        <tr><td>model_kendaraan</td><td>✅ Ya</td><td>Nama model yang sudah terdaftar di sistem</td></tr>
+        <tr><td>supplier</td><td>✅ Ya</td><td>Nama supplier yang sudah terdaftar (case-sensitive)</td></tr>
+        <tr><td>kategori</td><td>✅ Ya</td><td>Nama kategori yang sudah terdaftar</td></tr>
+        <tr><td>unit</td><td>✅ Ya</td><td>pcs, set, box, dll</td></tr>
+        <tr><td>description</td><td>Tidak</td><td>Deskripsi opsional</td></tr>
+        <tr><td>is_active</td><td>Tidak</td><td>1 = aktif, 0 = nonaktif. Default: 1</td></tr>
+      </table>
+    </div>
+  </li>
+  <li>
+    <strong>Upload & Preview</strong>
+    <p>Klik <strong>📥 Import/Export → Import</strong>. Pilih file Excel. Sistem menampilkan modal preview yang menunjukkan data yang akan diimpor beserta error jika ada.</p>
+    <div class="screenshot">Screenshot: Import Modal — preview data produk sebelum import</div>
+  </li>
+  <li>
+    <strong>Konfirmasi Import</strong>
+    <p>Periksa data. Klik <strong>Import</strong> untuk memproses.</p>
+  </li>
+</ol>
+
+<div class="callout warning">
+  <strong>⚠️ Catatan Penting Import</strong>
+  <ul>
+    <li>Part number duplikat akan menyebabkan baris tersebut <strong>dilewati (skip)</strong>.</li>
+    <li>Supplier, model kendaraan, dan kategori harus <strong>sudah terdaftar</strong> di sistem sebelum diimpor.</li>
+    <li>Nama supplier & kategori bersifat <strong>case-sensitive</strong> — pastikan penulisannya persis sama.</li>
+  </ul>
+</div>
+
+<!-- ─── 9. EXPORT PRODUK ─────────────────────────────────── -->
+
+<h2 id="export">9. Export Produk (Excel)</h2>
+
+<div class="callout info">
+  <strong>🧑‍💼 Permission dibutuhkan:</strong> <span class="perm-badge view">view products</span>
+</div>
+
+<ol class="steps">
+  <li>Di halaman daftar produk, klik <strong>📥 Import/Export</strong> di toolbar.</li>
+  <li>Pilih <strong>Export</strong>.</li>
+  <li>Browser otomatis mengunduh file <code>products-export.xlsx</code>.</li>
+</ol>
+
+<div class="card">
+  <h3>Data yang di-export</h3>
+  <p>Export mencakup seluruh data produk dengan kolom: <strong>Part Number, Nama, Model, Supplier, Kategori, Satuan, Status, Deskripsi</strong>.</p>
+  <p>Ekspor dilakukan terhadap <strong>seluruh data</strong>, tidak terpengaruh filter atau pencarian yang sedang aktif.</p>
+</div>
+
+<!-- ─── 10. STATUS STOK ──────────────────────────────────── -->
+
+<h2 id="stok">10. Memahami Status Stok</h2>
+
+<p>Setiap produk memiliki <strong>indikator status stok</strong> yang dihitung otomatis berdasarkan total stok di semua rak dibandingkan dengan <strong>min stok</strong> dan <strong>max stok</strong> yang ditetapkan.</p>
+
+<div class="card">
+  <h3>4 Status Stok</h3>
+  <table>
+    <tr><th>Status</th><th>Badge</th><th>Kondisi</th><th>Tindakan</th></tr>
+    <tr>
+      <td><strong>Normal</strong></td>
+      <td><span class="stock-badge normal">NORMAL</span></td>
+      <td>Stok antara min dan max (atau min/max tidak diatur)</td>
+      <td>Tidak ada tindakan khusus</td>
+    </tr>
+    <tr>
+      <td><strong>Low</strong></td>
+      <td><span class="stock-badge low">LOW</span></td>
+      <td>Stok di bawah min stok, tapi masih di atas 0</td>
+      <td>Segera lakukan receiving / restock</td>
+    </tr>
+    <tr>
+      <td><strong>Out</strong></td>
+      <td><span class="stock-badge out">OUT</span></td>
+      <td>Stok = 0, padahal min stok sudah diatur</td>
+      <td>Segera order ke supplier</td>
+    </tr>
+    <tr>
+      <td><strong>Over</strong></td>
+      <td><span class="stock-badge over">OVER</span></td>
+      <td>Stok di atas max stok</td>
+      <td>Pertimbangkan mengurangi order / memindahkan stok</td>
+    </tr>
+  </table>
+</div>
+
+<div class="callout info">
+  <strong>💡 Tips mengatur Min/Max Stok</strong>
+  <ul>
+    <li><strong>Min Stok</strong> idealnya sedikit di atas lead time order — cukup untuk menutupi kebutuhan selama supplier memproses order baru.</li>
+    <li><strong>Max Stok</strong> adalah kapasitas maksimum yang masuk akal — hindari menumpuk stok berlebihan yang memakan ruang rak.</li>
+    <li>Jika min/max stok tidak diatur (kosong), status akan selalu <strong>Normal</strong>.</li>
+  </ul>
+</div>
+
+<!-- ─── 11. TROUBLESHOOTING ────────────────────────────────── -->
+
+<h2 id="troubleshooting">11. Troubleshooting</h2>
+
+<div class="card">
+  <h3>🚫 Error 403 — Forbidden</h3>
+  <p><strong>Penyebab:</strong> Role kamu tidak memiliki permission untuk aksi produk (tambah/edit/hapus).</p>
+  <p><strong>Solusi:</strong> Hubungi superadmin. Untuk role <strong>Operator</strong>, modul produk bersifat read-only.</p>
+</div>
+
+<div class="card">
+  <h3>🔘 Tombol Tambah/Edit/Hapus tidak muncul</h3>
+  <p><strong>Penyebab:</strong> Permission tidak dimiliki, atau session masih menyimpan role lama.</p>
+  <p><strong>Solusi:</strong> Logout dan login ulang setelah role diubah.</p>
+</div>
+
+<div class="card">
+  <h3>📛 Part number sudah digunakan</h3>
+  <p><strong>Penyebab:</strong> Part number harus unik — tidak boleh ada dua produk dengan part number sama.</p>
+  <p><strong>Solusi:</strong> Gunakan format part number yang unik, misalnya dengan prefix supplier atau kategori: <code>BRK-001</code>, <code>ELC-012</code>.</p>
+</div>
+
+<div class="card">
+  <h3>📥 Import gagal — supplier/kategori/model tidak ditemukan</h3>
+  <p><strong>Penyebab:</strong> Data referensi (supplier, model kendaraan, kategori) yang tertulis di file Excel belum terdaftar di sistem, atau penulisannya tidak persis sama (case-sensitive).</p>
+  <p><strong>Solusi:</strong>
+    <br>• Daftarkan supplier/model/kategori terlebih dahulu.
+    <br>• Pastikan penulisan nama persis sama (termasuk huruf besar/kecil, spasi, tanda baca).
+  </p>
+</div>
+
+<div class="card">
+  <h3>📊 Status stok tidak sesuai ekspektasi</h3>
+  <p><strong>Penyebab:</strong> Min/max stok belum diatur atau nilainya tidak sesuai.</p>
+  <p><strong>Solusi:</strong> Edit produk dan sesuaikan nilai Min Stok dan Max Stok.</p>
+</div>
+
+<div class="card">
+  <h3>🗑️ Tidak bisa menghapus produk</h3>
+  <p><strong>Penyebab:</strong> Produk masih memiliki data stok di rak, tercatat di cycle penerimaan, atau terkait transaksi shopping.</p>
+  <p><strong>Solusi:</strong> Nonaktifkan produk (set <code>is_active = false</code>) daripada menghapusnya. Produk nonaktif tidak muncul di form transaksi baru.</p>
+</div>
+
+<hr style="margin:3rem 0 1.5rem; border:none; border-top:1px solid var(--border)">
+
+<footer style="text-align:center; color:var(--ink-muted); font-size:.82rem;">
+  <p>WMS MAW — Product Management Manual Book v1.0</p>
+  <p>⬅️ <a href="supplier-management.html">Supplier Management</a> &nbsp;|&nbsp; ➡️ <a href="#">Rack Management</a> (selanjutnya)</p>
+</footer>

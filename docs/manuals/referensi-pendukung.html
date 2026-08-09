@@ -1,0 +1,308 @@
+<title>Referensi Pendukung — WMS MAW Manual Book</title>
+
+<style>
+  :root {
+    --ink: #1e293b; --ink-muted: #64748b;
+    --ground: #f8f9fb; --surface: #ffffff;
+    --border: #e2e8f0; --border-strong: #cbd5e1;
+    --accent: #059669; --accent-soft: #ecfdf5;
+    --primary: #047857; --primary-soft: #ecfdf5;
+    --success: #0d9488; --success-soft: #f0fdfa;
+    --danger: #dc2626; --danger-soft: #fef2f2;
+    --warning: #d97706; --warning-soft: #fffbeb;
+    --code-bg: #f1f5f9;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --radius: 8px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #e2e8f0; --ink-muted: #94a3b8;
+      --ground: #0f172a; --surface: #1e293b;
+      --border: #334155; --border-strong: #475569;
+      --accent: #34d399; --accent-soft: #0d2e1c;
+      --primary: #6ee7b7; --primary-soft: #0d2e1c;
+      --success: #2dd4bf; --success-soft: #0d2e2b;
+      --danger: #f87171; --danger-soft: #2d1414;
+      --warning: #fbbf24; --warning-soft: #292112;
+      --code-bg: #1e293b; --shadow: 0 1px 3px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #e2e8f0; --ink-muted: #94a3b8;
+    --ground: #0f172a; --surface: #1e293b;
+    --border: #334155; --border-strong: #475569;
+    --accent: #34d399; --accent-soft: #0d2e1c;
+    --primary: #6ee7b7; --primary-soft: #0d2e1c;
+    --success: #2dd4bf; --success-soft: #0d2e2b;
+    --danger: #f87171; --danger-soft: #2d1414;
+    --warning: #fbbf24; --warning-soft: #292112;
+    --code-bg: #1e293b; --shadow: 0 1px 3px rgba(0,0,0,.3);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; font-size: 16px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--ground); color: var(--ink); line-height: 1.7;
+    max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem 6rem;
+  }
+
+  h1 { font-size: 1.9rem; font-weight: 700; letter-spacing: -.02em; margin-bottom: .25rem; color: var(--primary); }
+  h2 { font-size: 1.4rem; font-weight: 650; margin: 2.5rem 0 1rem; padding-bottom: .5rem; border-bottom: 2px solid var(--border); }
+  h3 { font-size: 1.15rem; font-weight: 600; margin: 1.75rem 0 .6rem; }
+  p { margin: .75rem 0; color: var(--ink-muted); }
+  strong { color: var(--ink); }
+  a { color: var(--primary); text-decoration: none; } a:hover { text-decoration: underline; }
+
+  header { margin-bottom: 2rem; }
+  .meta { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: .5rem; }
+  .meta span { font-size: .8rem; color: var(--ink-muted); background: var(--surface); border: 1px solid var(--border); padding: .2rem .7rem; border-radius: 99px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin: 1.25rem 0; box-shadow: var(--shadow); }
+  .card h3 { margin-top: 0; }
+
+  .callout { border-left: 4px solid; border-radius: 0 var(--radius) var(--radius) 0; padding: .9rem 1.2rem; margin: 1.25rem 0; font-size: .92rem; }
+  .callout.info    { border-color: var(--primary);  background: var(--primary-soft);  }
+  .callout.warning { border-color: var(--warning); background: var(--warning-soft); }
+  .callout.danger  { border-color: var(--danger);  background: var(--danger-soft);  }
+  .callout.success { border-color: var(--success); background: var(--success-soft); }
+  .callout strong { display: block; margin-bottom: .3rem; }
+
+  ol.steps { counter-reset: step; list-style: none; padding: 0; }
+  ol.steps li { counter-increment: step; position: relative; padding-left: 3rem; margin: 1.5rem 0; }
+  ol.steps li::before {
+    content: counter(step); position: absolute; left: 0; top: 0;
+    width: 2rem; height: 2rem; background: var(--primary-soft); color: var(--primary);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: .85rem;
+  }
+
+  .screenshot { background: var(--border); border: 2px dashed var(--border-strong); border-radius: var(--radius); padding: 2.5rem; text-align: center; color: var(--ink-muted); font-size: .85rem; margin: 1rem 0; }
+  .screenshot::before { content: "📸 "; font-size: 2rem; display: block; margin-bottom: .5rem; }
+
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .9rem; }
+  th, td { padding: .65rem .9rem; text-align: left; border-bottom: 1px solid var(--border); }
+  th { font-weight: 600; color: var(--ink); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
+  td { color: var(--ink-muted); } tr:last-child td { border-bottom: none; }
+
+  code, kbd { background: var(--code-bg); border: 1px solid var(--border); border-radius: 4px; padding: .15em .45em; font-family: "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace; font-size: .88em; }
+
+  .perm-badge { display: inline-block; font-size: .75rem; font-weight: 600; padding: .2em .6em; border-radius: 4px; margin: .15rem; }
+  .perm-badge.view   { background: #dbeafe; color: #1e40af; }
+  .perm-badge.create { background: #d1fae5; color: #065f46; }
+  .perm-badge.edit   { background: #fef3c7; color: #92400e; }
+  .perm-badge.delete { background: #fee2e2; color: #991b1b; }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .perm-badge.view   { background: #172033; color: #93c5fd; }
+    :root:not([data-theme="light"]) .perm-badge.create { background: #0d2e1c; color: #6ee7b7; }
+    :root:not([data-theme="light"]) .perm-badge.edit   { background: #292112; color: #fcd34d; }
+    :root:not([data-theme="light"]) .perm-badge.delete { background: #2d1414; color: #fca5a5; }
+  }
+  :root[data-theme="dark"] .perm-badge.view   { background: #172033; color: #93c5fd; }
+  :root[data-theme="dark"] .perm-badge.create { background: #0d2e1c; color: #6ee7b7; }
+  :root[data-theme="dark"] .perm-badge.edit   { background: #292112; color: #fcd34d; }
+  :root[data-theme="dark"] .perm-badge.delete { background: #2d1414; color: #fca5a5; }
+
+  nav.toc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 2rem; }
+  nav.toc h3 { margin-top: 0; font-size: .85rem; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-muted); }
+  nav.toc ol { list-style: none; padding: 0; margin: .5rem 0 0; }
+  nav.toc ol li { margin: .35rem 0; font-size: .9rem; }
+  nav.toc ol li a { color: var(--ink-muted); } nav.toc ol li a:hover { color: var(--primary); text-decoration: none; }
+
+  @media (max-width: 640px) { body { padding: 1rem; } h1 { font-size: 1.5rem; } h2 { font-size: 1.2rem; } .card { padding: 1rem; } }
+</style>
+
+<header>
+  <h1>📚 Referensi Pendukung</h1>
+  <p>Panduan lengkap modul-modul referensi: Vehicle Model, Product Category, Job Position, Work Location, dan Department.</p>
+  <div class="meta">
+    <span>📖 Manual Book</span>
+    <span>🧑‍💼 Leader & Admin</span>
+    <span>📅 2026-08-09</span>
+    <span>🔖 v1.0</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <h3>Daftar Isi</h3>
+  <ol>
+    <li><a href="#overview">1. Overview — Modul Referensi</a></li>
+    <li><a href="#vehicle-model">2. Vehicle Model (Model Kendaraan)</a></li>
+    <li><a href="#product-category">3. Product Category (Kategori Produk)</a></li>
+    <li><a href="#job-position">4. Job Position (Jabatan)</a></li>
+    <li><a href="#work-location">5. Work Location (Lokasi Kerja)</a></li>
+    <li><a href="#department">6. Department (Departemen)</a></li>
+    <li><a href="#troubleshooting">7. Troubleshooting</a></li>
+  </ol>
+</nav>
+
+<!-- ─── 1. OVERVIEW ─────────────────────────────────────────── -->
+
+<h2 id="overview">1. Overview — Modul Referensi</h2>
+
+<p>Kelima modul di halaman ini adalah <strong>data referensi (master data pendukung)</strong> yang digunakan oleh modul-modul utama seperti Product, Employee, dan transaksi. Semua modul ini punya pola operasi yang sama: <strong>tabel daftar → form tambah/edit → hapus → import/export</strong>.</p>
+
+<div class="card">
+  <h3>Siapa pakai modul apa?</h3>
+  <table>
+    <tr><th>Modul Referensi</th><th>Digunakan oleh</th><th>Icon Sidebar</th></tr>
+    <tr><td>Vehicle Model</td><td>Product (model kendaraan produk)</td><td>🚗</td></tr>
+    <tr><td>Product Category</td><td>Product (kategori produk)</td><td>📂</td></tr>
+    <tr><td>Job Position</td><td>Employee (jabatan + auto role)</td><td>🎖️</td></tr>
+    <tr><td>Work Location</td><td>Employee (lokasi kerja)</td><td>📍</td></tr>
+    <tr><td>Department</td><td>Employee (departemen)</td><td>🏢</td></tr>
+  </table>
+</div>
+
+<div class="callout info">
+  <strong>💡 Pola operasi seragam</strong>
+  Kelima modul memiliki struktur yang identik: tabel daftar, search, form tambah/edit, hapus, dan import/export. Bedanya hanya di <strong>jumlah & nama field</strong>. Setelah memahami satu modul, kamu otomatis bisa menggunakan modul lainnya.
+</div>
+
+<div class="card">
+  <h3>Permission Matrix — Semua Modul Referensi</h3>
+  <table>
+    <tr><th>Permission</th><th>Superadmin</th><th>Leader</th><th>Operator</th></tr>
+    <tr><td><span class="perm-badge view">view *</span></td><td>✅</td><td>✅</td><td>❌ <small>(kecuali vehicle models & product categories)</small></td></tr>
+    <tr><td><span class="perm-badge create">create *</span></td><td>✅</td><td>❌</td><td>❌</td></tr>
+    <tr><td><span class="perm-badge edit">edit *</span></td><td>✅</td><td>❌</td><td>❌</td></tr>
+    <tr><td><span class="perm-badge delete">delete *</span></td><td>✅</td><td>❌</td><td>❌</td></tr>
+  </table>
+</div>
+
+<!-- ─── 2. VEHICLE MODEL ────────────────────────────────────── -->
+
+<h2 id="vehicle-model">2. Vehicle Model (Model Kendaraan)</h2>
+
+<p>Mengelola daftar model kendaraan yang menggunakan produk. Contoh: <em>Toyota Avanza G</em>, <em>Honda Brio Satya</em>. Akses: sidebar <strong>Master Data → Model Kendaraan</strong> atau <code>/vehicle-models</code>.</p>
+
+<div class="card">
+  <h3>Field Form — Vehicle Model</h3>
+  <table>
+    <tr><th>Field</th><th>Wajib</th><th>Keterangan</th></tr>
+    <tr><td>Brand (Merek)</td><td>✅ Ya</td><td>Nama merek kendaraan. Contoh: <code>Toyota</code>, <code>Honda</code></td></tr>
+    <tr><td>Name (Nama Model)</td><td>✅ Ya</td><td>Nama model spesifik. Contoh: <code>Avanza</code>, <code>Brio</code></td></tr>
+    <tr><td>Suffix (Tambahan)</td><td>Tidak</td><td>Tipe/varian. Contoh: <code>G</code>, <code>Satya</code>. Digabung di tampilan menjadi <em>"Toyota Avanza G"</em></td></tr>
+  </table>
+</div>
+
+<div class="screenshot">Screenshot: Halaman daftar Vehicle Model — tabel: Brand, Name, Suffix, Tampilan Gabungan, Aksi</div>
+
+<div class="callout info">
+  <strong>💡 Penamaan konsisten</strong>
+  Saat produk diimpor via Excel, nama model kendaraan digunakan untuk mencocokkan data. Pastikan nama model diisi dengan konsisten (case-sensitive). Sistem menampilkan gabungan: <code>Brand + Name + Suffix</code>.
+</div>
+
+<!-- ─── 3. PRODUCT CATEGORY ──────────────────────────────────── -->
+
+<h2 id="product-category">3. Product Category (Kategori Produk)</h2>
+
+<p>Mengelompokkan produk berdasarkan jenisnya. Contoh: <em>Body Parts</em>, <em>Electrical</em>, <em>Engine Components</em>. Akses: <strong>Master Data → Kategori Produk</strong> atau <code>/product-categories</code>.</p>
+
+<div class="card">
+  <h3>Field Form — Product Category</h3>
+  <table>
+    <tr><th>Field</th><th>Wajib</th><th>Keterangan</th></tr>
+    <tr><td>Name</td><td>✅ Ya</td><td>Nama kategori, maks 100 karakter. Harus unik.</td></tr>
+  </table>
+</div>
+
+<div class="screenshot">Screenshot: Halaman daftar Product Category — tabel: Nama Kategori, Aksi (Edit, Hapus)</div>
+
+<!-- ─── 4. JOB POSITION ──────────────────────────────────────── -->
+
+<h2 id="job-position">4. Job Position (Jabatan)</h2>
+
+<p>Mengelola jabatan karyawan dan kaitannya dengan <strong>role sistem (RBAC)</strong>. Setiap jabatan bisa dikaitkan dengan satu role Spatie yang otomatis diberikan ke user login karyawan. Akses: <strong>Master Data → Jabatan</strong> atau <code>/job-positions</code>.</p>
+
+<div class="card">
+  <h3>Field Form — Job Position</h3>
+  <table>
+    <tr><th>Field</th><th>Wajib</th><th>Keterangan</th></tr>
+    <tr><td>Name</td><td>✅ Ya</td><td>Nama jabatan. Contoh: <code>Kepala Gudang</code>, <code>Staff Penerimaan</code></td></tr>
+    <tr><td>Level</td><td>Tidak</td><td>Tingkat jabatan. Contoh: <code>Manager</code>, <code>Staff</code>, <code>Operator</code></td></tr>
+    <tr><td>Role Name</td><td>Tidak</td><td>Dropdown role Spatie. Jika dipilih, karyawan dengan jabatan ini otomatis dapat role tersebut saat user login dibuat.</td></tr>
+  </table>
+</div>
+
+<div class="callout warning">
+  <strong>⚠️ Penting: Role auto-assignment</strong>
+  <ul>
+    <li>Saat jabatan diubah <strong>role_name</strong>-nya, SEMUA karyawan dengan jabatan tersebut akan di-sync ulang role-nya.</li>
+    <li>Saat karyawan baru dibuat dengan <code>auto_create_user</code>, role otomatis diambil dari jabatan ini.</li>
+    <li>Hanya role <code>operator</code> dan <code>leader</code> yang bisa auto-assign. Role <code>superadmin</code> harus diberikan manual.</li>
+  </ul>
+</div>
+
+<div class="screenshot">Screenshot: Halaman daftar Job Position — tabel: Nama Jabatan, Level, Role, Aksi</div>
+
+<!-- ─── 5. WORK LOCATION ─────────────────────────────────────── -->
+
+<h2 id="work-location">5. Work Location (Lokasi Kerja)</h2>
+
+<p>Mendaftarkan lokasi fisik tempat karyawan bekerja. Contoh: <em>Gudang Utama</em>, <em>Gudang B</em>, <em>Kantor Pusat</em>. Akses: <strong>Master Data → Lokasi Kerja</strong> atau <code>/work-locations</code>.</p>
+
+<div class="card">
+  <h3>Field Form — Work Location</h3>
+  <table>
+    <tr><th>Field</th><th>Wajib</th><th>Keterangan</th></tr>
+    <tr><td>Name</td><td>✅ Ya</td><td>Nama lokasi kerja, maks 100 karakter. Harus unik.</td></tr>
+  </table>
+</div>
+
+<!-- ─── 6. DEPARTMENT ────────────────────────────────────────── -->
+
+<h2 id="department">6. Department (Departemen)</h2>
+
+<p>Mengelola struktur departemen/organisasi. Contoh: <em>Logistik</em>, <em>Quality Control</em>, <em>Warehouse</em>. Akses: <strong>Master Data → Departemen</strong> atau <code>/departments</code>.</p>
+
+<div class="card">
+  <h3>Field Form — Department</h3>
+  <table>
+    <tr><th>Field</th><th>Wajib</th><th>Keterangan</th></tr>
+    <tr><td>Name</td><td>✅ Ya</td><td>Nama departemen, maks 100 karakter. Harus unik.</td></tr>
+  </table>
+</div>
+
+<!-- ─── 7. TROUBLESHOOTING ────────────────────────────────── -->
+
+<h2 id="troubleshooting">7. Troubleshooting</h2>
+
+<div class="card">
+  <h3>🚫 Error 403 — Forbidden</h3>
+  <p><strong>Penyebab:</strong> Role Operator tidak memiliki akses ke sebagian modul referensi (Job Position, Work Location, Department).</p>
+  <p><strong>Solusi:</strong> Hanya Leader & Superadmin yang bisa mengakses. Hubungi admin untuk penyesuaian role.</p>
+</div>
+
+<div class="card">
+  <h3>🔄 Role karyawan tidak berubah setelah ganti jabatan</h3>
+  <p><strong>Penyebab:</strong> Karyawan perlu logout & login ulang agar role baru berlaku.</p>
+  <p><strong>Solusi:</strong> Minta karyawan logout lalu login kembali. Sistem otomatis menghapus session lama saat role diubah.</p>
+</div>
+
+<div class="card">
+  <h3>📛 Nama sudah digunakan</h3>
+  <p><strong>Penyebab:</strong> Nama di modul referensi harus unik (kecuali Vehicle Model yang unik-nya di kombinasi brand+name).</p>
+  <p><strong>Solusi:</strong> Gunakan variasi nama: <code>Gudang A</code> vs <code>Gudang B</code>, atau periksa apakah data sudah ada.</p>
+</div>
+
+<div class="card">
+  <h3>📥 Import gagal</h3>
+  <p><strong>Penyebab:</strong> Nama duplikat, atau field wajib kosong.</p>
+  <p><strong>Solusi:</strong> Download template resmi, pastikan tidak ada nama yang sama dengan data yang sudah ada. Cek error di modal preview.</p>
+</div>
+
+<div class="card">
+  <h3>🗑️ Tidak bisa hapus data referensi</h3>
+  <p><strong>Penyebab:</strong> Data masih digunakan oleh modul lain (contoh: Department dipakai Employee, Category dipakai Product).</p>
+  <p><strong>Solusi:</strong> Hapus atau pindahkan data yang terkait terlebih dahulu, lalu hapus data referensi.</p>
+</div>
+
+<hr style="margin:3rem 0 1.5rem; border:none; border-top:1px solid var(--border)">
+
+<footer style="text-align:center; color:var(--ink-muted); font-size:.82rem;">
+  <p>WMS MAW — Referensi Pendukung Manual Book v1.0</p>
+  <p>⬅️ <a href="rack-management.html">Rack Management</a> &nbsp;|&nbsp; ➡️ <a href="#">Employee Management</a> (selanjutnya)</p>
+</footer>

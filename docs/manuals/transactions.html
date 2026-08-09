@@ -1,0 +1,438 @@
+<title>Transactions: Receiving, Shopping & Stocks — WMS MAW Manual Book</title>
+
+<style>
+  :root {
+    --ink: #1e293b; --ink-muted: #64748b;
+    --ground: #f8f9fb; --surface: #ffffff;
+    --border: #e2e8f0; --border-strong: #cbd5e1;
+    --accent: #ea580c; --accent-soft: #fff7ed;
+    --primary: #c2410c; --primary-soft: #fff7ed;
+    --success: #0d9488; --success-soft: #f0fdfa;
+    --danger: #dc2626; --danger-soft: #fef2f2;
+    --warning: #d97706; --warning-soft: #fffbeb;
+    --code-bg: #f1f5f9;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --radius: 8px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #e2e8f0; --ink-muted: #94a3b8;
+      --ground: #0f172a; --surface: #1e293b;
+      --border: #334155; --border-strong: #475569;
+      --accent: #fb923c; --accent-soft: #2d1a0e;
+      --primary: #fdba74; --primary-soft: #2d1a0e;
+      --success: #2dd4bf; --success-soft: #0d2e2b;
+      --danger: #f87171; --danger-soft: #2d1414;
+      --warning: #fbbf24; --warning-soft: #292112;
+      --code-bg: #1e293b; --shadow: 0 1px 3px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #e2e8f0; --ink-muted: #94a3b8;
+    --ground: #0f172a; --surface: #1e293b;
+    --border: #334155; --border-strong: #475569;
+    --accent: #fb923c; --accent-soft: #2d1a0e;
+    --primary: #fdba74; --primary-soft: #2d1a0e;
+    --success: #2dd4bf; --success-soft: #0d2e2b;
+    --danger: #f87171; --danger-soft: #2d1414;
+    --warning: #fbbf24; --warning-soft: #292112;
+    --code-bg: #1e293b; --shadow: 0 1px 3px rgba(0,0,0,.3);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; font-size: 16px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: var(--ground); color: var(--ink); line-height: 1.7; max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem 6rem; }
+  h1 { font-size: 1.9rem; font-weight: 700; letter-spacing: -.02em; margin-bottom: .25rem; color: var(--primary); }
+  h2 { font-size: 1.4rem; font-weight: 650; margin: 2.5rem 0 1rem; padding-bottom: .5rem; border-bottom: 2px solid var(--border); }
+  h3 { font-size: 1.15rem; font-weight: 600; margin: 1.75rem 0 .6rem; }
+  p { margin: .75rem 0; color: var(--ink-muted); } strong { color: var(--ink); }
+  a { color: var(--primary); } a:hover { text-decoration: underline; }
+  header { margin-bottom: 2rem; }
+  .meta { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: .5rem; }
+  .meta span { font-size: .8rem; color: var(--ink-muted); background: var(--surface); border: 1px solid var(--border); padding: .2rem .7rem; border-radius: 99px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin: 1.25rem 0; box-shadow: var(--shadow); } .card h3 { margin-top: 0; }
+  .callout { border-left: 4px solid; border-radius: 0 var(--radius) var(--radius) 0; padding: .9rem 1.2rem; margin: 1.25rem 0; font-size: .92rem; }
+  .callout.info    { border-color: var(--primary);  background: var(--primary-soft);  }
+  .callout.warning { border-color: var(--warning); background: var(--warning-soft); }
+  .callout.danger  { border-color: var(--danger);  background: var(--danger-soft);  }
+  .callout.success { border-color: var(--success); background: var(--success-soft); }
+  .callout strong { display: block; margin-bottom: .3rem; }
+  ol.steps { counter-reset: step; list-style: none; padding: 0; }
+  ol.steps li { counter-increment: step; position: relative; padding-left: 3rem; margin: 1.5rem 0; }
+  ol.steps li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 2rem; height: 2rem; background: var(--primary-soft); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .85rem; }
+  .screenshot { background: var(--border); border: 2px dashed var(--border-strong); border-radius: var(--radius); padding: 2.5rem; text-align: center; color: var(--ink-muted); font-size: .85rem; margin: 1rem 0; } .screenshot::before { content: "📸 "; font-size: 2rem; display: block; margin-bottom: .5rem; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .9rem; }
+  th, td { padding: .65rem .9rem; text-align: left; border-bottom: 1px solid var(--border); }
+  th { font-weight: 600; color: var(--ink); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
+  td { color: var(--ink-muted); } tr:last-child td { border-bottom: none; }
+  code, kbd { background: var(--code-bg); border: 1px solid var(--border); border-radius: 4px; padding: .15em .45em; font-family: "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace; font-size: .88em; }
+  .perm-badge { display: inline-block; font-size: .75rem; font-weight: 600; padding: .2em .6em; border-radius: 4px; margin: .15rem; }
+  .perm-badge.view   { background: #dbeafe; color: #1e40af; }
+  .perm-badge.create { background: #d1fae5; color: #065f46; }
+  .perm-badge.edit   { background: #fef3c7; color: #92400e; }
+  .perm-badge.delete { background: #fee2e2; color: #991b1b; }
+  .perm-badge.action { background: #ede9fe; color: #6d28d9; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .perm-badge.view { background: #172033; color: #93c5fd; } :root:not([data-theme="light"]) .perm-badge.create { background: #0d2e1c; color: #6ee7b7; } :root:not([data-theme="light"]) .perm-badge.edit { background: #292112; color: #fcd34d; } :root:not([data-theme="light"]) .perm-badge.delete { background: #2d1414; color: #fca5a5; } :root:not([data-theme="light"]) .perm-badge.action { background: #1e1733; color: #c4b5fd; } }
+  :root[data-theme="dark"] .perm-badge.view { background: #172033; color: #93c5fd; } :root[data-theme="dark"] .perm-badge.create { background: #0d2e1c; color: #6ee7b7; } :root[data-theme="dark"] .perm-badge.edit { background: #292112; color: #fcd34d; } :root[data-theme="dark"] .perm-badge.delete { background: #2d1414; color: #fca5a5; } :root[data-theme="dark"] .perm-badge.action { background: #1e1733; color: #c4b5fd; }
+
+  .status-badge { display: inline-block; font-size: .78rem; font-weight: 600; padding: .15em .6em; border-radius: 99px; }
+  .status-badge.draft     { background: #f1f5f9; color: #475569; }
+  .status-badge.receiving { background: #fef3c7; color: #92400e; }
+  .status-badge.completed { background: #d1fae5; color: #065f46; }
+  .status-badge.shipped   { background: #dbeafe; color: #1e40af; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .status-badge.draft { background: #1e293b; color: #94a3b8; } :root:not([data-theme="light"]) .status-badge.receiving { background: #292112; color: #fcd34d; } :root:not([data-theme="light"]) .status-badge.completed { background: #0d2e1c; color: #6ee7b7; } :root:not([data-theme="light"]) .status-badge.shipped { background: #172033; color: #93c5fd; } }
+  :root[data-theme="dark"] .status-badge.draft { background: #1e293b; color: #94a3b8; } :root[data-theme="dark"] .status-badge.receiving { background: #292112; color: #fcd34d; } :root[data-theme="dark"] .status-badge.completed { background: #0d2e1c; color: #6ee7b7; } :root[data-theme="dark"] .status-badge.shipped { background: #172033; color: #93c5fd; }
+
+  nav.toc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 2rem; }
+  nav.toc h3 { margin-top: 0; font-size: .85rem; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-muted); }
+  nav.toc ol { list-style: none; padding: 0; margin: .5rem 0 0; } nav.toc ol li { margin: .35rem 0; font-size: .9rem; }
+  nav.toc ol li a { color: var(--ink-muted); } nav.toc ol li a:hover { color: var(--primary); text-decoration: none; }
+  ol.inner-toc { list-style: disc; padding-left: 1.5rem; margin: .3rem 0; }
+  ol.inner-toc li { font-size: .85rem; margin: .2rem 0; }
+  @media (max-width: 640px) { body { padding: 1rem; } h1 { font-size: 1.5rem; } h2 { font-size: 1.2rem; } .card { padding: 1rem; } }
+</style>
+
+<header>
+  <h1>🔄 Transactions</h1>
+  <p>Panduan lengkap modul transaksi: Receiving (penerimaan barang), Shopping (pengiriman keluar), dan Stocks (pemantauan stok).</p>
+  <div class="meta">
+    <span>📖 Manual Book</span>
+    <span>🧑‍💼 Semua Role</span>
+    <span>📅 2026-08-09</span>
+    <span>🔖 v1.0</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <h3>Daftar Isi</h3>
+  <ol>
+    <li><strong>Receiving (Cycles)</strong>
+      <ol class="inner-toc">
+        <li><a href="#rec-overview">Overview & Permission</a></li>
+        <li><a href="#rec-lifecycle">Siklus Hidup Cycle</a></li>
+        <li><a href="#rec-daftar">Melihat Daftar Cycle</a></li>
+        <li><a href="#rec-create">Membuat Cycle Baru</a></li>
+        <li><a href="#rec-quick">Quick Receive (Scan)</a></li>
+        <li><a href="#rec-receive">Proses Penerimaan (Receive)</a></li>
+        <li><a href="#rec-edit">Mengedit & Menghapus</a></li>
+        <li><a href="#rec-import">Import & Export</a></li>
+      </ol>
+    </li>
+    <li><strong>Shopping (Pengiriman)</strong>
+      <ol class="inner-toc">
+        <li><a href="#shop-overview">Overview & Permission</a></li>
+        <li><a href="#shop-create">Membuat Shopping Baru</a></li>
+        <li><a href="#shop-ship">Proses Pengiriman (Ship)</a></li>
+      </ol>
+    </li>
+    <li><strong>Stocks (Stok)</strong>
+      <ol class="inner-toc">
+        <li><a href="#stock-overview">Overview & Permission</a></li>
+      </ol>
+    </li>
+    <li><a href="#troubleshooting">Troubleshooting</a></li>
+  </ol>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- PART 1: RECEIVING (CYCLES) -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<h2 style="font-size:1.8rem;color:var(--primary);border-bottom:3px solid var(--accent);margin-top:3rem;">📥 Part 1 — Receiving (Cycles)</h2>
+
+<h3 id="rec-overview">Overview</h3>
+<p>Modul <strong>Receiving</strong> mencatat proses penerimaan barang dari supplier ke gudang. Setiap penerimaan disebut <strong>Cycle</strong>. Setiap cycle punya nomor unik per supplier, daftar item produk, dan melalui beberapa tahap status hingga selesai.</p>
+
+<div class="card">
+  <h3>Permission — Cycles</h3>
+  <table>
+    <tr><th>Permission</th><th>Fungsi</th><th>Superadmin</th><th>Leader</th><th>Operator</th></tr>
+    <tr><td><span class="perm-badge view">view cycles</span></td><td>Lihat daftar & detail</td><td>✅</td><td>✅</td><td>✅</td></tr>
+    <tr><td><span class="perm-badge create">create cycles</span></td><td>Buat cycle baru, quick receive, import</td><td>✅</td><td>✅</td><td>✅</td></tr>
+    <tr><td><span class="perm-badge edit">edit cycles</span></td><td>Edit cycle (hanya status draft)</td><td>✅</td><td>✅</td><td>❌</td></tr>
+    <tr><td><span class="perm-badge delete">delete cycles</span></td><td>Hapus cycle</td><td>✅</td><td>✅</td><td>❌</td></tr>
+    <tr><td><span class="perm-badge action">receive cycles</span></td><td>Proses penerimaan barang</td><td>✅</td><td>✅</td><td>❌</td></tr>
+    <tr><td><span class="perm-badge action">import cycles</span></td><td>Import Excel</td><td>✅</td><td>✅</td><td>❌</td></tr>
+    <tr><td><span class="perm-badge action">export cycles</span></td><td>Export Excel</td><td>✅</td><td>✅</td><td>❌</td></tr>
+  </table>
+</div>
+
+<h3 id="rec-lifecycle">Siklus Hidup Cycle</h3>
+<div class="card">
+  <table>
+    <tr><th>Status</th><th>Badge</th><th>Arti</th><th>Tindakan</th></tr>
+    <tr><td>draft</td><td><span class="status-badge draft">DRAFT</span></td><td>Cycle baru dibuat, belum diproses</td><td>Edit item, tambah/kurangi, atau mulai receiving</td></tr>
+    <tr><td>receiving</td><td><span class="status-badge receiving">RECEIVING</span></td><td>Sedang dalam proses penerimaan</td><td>Scan QR, input jumlah diterima, pilih rak</td></tr>
+    <tr><td>completed</td><td><span class="status-badge completed">COMPLETED</span></td><td>Penerimaan selesai, stok bertambah</td><td>Lihat riwayat & durasi. Tidak bisa diedit.</td></tr>
+  </table>
+</div>
+
+<h3 id="rec-daftar">Melihat Daftar Cycle</h3>
+<p>Akses: sidebar <strong>Transactions → Receiving</strong> atau <code>/cycles</code>.</p>
+
+<div class="screenshot">Screenshot: Halaman daftar cycle — filter supplier & status, tabel: Supplier, Cycle#, Status, Items, Tanggal, Aksi</div>
+
+<div class="card">
+  <h3>Fitur Halaman Daftar</h3>
+  <table>
+    <tr><th>Elemen</th><th>Fungsi</th></tr>
+    <tr><td>🏭 Filter Supplier</td><td>Dropdown — tampilkan cycle hanya dari supplier tertentu</td></tr>
+    <tr><td>📊 Filter Status</td><td>Dropdown — filter: All, Draft, Receiving, Completed</td></tr>
+    <tr><td>➕ Cycle Baru</td><td>Membuat cycle baru (permission <code>create cycles</code>)</td></tr>
+    <tr><td>📷 Terima Cepat</td><td>Quick receive — scan QR / barcode langsung (permission <code>create cycles</code>)</td></tr>
+    <tr><td>📥📤 Import/Export</td><td>Toolbar Excel</td></tr>
+    <tr><td>👁️ View</td><td>Detail cycle + proses receiving</td></tr>
+    <tr><td>✏️ Edit</td><td>Edit cycle (hanya status draft, permission <code>edit cycles</code>)</td></tr>
+    <tr><td>🗑️ Hapus</td><td>Hapus cycle (permission <code>delete cycles</code>)</td></tr>
+  </table>
+</div>
+
+<div class="callout info">
+  <strong>💡 Cycle Number</strong>
+  Setiap cycle punya nomor unik per supplier, format: <code>[KODE_SUPPLIER]-[URUT]</code>. Contoh: <code>AJM-001</code>, <code>AJM-002</code>. Sistem otomatis menghitung nomor berikutnya untuk supplier yang sama.
+</div>
+
+<h3 id="rec-create">Membuat Cycle Baru</h3>
+<ol class="steps">
+  <li>
+    <strong>Buka form</strong>
+    <p>Klik <strong>Cycle Baru</strong> atau ke <code>/cycles/create</code>.</p>
+  </li>
+  <li>
+    <strong>Pilih supplier & isi detail</strong>
+    <div class="card">
+      <h3>Field Form — Cycle</h3>
+      <table>
+        <tr><th>Field</th><th>Wajib</th><th>Keterangan</th></tr>
+        <tr><td>Supplier</td><td>✅ Ya</td><td>Dropdown supplier. Cycle number otomatis mengikuti supplier ini.</td></tr>
+        <tr><td>Delivery Date</td><td>✅ Ya</td><td>Tanggal & waktu pengiriman dari supplier.</td></tr>
+        <tr><td>Notes</td><td>Tidak</td><td>Catatan tambahan untuk cycle ini.</td></tr>
+      </table>
+    </div>
+  </li>
+  <li>
+    <strong>Tambah item produk</strong>
+    <p>Untuk setiap item yang diterima, pilih <strong>Produk</strong> (dropdown searchable) dan isi <strong>Quantity</strong>. Kamu bisa menambah banyak item dalam satu cycle.</p>
+  </li>
+  <li><strong>Simpan</strong> — cycle tersimpan dengan status <strong>Draft</strong>.</li>
+</ol>
+
+<h3 id="rec-quick">Quick Receive (Scan QR/Barcode)</h3>
+<p>Fitur <strong>Quick Receive</strong> mempercepat penerimaan dengan scan. Akses: tombol <strong>📷 Terima Cepat</strong> di halaman daftar cycle.</p>
+
+<div class="screenshot">Screenshot: Halaman Quick Receive — form pilih supplier + scan part number</div>
+
+<div class="callout info">
+  <strong>📷 Cara kerja Quick Receive</strong>
+  <ol>
+    <li>Pilih <strong>Supplier</strong>.</li>
+    <li>Scan barcode/QR code <strong>Part Number</strong> produk.</li>
+    <li>Sistem otomatis menambah quantity +1 untuk produk tersebut di cycle.</li>
+    <li>Setiap scan menambah quantity. Scan berkali-kali = quantity bertambah.</li>
+    <li>Setelah selesai scan semua item, klik <strong>Simpan</strong>.</li>
+  </ol>
+  Sistem membuat satu cycle baru dengan semua item yang di-scan. Status: <strong>Draft</strong>. Lanjutkan ke proses receive untuk memasukkan ke rak.
+</div>
+
+<h3 id="rec-receive">Proses Penerimaan (Receive)</h3>
+<p>Ini adalah inti dari modul Receiving — memasukkan barang ke rak dan menambah stok.</p>
+
+<ol class="steps">
+  <li>
+    <strong>Buka halaman detail cycle</strong>
+    <p>Dari daftar cycle, klik <strong>👁️ View</strong> pada cycle dengan status <strong>Draft</strong>.</p>
+  </li>
+  <li>
+    <strong>Klik "Terima Barang"</strong>
+    <p>Tombol ini muncul di halaman detail. Halaman berubah ke mode receiving.</p>
+  </li>
+  <li>
+    <strong>Input data penerimaan per item</strong>
+    <div class="card">
+      <h3>Form Receive — Per Item</h3>
+      <table>
+        <tr><th>Field</th><th>Keterangan</th></tr>
+        <tr><td>Qty Doc</td><td>Quantity di dokumen/surat jalan (read-only, dari data cycle)</td></tr>
+        <tr><td>Diterima</td><td>Jumlah yang benar-benar diterima. Default: 0. Bisa kurang dari Qty Doc (shortfall).</td></tr>
+        <tr><td>Rak</td><td>Dropdown searchable — pilih rak tujuan. Sistem otomatis mengisi rak default produk (label <em>"Default"</em>) atau rak terakhir (label <em>"Terakhir"</em>). Jika tidak dipilih, stok dicatat tanpa lokasi (<em>"Overflow"</em>).</td></tr>
+        <tr><td>Catatan</td><td>Catatan per item (opsional), contoh: <code>rusak</code>, <code>kemasan sobek</code></td></tr>
+      </table>
+    </div>
+  </li>
+  <li>
+    <strong>Scan QR (opsional)</strong>
+    <p>Klik <strong>📷 Scan QR</strong> untuk membuka QR scanner. Scan part number produk — quantity otomatis +1. Berguna untuk hitung fisik sambil scan.</p>
+  </li>
+  <li>
+    <strong>Selesaikan Penerimaan</strong>
+    <p>Klik <strong>Selesaikan Penerimaan</strong>. Sistem akan:
+      <br>• Menambah stok produk di rak yang dipilih
+      <br>• Mencatat receive log (siapa, kapan, berapa)
+      <br>• Mengubah status cycle menjadi <strong>Completed</strong>
+      <br>• Menghitung total durasi penerimaan
+    </p>
+  </li>
+</ol>
+
+<div class="callout warning">
+  <strong>⚠️ Item tanpa rak = Overflow</strong>
+  Jika kamu menyelesaikan penerimaan dengan item yang belum memilih rak, stok tetap dicatat tapi tanpa lokasi rak (Overflow). Sistem akan menampilkan peringatan <em>"Beberapa item belum memilih rak"</em>.
+</div>
+
+<h3 id="rec-edit">Mengedit & Menghapus Cycle</h3>
+<div class="card">
+  <p><strong>Edit:</strong> Hanya bisa untuk cycle status <strong>Draft</strong>. Cycle yang sudah receiving/completed tidak bisa diedit.</p>
+  <p><strong>Hapus:</strong> Bisa untuk semua status. Hati-hati — cycle completed yang dihapus akan menghilangkan riwayat penerimaan.</p>
+</div>
+
+<h3 id="rec-import">Import & Export Cycle</h3>
+<div class="card">
+  <h3>Import Cycle</h3>
+  <p><strong>Permission:</strong> <span class="perm-badge action">import cycles</span></p>
+  <p>Kolom template: cycle_number, supplier_name, delivery_date, part_number, quantity, notes. Import membuat cycle baru per kombinasi supplier + cycle_number.</p>
+</div>
+<div class="card">
+  <h3>Export Cycle</h3>
+  <p><strong>Permission:</strong> <span class="perm-badge action">export cycles</span></p>
+  <p>Export seluruh data cycle. File: <code>cycles-export.xlsx</code>.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- PART 2: SHOPPING -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<h2 style="font-size:1.8rem;color:var(--primary);border-bottom:3px solid var(--accent);margin-top:4rem;">📤 Part 2 — Shopping (Pengiriman)</h2>
+
+<h3 id="shop-overview">Overview</h3>
+<p>Modul <strong>Shopping</strong> mencatat proses pengiriman barang <strong>keluar</strong> dari gudang ke lokasi tujuan (mitra, cabang, toko). Setiap pengiriman mengurangi stok di rak.</p>
+
+<div class="card">
+  <h3>Permission — Shopping</h3>
+  <table>
+    <tr><th>Permission</th><th>Fungsi</th><th>Superadmin</th><th>Leader</th><th>Operator</th></tr>
+    <tr><td><span class="perm-badge view">view shoppings</span></td><td>Lihat daftar & detail</td><td>✅</td><td>✅</td><td>✅</td></tr>
+    <tr><td><span class="perm-badge create">create shoppings</span></td><td>Buat shopping baru</td><td>✅</td><td>✅</td><td>✅</td></tr>
+    <tr><td><span class="perm-badge edit">edit shoppings</span></td><td>Edit shopping (hanya draft)</td><td>✅</td><td>✅</td><td>❌</td></tr>
+    <tr><td><span class="perm-badge delete">delete shoppings</span></td><td>Hapus shopping</td><td>✅</td><td>✅</td><td>❌</td></tr>
+    <tr><td><span class="perm-badge action">ship shoppings</span></td><td>Proses kirim (kurangi stok)</td><td>✅</td><td>✅</td><td>❌</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h3>Status Shopping</h3>
+  <table>
+    <tr><th>Status</th><th>Badge</th><th>Arti</th></tr>
+    <tr><td>draft</td><td><span class="status-badge draft">DRAFT</span></td><td>Shopping dibuat, belum dikirim</td></tr>
+    <tr><td>shipped</td><td><span class="status-badge shipped">SHIPPED</span></td><td>Sudah dikirim, stok berkurang</td></tr>
+    <tr><td>completed</td><td><span class="status-badge completed">COMPLETED</span></td><td>Selesai</td></tr>
+  </table>
+</div>
+
+<h3 id="shop-create">Membuat Shopping Baru</h3>
+<ol class="steps">
+  <li>Akses: sidebar <strong>Transactions → Shopping</strong>, klik <strong>Shopping Baru</strong>.</li>
+  <li>
+    <strong>Isi data:</strong>
+    <table>
+      <tr><th>Field</th><th>Wajib</th><th>Keterangan</th></tr>
+      <tr><td>Lokasi Tujuan</td><td>✅ Ya</td><td>Dropdown dari Shopping Location</td></tr>
+      <tr><td>Tanggal</td><td>✅ Ya</td><td>Tanggal pengiriman</td></tr>
+      <tr><td>Frame Number</td><td>Tidak</td><td>Nomor frame/barcode untuk tracking</td></tr>
+      <tr><td>Notes</td><td>Tidak</td><td>Catatan</td></tr>
+    </table>
+  </li>
+  <li>Tambah item: pilih <strong>Produk</strong>, <strong>Rak</strong> (dari mana stok diambil), dan <strong>Quantity</strong>.</li>
+  <li>Simpan — status <strong>Draft</strong>.</li>
+</ol>
+
+<h3 id="shop-ship">Proses Pengiriman (Ship)</h3>
+<ol class="steps">
+  <li>Buka detail Shopping (klik <strong>View</strong>).</li>
+  <li>Klik <strong>Kirim Sekarang</strong>.</li>
+  <li>Sistem mengurangi stok produk dari rak yang dipilih.</li>
+  <li>Status berubah: <strong>Draft → Shipped</strong>.</li>
+</ol>
+
+<div class="callout danger">
+  <strong>⚠️ Ship = Kurangi Stok</strong>
+  Setelah Ship, stok di rak berkurang permanen. Pastikan quantity benar sebelum klik Kirim. Shopping yang sudah shipped <strong>tidak bisa dibatalkan</strong> dari UI.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- PART 3: STOCKS -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<h2 style="font-size:1.8rem;color:var(--primary);border-bottom:3px solid var(--accent);margin-top:4rem;">📊 Part 3 — Stocks (Stok)</h2>
+
+<h3 id="stock-overview">Overview</h3>
+<p>Modul <strong>Stocks</strong> menampilkan data stok seluruh produk di semua rak. Modul ini <strong>read-only</strong> — tidak ada operasi tambah/edit/hapus. Stok hanya berubah melalui transaksi <strong>Receiving</strong> (nambah) dan <strong>Shopping</strong> (kurangi).</p>
+
+<div class="card">
+  <h3>Permission</h3>
+  <table>
+    <tr><th>Permission</th><th>Superadmin</th><th>Leader</th><th>Operator</th></tr>
+    <tr><td><span class="perm-badge view">view stocks</span></td><td>✅</td><td>✅</td><td>✅</td></tr>
+  </table>
+</div>
+
+<div class="screenshot">Screenshot: Halaman Stocks — tabel: Part Number, Produk, Supplier, Rak, Quantity</div>
+
+<div class="callout info">
+  <strong>💡 Memahami Stok</strong>
+  <ul>
+    <li>Satu produk bisa tersimpan di <strong>banyak rak</strong>. Setiap baris = satu kombinasi produk + rak.</li>
+    <li><strong>Total stok</strong> produk = jumlah quantity di semua rak.</li>
+    <li>Stok bertambah via <strong>Receiving (Cycle complete)</strong>.</li>
+    <li>Stok berkurang via <strong>Shopping (Ship)</strong>.</li>
+  </ul>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TROUBLESHOOTING -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<div class="card">
+  <h3>🚫 Tidak bisa edit cycle — tombol abu-abu</h3>
+  <p><strong>Penyebab:</strong> Cycle bukan status <strong>Draft</strong>. Cycle receiving/completed tidak bisa diedit.</p>
+  <p><strong>Solusi:</strong> Jika ada kesalahan, hapus cycle dan buat ulang. Stok yang sudah bertambah tidak otomatis kembali.</p>
+</div>
+
+<div class="card">
+  <h3>📷 QR Scanner tidak muncul atau error</h3>
+  <p><strong>Penyebab:</strong Browser tidak support kamera, atau permission kamera belum diberikan.</p>
+  <p><strong>Solusi:</strong> Izinkan akses kamera di browser. Gunakan Chrome/Edge. Pastikan koneksi HTTPS (production) — kamera hanya bekerja di secure context.</p>
+</div>
+
+<div class="card">
+  <h3>🔴 Stok tidak bertambah setelah receive</h3>
+  <p><strong>Penyebab:</strong> Mungkin receive gagal di tengah jalan (error server), atau quantity diterima = 0.</p>
+  <p><strong>Solusi:</strong> Cek status cycle — harus <strong>Completed</strong>. Lihat receive log di halaman detail untuk riwayat penerimaan.</p>
+</div>
+
+<div class="card">
+  <h3>🔻 Stok tidak berkurang setelah ship</h3>
+  <p><strong>Penyebab:</strong> Shopping masih status <strong>Draft</strong>. Klik <strong>Kirim Sekarang</strong> untuk mengurangi stok.</p>
+</div>
+
+<div class="card">
+  <h3>⚠️ Rak Overflow — stok tanpa lokasi</h3>
+  <p><strong>Penyebab:</strong> Saat receive, item tidak dipilihkan rak.</p>
+  <p><strong>Solusi:</strong> Stok sudah tercatat. Untuk memindahkan ke rak, buat transaksi Shopping (kirim dari overflow) lalu Receiving baru ke rak yang benar. Atau edit langsung di database.</p>
+</div>
+
+<div class="card">
+  <h3>📊 Stok negatif — bagaimana bisa?</h3>
+  <p><strong>Penyebab:</strong> Shopping mengirim lebih banyak dari stok yang tersedia di rak.</p>
+  <p><strong>Solusi:</strong> Sistem tidak memblokir pengiriman melebihi stok. Pastikan quantity di Shopping tidak melebihi stok Rak yang dipilih. Gunakan halaman Stocks untuk cek stok terkini sebelum kirim.</p>
+</div>
+
+<hr style="margin:3rem 0 1.5rem; border:none; border-top:1px solid var(--border)">
+
+<footer style="text-align:center; color:var(--ink-muted); font-size:.82rem;">
+  <p>WMS MAW — Transactions Manual Book v1.0</p>
+  <p>📥 Receiving &nbsp;|&nbsp; 📤 Shopping &nbsp;|&nbsp; 📊 Stocks</p>
+  <p>⬅️ <a href="shift-deliveryslot-shoppinglocation.html">Phase 1: Master Data</a> &nbsp;|&nbsp; ➡️ <a href="#">Phase 3: Reports & Monitoring</a></p>
+</footer>

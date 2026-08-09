@@ -1,0 +1,347 @@
+<title>System Administration — WMS MAW Manual Book</title>
+
+<style>
+  :root {
+    --ink: #1e293b; --ink-muted: #64748b;
+    --ground: #f8f9fb; --surface: #ffffff;
+    --border: #e2e8f0; --border-strong: #cbd5e1;
+    --accent: #4f46e5; --accent-soft: #eef2ff;
+    --primary: #4338ca; --primary-soft: #eef2ff;
+    --success: #0d9488; --success-soft: #f0fdfa;
+    --danger: #dc2626; --danger-soft: #fef2f2;
+    --warning: #d97706; --warning-soft: #fffbeb;
+    --code-bg: #f1f5f9;
+    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --radius: 8px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #e2e8f0; --ink-muted: #94a3b8;
+      --ground: #0f172a; --surface: #1e293b;
+      --border: #334155; --border-strong: #475569;
+      --accent: #818cf8; --accent-soft: #1e1733;
+      --primary: #a5b4fc; --primary-soft: #1e1733;
+      --success: #2dd4bf; --success-soft: #0d2e2b;
+      --danger: #f87171; --danger-soft: #2d1414;
+      --warning: #fbbf24; --warning-soft: #292112;
+      --code-bg: #1e293b; --shadow: 0 1px 3px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #e2e8f0; --ink-muted: #94a3b8;
+    --ground: #0f172a; --surface: #1e293b;
+    --border: #334155; --border-strong: #475569;
+    --accent: #818cf8; --accent-soft: #1e1733;
+    --primary: #a5b4fc; --primary-soft: #1e1733;
+    --success: #2dd4bf; --success-soft: #0d2e2b;
+    --danger: #f87171; --danger-soft: #2d1414;
+    --warning: #fbbf24; --warning-soft: #292112;
+    --code-bg: #1e293b; --shadow: 0 1px 3px rgba(0,0,0,.3);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; font-size: 16px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: var(--ground); color: var(--ink); line-height: 1.7; max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem 6rem; }
+  h1 { font-size: 1.9rem; font-weight: 700; letter-spacing: -.02em; margin-bottom: .25rem; color: var(--primary); }
+  h2 { font-size: 1.4rem; font-weight: 650; margin: 2.5rem 0 1rem; padding-bottom: .5rem; border-bottom: 2px solid var(--border); }
+  h3 { font-size: 1.15rem; font-weight: 600; margin: 1.75rem 0 .6rem; }
+  p { margin: .75rem 0; color: var(--ink-muted); } strong { color: var(--ink); }
+  a { color: var(--primary); } a:hover { text-decoration: underline; }
+  header { margin-bottom: 2rem; }
+  .meta { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: .5rem; }
+  .meta span { font-size: .8rem; color: var(--ink-muted); background: var(--surface); border: 1px solid var(--border); padding: .2rem .7rem; border-radius: 99px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin: 1.25rem 0; box-shadow: var(--shadow); } .card h3 { margin-top: 0; }
+  .callout { border-left: 4px solid; border-radius: 0 var(--radius) var(--radius) 0; padding: .9rem 1.2rem; margin: 1.25rem 0; font-size: .92rem; }
+  .callout.info    { border-color: var(--primary);  background: var(--primary-soft);  }
+  .callout.warning { border-color: var(--warning); background: var(--warning-soft); }
+  .callout.danger  { border-color: var(--danger);  background: var(--danger-soft);  }
+  .callout.success { border-color: var(--success); background: var(--success-soft); }
+  .callout strong { display: block; margin-bottom: .3rem; }
+  ol.steps { counter-reset: step; list-style: none; padding: 0; }
+  ol.steps li { counter-increment: step; position: relative; padding-left: 3rem; margin: 1.5rem 0; }
+  ol.steps li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 2rem; height: 2rem; background: var(--primary-soft); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .85rem; }
+  .screenshot { background: var(--border); border: 2px dashed var(--border-strong); border-radius: var(--radius); padding: 2.5rem; text-align: center; color: var(--ink-muted); font-size: .85rem; margin: 1rem 0; } .screenshot::before { content: "📸 "; font-size: 2rem; display: block; margin-bottom: .5rem; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .9rem; }
+  th, td { padding: .65rem .9rem; text-align: left; border-bottom: 1px solid var(--border); }
+  th { font-weight: 600; color: var(--ink); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
+  td { color: var(--ink-muted); } tr:last-child td { border-bottom: none; }
+  code, kbd { background: var(--code-bg); border: 1px solid var(--border); border-radius: 4px; padding: .15em .45em; font-family: "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace; font-size: .88em; }
+  .perm-badge { display: inline-block; font-size: .75rem; font-weight: 600; padding: .2em .6em; border-radius: 4px; margin: .15rem; }
+  .perm-badge.view   { background: #dbeafe; color: #1e40af; }
+  .perm-badge.manage { background: #ede9fe; color: #6d28d9; }
+  .perm-badge.role-badge { display: inline-block; padding: .1em .5em; border-radius: 3px; font-size: .72rem; font-weight: 700; }
+  .perm-badge.role-super { background: #fee2e2; color: #991b1b; }
+  .perm-badge.role-leader { background: #fef3c7; color: #92400e; }
+  .perm-badge.role-operator { background: #d1fae5; color: #065f46; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .perm-badge.view { background: #172033; color: #93c5fd; } :root:not([data-theme="light"]) .perm-badge.manage { background: #1e1733; color: #c4b5fd; } }
+  :root[data-theme="dark"] .perm-badge.view { background: #172033; color: #93c5fd; } :root[data-theme="dark"] .perm-badge.manage { background: #1e1733; color: #c4b5fd; }
+
+  nav.toc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 2rem; }
+  nav.toc h3 { margin-top: 0; font-size: .85rem; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-muted); }
+  nav.toc ol { list-style: none; padding: 0; margin: .5rem 0 0; } nav.toc ol li { margin: .35rem 0; font-size: .9rem; }
+  nav.toc ol li a { color: var(--ink-muted); } nav.toc ol li a:hover { color: var(--primary); text-decoration: none; }
+  ol.inner-toc { list-style: disc; padding-left: 1.5rem; margin: .3rem 0; }
+  ol.inner-toc li { font-size: .85rem; margin: .2rem 0; }
+  @media (max-width: 640px) { body { padding: 1rem; } h1 { font-size: 1.5rem; } h2 { font-size: 1.2rem; } .card { padding: 1rem; } }
+</style>
+
+<header>
+  <h1>⚙️ System Administration</h1>
+  <p>Panduan administrasi sistem: User Management, Role & Permission (RBAC), dan Menu/Sidebar Configuration. Khusus untuk <strong>Superadmin</strong>.</p>
+  <div class="meta">
+    <span>📖 Manual Book</span>
+    <span>🔐 Superadmin Only</span>
+    <span>📅 2026-08-09</span>
+    <span>🔖 v1.0</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <h3>Daftar Isi</h3>
+  <ol>
+    <li><strong>User Management</strong>
+      <ol class="inner-toc"><li><a href="#user-overview">Overview</a></li><li><a href="#user-manage">Mengelola User</a></li></ol>
+    </li>
+    <li><strong>Role & Permission (RBAC)</strong>
+      <ol class="inner-toc"><li><a href="#rbac-concept">Konsep RBAC</a></li><li><a href="#rbac-roles">3 Role Bawaan</a></li><li><a href="#rbac-permissions">Daftar Lengkap Permission</a></li><li><a href="#rbac-manage">Mengelola Role & Permission</a></li></ol>
+    </li>
+    <li><strong>Menu & Sidebar</strong>
+      <ol class="inner-toc"><li><a href="#menu-overview">Overview</a></li><li><a href="#menu-manage">Mengelola Menu</a></li></ol>
+    </li>
+    <li><a href="#troubleshooting">Troubleshooting</a></li>
+  </ol>
+</nav>
+
+<!-- ═══════════ 1. USER MANAGEMENT ═══════════ -->
+
+<h2 id="user-overview">1. User Management</h2>
+<p>Modul untuk mengelola akun login pengguna sistem. Akses: sidebar <strong>Setup → Users</strong> atau <code>/users</code>. <strong>Hanya Superadmin.</strong></p>
+
+<div class="card">
+  <h3>Permission — Users</h3>
+  <table>
+    <tr><th>Permission</th><th>Fungsi</th></tr>
+    <tr><td><span class="perm-badge view">view users</span></td><td>Lihat daftar user, export</td></tr>
+    <tr><td><span class="perm-badge manage">manage users</span></td><td>Tambah, edit, hapus user, import</td></tr>
+  </table>
+</div>
+
+<div class="screenshot">Screenshot: Halaman Users — tabel: Nama, Email, Role badges, Employee link, Aksi</div>
+
+<h3 id="user-manage">Mengelola User</h3>
+
+<div class="card">
+  <h3>Menambah User (Manual)</h3>
+  <ol class="steps">
+    <li>Klik <strong>Tambah User</strong>. Isi: Nama, Email, Password, Role.</li>
+    <li>Role bisa dipilih manual dari dropdown.</li>
+    <li>Opsional: kaitkan dengan Employee (<code>employee_id</code>) — role akan otomatis mengikuti Job Position.</li>
+    <li>Simpan. User bisa langsung login.</li>
+  </ol>
+</div>
+
+<div class="card">
+  <h3>Alternatif: Generate User dari Employee</h3>
+  <p>User juga bisa dibuat dari modul <strong>Employee → Generate User</strong> (lihat manual Employee Management). Ini lebih disarankan karena role otomatis mengikuti jabatan.</p>
+</div>
+
+<div class="callout warning">
+  <strong>⚠️ Edit User & Role</strong>
+  Mengubah role user langsung di halaman Users akan <strong>menimpa</strong> role yang di-assign otomatis dari Job Position. Untuk menjaga konsistensi, sebaiknya kelola role melalui <strong>Job Position</strong> (Employee module), bukan langsung di User.
+</div>
+
+<!-- ═══════════ 2. ROLE & PERMISSION ═══════════ -->
+
+<h2 id="rbac-concept">2. Role & Permission (RBAC)</h2>
+
+<p>WMS MAW menggunakan <strong>Spatie Laravel Permission</strong> — sistem Role-Based Access Control dengan ~74 permission yang mengatur akses ke setiap fitur.</p>
+
+<h3 id="rbac-roles">3 Role Bawaan</h3>
+
+<div class="card">
+  <table>
+    <tr><th>Role</th><th>Badge</th><th>Permission</th><th>Deskripsi</th></tr>
+    <tr>
+      <td><strong>superadmin</strong></td>
+      <td><span class="perm-badge role-badge role-super">SUPERADMIN</span></td>
+      <td>Semua (74)</td>
+      <td>Akses penuh. Kelola user, role, permission, menu. Hanya 1-2 orang.</td>
+    </tr>
+    <tr>
+      <td><strong>leader</strong></td>
+      <td><span class="perm-badge role-badge role-leader">LEADER</span></td>
+      <td>~50</td>
+      <td>View semua master data, full CRUD transaksi, akses report & monitoring. Tidak bisa hapus master data & tidak bisa akses system admin.</td>
+    </tr>
+    <tr>
+      <td><strong>operator</strong></td>
+      <td><span class="perm-badge role-badge role-operator">OPERATOR</span></td>
+      <td>~20</td>
+      <td>View master data terbatas, create receiving & shopping. Tidak bisa edit/delete/ship. Role harian gudang.</td>
+    </tr>
+  </table>
+</div>
+
+<h3 id="rbac-permissions">Daftar Lengkap Permission</h3>
+
+<p>Semua permission mengikuti pola <code>verb noun</code>. Berikut daftar lengkapnya:</p>
+
+<div class="card">
+  <h3>Master Data Permissions (47)</h3>
+  <table>
+    <tr><th>Modul</th><th>Permission</th></tr>
+    <tr><td>Suppliers</td><td><code>view/create/edit/delete suppliers</code></td></tr>
+    <tr><td>Products</td><td><code>view/create/edit/delete products</code></td></tr>
+    <tr><td>Racks</td><td><code>view/create/edit/delete racks</code></td></tr>
+    <tr><td>Vehicle Models</td><td><code>view/create/edit/delete vehicle models</code></td></tr>
+    <tr><td>Product Categories</td><td><code>view/create/edit/delete product categories</code></td></tr>
+    <tr><td>Job Positions</td><td><code>view/create/edit/delete job positions</code></td></tr>
+    <tr><td>Work Locations</td><td><code>view/create/edit/delete work locations</code></td></tr>
+    <tr><td>Departments</td><td><code>view/create/edit/delete departments</code></td></tr>
+    <tr><td>Employees</td><td><code>view/create/edit/delete employees</code></td></tr>
+    <tr><td>Shifts</td><td><code>view/create/edit/delete shifts</code></td></tr>
+    <tr><td>Delivery Slots</td><td><code>view/edit delivery slots</code></td></tr>
+    <tr><td>Shopping Locations</td><td><code>view/create/edit/delete shopping locations</code></td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h3>Transaction Permissions (12)</h3>
+  <table>
+    <tr><th>Modul</th><th>Permission</th></tr>
+    <tr><td>Cycles</td><td><code>view/create/edit/delete/receive cycles</code></td></tr>
+    <tr><td>Shopping</td><td><code>view/create/edit/delete/ship shoppings</code></td></tr>
+    <tr><td>Stocks</td><td><code>view stocks</code></td></tr>
+    <tr><td>Import/Export</td><td><code>import/export cycles</code></td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h3>Report & System Permissions (15)</h3>
+  <table>
+    <tr><th>Grup</th><th>Permission</th></tr>
+    <tr><td>Reports</td><td><code>view/export receiving report</code>, <code>view/export shopping report</code>, <code>view supplier performance</code></td></tr>
+    <tr><td>Delivery Monitor</td><td><code>view delivery monitor</code></td></tr>
+    <tr><td>Dashboard</td><td><code>view dashboard</code></td></tr>
+    <tr><td>System</td><td><code>view/manage users</code>, <code>view/manage roles</code>, <code>view/manage permissions</code>, <code>view/manage menus</code></td></tr>
+  </table>
+</div>
+
+<h3 id="rbac-manage">Mengelola Role & Permission</h3>
+
+<div class="card">
+  <h3>Mengedit Role (Setup → Roles)</h3>
+  <ol class="steps">
+    <li>Buka <strong>/roles</strong>. Tabel menampilkan semua role dengan daftar permission-nya.</li>
+    <li>Klik <strong>Edit</strong> pada role yang ingin diubah.</li>
+    <li>Centang/uncentang permission di daftar checkbox (dikelompokkan per modul).</li>
+    <li>Simpan. User dengan role ini akan mendapatkan permission baru setelah <strong>logout & login ulang</strong>.</li>
+  </ol>
+</div>
+
+<div class="card">
+  <h3>Melihat Daftar Permission (Setup → Permissions)</h3>
+  <p>Halaman <strong>/permissions</strong> menampilkan semua permission yang terdaftar di sistem. Hanya <strong>read-only</strong> untuk melihat. Permission dibuat melalui database seeder (<code>WmsRoleSeeder</code>).</p>
+</div>
+
+<div class="callout danger">
+  <strong>⚠️ Jangan edit role Superadmin sembarangan</strong>
+  Role superadmin harus selalu punya SEMUA permission (<code>manage roles</code>, <code>manage permissions</code>). Jika tidak sengaja menghapus permission dari superadmin, kamu bisa terkunci dari halaman Roles itu sendiri. Jalankan ulang seeder untuk recovery.
+</div>
+
+<!-- ═══════════ 3. MENU & SIDEBAR ═══════════ -->
+
+<h2 id="menu-overview">3. Menu & Sidebar Configuration</h2>
+
+<p>Modul untuk mengelola tampilan sidebar navigasi. Setiap menu item bisa dikaitkan dengan permission — user hanya melihat menu yang sesuai dengan permission-nya. Akses: <strong>Setup → Menu Management</strong> atau <code>/menus</code>.</p>
+
+<div class="card">
+  <h3>Permission — Menu</h3>
+  <table>
+    <tr><th>Permission</th><th>Fungsi</th></tr>
+    <tr><td><span class="perm-badge view">view menus</span></td><td>Lihat struktur menu</td></tr>
+    <tr><td><span class="perm-badge manage">manage menus</span></td><td>Tambah, edit, hapus menu items</td></tr>
+  </table>
+</div>
+
+<div class="screenshot">Screenshot: Halaman Menu Management — tabel hierarki: Parent Menu → Sub Menus, dengan icon, path, permission_name, sort_order</div>
+
+<div class="card">
+  <h3>Struktur Menu</h3>
+  <table>
+    <tr><th>Field</th><th>Keterangan</th></tr>
+    <tr><td>Name</td><td>Label yang muncul di sidebar</td></tr>
+    <tr><td>Icon</td><td>Nama icon (Heroicons). Contoh: <code>BoxIcon</code>, <code>TagIcon</code></td></tr>
+    <tr><td>Path</td><td>URL tujuan. Contoh: <code>/suppliers</code>. Kosongkan untuk parent menu.</td></tr>
+    <tr><td>Parent</td><td>Parent menu (null = menu level atas)</td></tr>
+    <tr><td>Sort Order</td><td>Urutan tampilan. Angka kecil = di atas.</td></tr>
+    <tr><td>Permission Name</td><td>Permission yang diperlukan untuk melihat menu ini. Contoh: <code>view suppliers</code></td></tr>
+    <tr><td>Group</td><td><code>main</code> = sidebar utama. <code>others</code> = group Setup (hanya superadmin).</td></tr>
+  </table>
+</div>
+
+<h3 id="menu-manage">Mengelola Menu</h3>
+
+<div class="card">
+  <h3>Menambah Menu Baru</h3>
+  <ol class="steps">
+    <li>Klik <strong>Tambah Menu</strong>.</li>
+    <li>Isi Name, Path, Icon, Permission Name, Sort Order.</li>
+    <li>Pilih Parent jika ini sub-menu.</li>
+    <li>Pilih Group: <code>main</code> (terlihat semua user) atau <code>others</code> (hanya superadmin).</li>
+    <li>Simpan.</li>
+  </ol>
+</div>
+
+<div class="callout info">
+  <strong>💡 Cara kerja filtering menu</strong>
+  Setiap kali user login, sistem memeriksa setiap menu item:
+  <br>• Jika menu punya <code>permission_name</code>, cek apakah user punya permission tersebut via <code>$user->can(...)</code>.
+  <br>• Jika user TIDAK punya permission → menu disembunyikan.
+  <br>• Parent menu tanpa path akan disembunyikan jika SEMUA sub-menunya juga tersembunyi.
+  <br><br>Ini memastikan setiap user hanya melihat menu yang relevan dengan role-nya.
+</div>
+
+<!-- ═══════════ TROUBLESHOOTING ═══════════ -->
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<div class="card">
+  <h3>🚫 Tidak bisa akses Setup menu</h3>
+  <p><strong>Penyebab:</strong> Hanya <strong>superadmin</strong> yang bisa melihat menu Setup (Users, Roles, Permissions, Menus).</p>
+  <p><strong>Solusi:</strong> Login dengan akun superadmin (<code>admin@maw.com</code>).</p>
+</div>
+
+<div class="card">
+  <h3>🔘 Tombol tidak muncul padahal role sudah diubah</h3>
+  <p><strong>Penyebab:</strong> Permission di-cache. User harus logout & login ulang setelah role berubah.</p>
+  <p><strong>Solusi:</strong> Logout → login kembali. Jika masih bermasalah di production, restart container (<code>docker compose restart app</code>) untuk clear Octane memory cache.</p>
+</div>
+
+<div class="card">
+  <h3>🔐 Terkunci dari halaman Roles (tidak sengaja hapus permission sendiri)</h3>
+  <p><strong>Penyebab:</strong> Role superadmin kehilangan <code>manage roles</code> atau <code>view roles</code>.</p>
+  <p><strong>Solusi:</strong> Jalankan seeder ulang di server:
+    <br><code>php artisan db:seed --class=WmsRoleSeeder --force</code>
+    <br><code>php artisan optimize:clear</code>
+    <br>Restart container app, lalu login ulang.
+  </p>
+</div>
+
+<div class="card">
+  <h3>📋 Menu baru tidak muncul di sidebar</h3>
+  <p><strong>Penyebab:</strong> Bisa jadi <code>permission_name</code> tidak cocok, atau user tidak punya permission tersebut, atau lupa set <code>sort_order</code>.</p>
+  <p><strong>Solusi:</strong> Cek permission_name di menu — harus sama persis dengan nama permission di database. Cek apakah user kamu punya permission tersebut.</p>
+</div>
+
+<div class="card">
+  <h3>👥 User tidak bisa login / role hilang</h3>
+  <p><strong>Penyebab:</strong> Bisa karena <code>syncRoles</code> dari Job Position menimpa role manual.</p>
+  <p><strong>Solusi:</strong> Cek apakah user terkait Employee. Jika iya, role dikelola oleh Job Position, bukan manual di User. Edit Job Position untuk mengubah role.</p>
+</div>
+
+<hr style="margin:3rem 0 1.5rem; border:none; border-top:1px solid var(--border)">
+
+<footer style="text-align:center; color:var(--ink-muted); font-size:.82rem;">
+  <p>WMS MAW — System Administration Manual Book v1.0</p>
+  <p>⬅️ <a href="reports-monitoring.html">Phase 3: Reports</a> &nbsp;|&nbsp; ➡️ <a href="#">Phase 5: Appendix</a></p>
+</footer>
