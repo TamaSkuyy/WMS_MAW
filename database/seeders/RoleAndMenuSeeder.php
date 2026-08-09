@@ -5,32 +5,29 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
-use Spatie\Permission\PermissionRegistrar;
 
 class RoleAndMenuSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Buat default admin user & assign ke role superadmin.
+     *
+     * ⚠️  Penting: WmsRoleSeeder HARUS dijalankan lebih dulu!
+     *     WmsRoleSeeder yang bikin semua permission + role (superadmin, leader, operator).
+     *     Seeder ini HANYA untuk bikin admin user-nya.
      */
     public function run(): void
     {
-        // Reset cached roles and permissions
-        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+        // Pastikan role superadmin sudah ada (dibuat oleh WmsRoleSeeder)
+        $superadminRole = Role::where('name', 'superadmin')->first();
 
-        // create permissions
-        Permission::firstOrCreate(['name' => 'view menus']);
-        Permission::firstOrCreate(['name' => 'manage menus']);
-        Permission::firstOrCreate(['name' => 'view users']);
-        Permission::firstOrCreate(['name' => 'manage users']);
-        Permission::firstOrCreate(['name' => 'view dashboard']);
+        if (! $superadminRole) {
+            throw new \RuntimeException(
+                'Role "superadmin" tidak ditemukan. Jalankan WmsRoleSeeder dulu!'
+            );
+        }
 
-        // assign all permissions to superadmin
-        $roleAdmin = Role::firstOrCreate(['name' => 'superadmin', 'guard_name' => 'web']);
-        $roleAdmin->givePermissionTo(Permission::all());
-
-        // create default admin user
+        // Buat default admin user
         $admin = User::firstOrCreate(
             ['email' => 'admin@maw.com'],
             [
@@ -38,8 +35,7 @@ class RoleAndMenuSeeder extends Seeder
                 'password' => Hash::make('password'),
             ]
         );
-        $admin->syncRoles(['superadmin']);
 
-        // Menus are handled by MenuSeeder
+        $admin->syncRoles(['superadmin']);
     }
 }
