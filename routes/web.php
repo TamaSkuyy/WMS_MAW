@@ -74,16 +74,18 @@ Route::middleware('auth')->group(function () {
         ->name('import.status');
 
     // ── Master Data: Suppliers ──────────────────────────────
-    // View
-    Route::middleware(PermissionMiddleware::using('view suppliers'))->group(function () {
-        Route::get('suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
-        Route::get('suppliers/{supplier}', [SupplierController::class, 'show'])->name('suppliers.show');
-    });
+    // ⚠️ Static routes first to avoid being captured by {supplier}
 
-    // Create
+    // Create (static)
     Route::middleware(PermissionMiddleware::using('create suppliers'))->group(function () {
         Route::get('suppliers/create', [SupplierController::class, 'create'])->name('suppliers.create');
         Route::post('suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
+    });
+
+    // View (parameterized — after static routes)
+    Route::middleware(PermissionMiddleware::using('view suppliers'))->group(function () {
+        Route::get('suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
+        Route::get('suppliers/{supplier}', [SupplierController::class, 'show'])->name('suppliers.show');
     });
 
     // Edit
@@ -108,11 +110,7 @@ Route::middleware('auth')->group(function () {
         ->middleware(PermissionMiddleware::using('view suppliers'))->name('suppliers.export');
 
     // ── Master Data: Products ───────────────────────────────
-    Route::middleware(PermissionMiddleware::using('view products'))->group(function () {
-        Route::get('products', [ProductController::class, 'index'])->name('products.index');
-        Route::get('products/{product}', [ProductController::class, 'show'])->name('products.show');
-        Route::get('products/export', [ProductController::class, 'export'])->name('products.export');
-    });
+    // ⚠️ Static routes first to avoid being captured by {product}
     Route::middleware(PermissionMiddleware::using('create products'))->group(function () {
         Route::get('products/create', [ProductController::class, 'create'])->name('products.create');
         Route::post('products', [ProductController::class, 'store'])->name('products.store');
@@ -120,6 +118,13 @@ Route::middleware('auth')->group(function () {
         Route::post('products/import', [ProductController::class, 'import'])->name('products.import');
         Route::get('products/import-template', [ProductController::class, 'importTemplate'])->name('products.import-template');
     });
+    // View (parameterized — after static routes)
+    Route::middleware(PermissionMiddleware::using('view products'))->group(function () {
+        Route::get('products', [ProductController::class, 'index'])->name('products.index');
+        Route::get('products/{product}', [ProductController::class, 'show'])->name('products.show');
+        Route::get('products/export', [ProductController::class, 'export'])->name('products.export');
+    });
+
     Route::middleware(PermissionMiddleware::using('edit products'))->group(function () {
         Route::get('products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
         Route::put('products/{product}', [ProductController::class, 'update'])->name('products.update');
@@ -130,11 +135,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // ── Master Data: Racks ──────────────────────────────────
-    Route::middleware(PermissionMiddleware::using('view racks'))->group(function () {
-        Route::get('racks', [RackController::class, 'index'])->name('racks.index');
-        Route::get('racks/{rack}', [RackController::class, 'show'])->name('racks.show');
-        Route::get('racks/export', [RackController::class, 'export'])->name('racks.export');
-    });
+    // ⚠️ Static routes first to avoid being captured by {rack}
     Route::middleware(PermissionMiddleware::using('create racks'))->group(function () {
         Route::get('racks/create', [RackController::class, 'create'])->name('racks.create');
         Route::post('racks', [RackController::class, 'store'])->name('racks.store');
@@ -142,6 +143,13 @@ Route::middleware('auth')->group(function () {
         Route::post('racks/import', [RackController::class, 'import'])->name('racks.import');
         Route::get('racks/import-template', [RackController::class, 'importTemplate'])->name('racks.import-template');
     });
+    // View (parameterized — after static routes)
+    Route::middleware(PermissionMiddleware::using('view racks'))->group(function () {
+        Route::get('racks', [RackController::class, 'index'])->name('racks.index');
+        Route::get('racks/{rack}', [RackController::class, 'show'])->name('racks.show');
+        Route::get('racks/export', [RackController::class, 'export'])->name('racks.export');
+    });
+
     Route::middleware(PermissionMiddleware::using('edit racks'))->group(function () {
         Route::get('racks/{rack}/edit', [RackController::class, 'edit'])->name('racks.edit');
         Route::put('racks/{rack}', [RackController::class, 'update'])->name('racks.update');
@@ -257,11 +265,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // ── Master Data: Employees ──────────────────────────────
-    Route::middleware(PermissionMiddleware::using('view employees'))->group(function () {
-        Route::get('employees', [EmployeeController::class, 'index'])->name('employees.index');
-        Route::get('employees/{employee}', [EmployeeController::class, 'show'])->name('employees.show');
-        Route::get('employees/export', [EmployeeController::class, 'export'])->name('employees.export');
-    });
+    // ⚠️ Static routes first to avoid being captured by {employee}
     Route::middleware(PermissionMiddleware::using('create employees'))->group(function () {
         Route::get('employees/create', [EmployeeController::class, 'create'])->name('employees.create');
         Route::post('employees', [EmployeeController::class, 'store'])->name('employees.store');
@@ -269,6 +273,13 @@ Route::middleware('auth')->group(function () {
         Route::post('employees/import', [EmployeeController::class, 'import'])->name('employees.import');
         Route::get('employees/import-template', [EmployeeController::class, 'importTemplate'])->name('employees.import-template');
     });
+    // View (parameterized — after static routes)
+    Route::middleware(PermissionMiddleware::using('view employees'))->group(function () {
+        Route::get('employees', [EmployeeController::class, 'index'])->name('employees.index');
+        Route::get('employees/{employee}', [EmployeeController::class, 'show'])->name('employees.show');
+        Route::get('employees/export', [EmployeeController::class, 'export'])->name('employees.export');
+    });
+
     Route::middleware(PermissionMiddleware::using('edit employees'))->group(function () {
         Route::get('employees/{employee}/edit', [EmployeeController::class, 'edit'])->name('employees.edit');
         Route::put('employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
@@ -328,13 +339,11 @@ Route::middleware('auth')->group(function () {
     });
 
     // ── Transactions: Cycles ────────────────────────────────
-    // View
-    Route::middleware(PermissionMiddleware::using('view cycles'))->group(function () {
-        Route::get('cycles', [CycleController::class, 'index'])->name('cycles.index');
-        Route::get('cycles/{cycle}', [CycleController::class, 'show'])->name('cycles.show');
-    });
+    // ⚠️ Static routes MUST be registered BEFORE parameterized
+    //    routes (cycles/{cycle}) to prevent "create", "export",
+    //    "quick-receive", etc. from being captured as a {cycle} ID.
 
-    // Create
+    // Create (static paths first)
     Route::middleware(PermissionMiddleware::using('create cycles'))->group(function () {
         Route::get('cycles/create', [CycleController::class, 'create'])->name('cycles.create');
         Route::post('cycles', [CycleController::class, 'store'])->name('cycles.store');
@@ -342,61 +351,71 @@ Route::middleware('auth')->group(function () {
         Route::post('cycles/quick-receive', [CycleController::class, 'quickReceiveStore'])->name('cycles.quick-receive.store');
     });
 
-    // Edit
-    Route::middleware(PermissionMiddleware::using('edit cycles'))->group(function () {
-        Route::get('cycles/{cycle}/edit', [CycleController::class, 'edit'])->name('cycles.edit');
-        Route::put('cycles/{cycle}', [CycleController::class, 'update'])->name('cycles.update');
-        Route::patch('cycles/{cycle}', [CycleController::class, 'update']);
-    });
-
-    // Delete
-    Route::middleware(PermissionMiddleware::using('delete cycles'))->group(function () {
-        Route::delete('cycles/{cycle}', [CycleController::class, 'destroy'])->name('cycles.destroy');
-    });
-
-    // Receive
-    Route::middleware(PermissionMiddleware::using('receive cycles'))->group(function () {
-        Route::post('cycles/{cycle}/receive', [CycleController::class, 'receive'])->name('cycles.receive');
-    });
-
-    // Import
+    // Import (static paths)
     Route::middleware(PermissionMiddleware::using('import cycles'))->group(function () {
         Route::post('cycles/import/preview', [CycleController::class, 'importPreview'])->name('cycles.import.preview');
         Route::post('cycles/import', [CycleController::class, 'import'])->name('cycles.import');
         Route::get('cycles/import-template', [CycleController::class, 'importTemplate'])->name('cycles.import-template');
     });
 
-    // Export
+    // Export (static path)
     Route::middleware(PermissionMiddleware::using('export cycles'))->group(function () {
         Route::get('cycles/export', [CycleController::class, 'export'])->name('cycles.export');
     });
 
-    // ── Transactions: Shopping ──────────────────────────────
-    // View
-    Route::middleware(PermissionMiddleware::using('view shoppings'))->group(function () {
-        Route::get('shoppings', [ShoppingController::class, 'index'])->name('shoppings.index');
-        Route::get('shoppings/{shopping}', [ShoppingController::class, 'show'])->name('shoppings.show');
+    // View (parameterized — must come AFTER static routes)
+    Route::middleware(PermissionMiddleware::using('view cycles'))->group(function () {
+        Route::get('cycles', [CycleController::class, 'index'])->name('cycles.index');
+        Route::get('cycles/{cycle}', [CycleController::class, 'show'])->name('cycles.show');
     });
 
-    // Create
+    // Edit (parameterized)
+    Route::middleware(PermissionMiddleware::using('edit cycles'))->group(function () {
+        Route::get('cycles/{cycle}/edit', [CycleController::class, 'edit'])->name('cycles.edit');
+        Route::put('cycles/{cycle}', [CycleController::class, 'update'])->name('cycles.update');
+        Route::patch('cycles/{cycle}', [CycleController::class, 'update']);
+    });
+
+    // Delete (parameterized)
+    Route::middleware(PermissionMiddleware::using('delete cycles'))->group(function () {
+        Route::delete('cycles/{cycle}', [CycleController::class, 'destroy'])->name('cycles.destroy');
+    });
+
+    // Receive (parameterized)
+    Route::middleware(PermissionMiddleware::using('receive cycles'))->group(function () {
+        Route::post('cycles/{cycle}/receive', [CycleController::class, 'receive'])->name('cycles.receive');
+    });
+
+    // ── Transactions: Shopping ──────────────────────────────
+    // ⚠️ Static routes MUST be registered BEFORE parameterized
+    //    routes (shoppings/{shopping}) to prevent "create" from
+    //    being captured as a {shopping} ID.
+
+    // Create (static paths first)
     Route::middleware(PermissionMiddleware::using('create shoppings'))->group(function () {
         Route::get('shoppings/create', [ShoppingController::class, 'create'])->name('shoppings.create');
         Route::post('shoppings', [ShoppingController::class, 'store'])->name('shoppings.store');
     });
 
-    // Edit
+    // View (parameterized — must come AFTER static routes)
+    Route::middleware(PermissionMiddleware::using('view shoppings'))->group(function () {
+        Route::get('shoppings', [ShoppingController::class, 'index'])->name('shoppings.index');
+        Route::get('shoppings/{shopping}', [ShoppingController::class, 'show'])->name('shoppings.show');
+    });
+
+    // Edit (parameterized)
     Route::middleware(PermissionMiddleware::using('edit shoppings'))->group(function () {
         Route::get('shoppings/{shopping}/edit', [ShoppingController::class, 'edit'])->name('shoppings.edit');
         Route::put('shoppings/{shopping}', [ShoppingController::class, 'update'])->name('shoppings.update');
         Route::patch('shoppings/{shopping}', [ShoppingController::class, 'update']);
     });
 
-    // Delete
+    // Delete (parameterized)
     Route::middleware(PermissionMiddleware::using('delete shoppings'))->group(function () {
         Route::delete('shoppings/{shopping}', [ShoppingController::class, 'destroy'])->name('shoppings.destroy');
     });
 
-    // Ship
+    // Ship (parameterized)
     Route::middleware(PermissionMiddleware::using('ship shoppings'))->group(function () {
         Route::post('shoppings/{shopping}/ship', [ShoppingController::class, 'ship'])->name('shoppings.ship');
     });
