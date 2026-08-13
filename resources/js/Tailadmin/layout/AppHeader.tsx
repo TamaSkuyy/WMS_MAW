@@ -82,6 +82,30 @@ const AppHeader: React.FC = () => {
             {/* Cross Icon */}
           </button>
 
+          {/* <!-- Manual Book (plain <a>, bukan Inertia Link — /docs adalah HTML statis) --> */}
+          <a
+            href="/docs"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Buka Manual Book"
+            className="flex items-center justify-center w-10 h-10 text-gray-500 rounded-lg hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M6 2.25A2.25 2.25 0 0 0 3.75 4.5v15A2.25 2.25 0 0 0 6 21.75h12A2.25 2.25 0 0 0 20.25 19.5v-15A2.25 2.25 0 0 0 18 2.25H6ZM6 3.75h12c.414 0 .75.336.75.75v15a.75.75 0 0 1-.75.75H6a.75.75 0 0 1-.75-.75v-15c0-.414.336-.75.75-.75Zm2.25 3a.75.75 0 0 1 .75-.75h2.25a.75.75 0 0 1 0 1.5H9a.75.75 0 0 1-.75-.75Zm6 0a.75.75 0 0 1 .75-.75H15a.75.75 0 0 1 0 1.5h-.75a.75.75 0 0 1 0-1.5Zm-6 3.75A.75.75 0 0 1 9 9.75h6a.75.75 0 0 1 0 1.5H9a.75.75 0 0 1-.75-.75Zm0 3.75a.75.75 0 0 1 .75-.75h6a.75.75 0 0 1 0 1.5H9a.75.75 0 0 1-.75-.75Zm0 3.75a.75.75 0 0 1 .75-.75h6a.75.75 0 0 1 0 1.5H9a.75.75 0 0 1-.75-.75Z"
+                fill="currentColor"
+              />
+            </svg>
+          </a>
+
           <Link href="/" className="lg:hidden flex items-center gap-2">
             <img
               src="/images/maw/logo-icon.png"
