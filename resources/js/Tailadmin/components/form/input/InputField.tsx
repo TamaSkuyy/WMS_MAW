@@ -16,6 +16,7 @@ interface InputProps {
   success?: boolean;
   error?: boolean;
   hint?: string;
+  selectOnFocus?: boolean;
 }
 
 const Input: FC<InputProps> = ({
@@ -33,6 +34,7 @@ const Input: FC<InputProps> = ({
   success = false,
   error = false,
   hint,
+  selectOnFocus = false,
 }) => {
   let inputClasses = `w-full border border-[#DEE2E6] rounded-lg px-3.5 py-2.5 text-sm text-[#1A1D23] placeholder-[#ADB5BD] bg-white focus:border-[#3B5BDB] focus:ring-2 focus:ring-[#3B5BDB]/20 transition-all duration-150 ${className}`;
 
@@ -55,6 +57,7 @@ const Input: FC<InputProps> = ({
         placeholder={placeholder}
         value={value}
         onChange={onChange}
+        onFocus={selectOnFocus ? (e) => e.target.select() : undefined}
         min={min}
         max={max}
         step={step}

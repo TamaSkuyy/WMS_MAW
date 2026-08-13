@@ -9,6 +9,9 @@ import Input from '../../../Tailadmin/components/form/input/InputField';
 import Label from '../../../Tailadmin/components/form/Label';
 import SearchableSelect from '../../../Tailadmin/components/form/select/SearchableSelect';
 import QrScanner from '../../../Components/QrScanner';
+import Badge from '../../../Tailadmin/components/ui/badge/Badge';
+import Alert from '../../../Tailadmin/components/ui/alert/Alert';
+import EmptyState from '../../../Tailadmin/components/common/EmptyState';
 
 interface TableItem {
     product_id: number;
@@ -197,7 +200,8 @@ export default function Create({ products, racks, shoppingLocations }: any) {
             <PageBreadcrumb pageTitle="Tambah Shopping" />
 
             <form onSubmit={handleSubmit}>
-                <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+                    <div className="xl:col-span-5 flex flex-col gap-6">
                     <ComponentCard
                         title="Detail Shopping"
                         action={
@@ -244,42 +248,32 @@ export default function Create({ products, racks, shoppingLocations }: any) {
                                 📷 Scan Part / QR Code
                             </Button>
 
-                            {lastScan && (
-                                <div className={`text-xs px-3 py-2 rounded ${
-                                    lastScanStatus === 'ok' ? 'bg-green-50 text-green-700' :
-                                    lastScanStatus === 'no_stock' ? 'bg-yellow-50 text-yellow-700' :
-                                    'bg-orange-50 text-orange-700'
-                                }`}>
-                                    {lastScanStatus === 'ok' ? '✓ ' : '✗ '}{lastScan}
-                                    {lastScanStatus === 'no_stock' && ' — Stok habis'}
-                                    {lastScanStatus === 'unknown' && ' — Part tidak dikenal'}
-                                </div>
+                            {lastScan && lastScanStatus !== null && (
+                                <Alert
+                                    variant={lastScanStatus === 'ok' ? 'success' : lastScanStatus === 'no_stock' ? 'warning' : 'error'}
+                                    title={lastScanStatus === 'ok' ? 'Scan Berhasil' : lastScanStatus === 'no_stock' ? 'Stok Habis' : 'Part Tidak Dikenal'}
+                                    message={lastScan}
+                                />
                             )}
 
                         </div>
                     </ComponentCard>
 
-                    <div className="flex flex-col gap-6">
                     <ComponentCard
                         title={`Barang Dipilih (${activeItems.length} jenis, ${activeItems.reduce((s: number, i: any) => s + i.quantity, 0)} qty)`}
                         desc={activeItems.length === 0 ? 'Scan QR code atau cari produk di bawah' : 'Review sebelum simpan'}
                     >
                         {activeItems.length === 0 ? (
-                            <div className="py-6 text-center border-2 border-dashed border-gray-200 rounded-lg">
-                                <p className="text-3xl mb-2">📦</p>
-                                <p className="text-sm text-gray-500">Belum ada barang dipilih</p>
-                                <p className="text-xs text-gray-400 mt-1">Scan QR atau cari produk di bawah</p>
-                            </div>
+                            <EmptyState icon="📦" title="Belum ada barang dipilih" message="Scan QR atau isi qty di tabel Cari Produk." />
                         ) : (
                             <div className="overflow-x-auto max-h-60 overflow-y-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50 sticky top-0">
                                         <tr>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Part #</th>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Produk</th>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Rak</th>
-                                            <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase w-24">Qty</th>
-                                            <th className="px-3 py-2 w-8"></th>
+                                            <th className="px-4 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Produk</th>
+                                            <th className="px-4 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Rak</th>
+                                            <th className="px-4 py-2 text-center text-[11px] font-medium text-gray-500 uppercase tracking-wider w-24">Qty</th>
+                                            <th className="px-4 py-2 w-8"></th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
@@ -287,25 +281,26 @@ export default function Create({ products, racks, shoppingLocations }: any) {
                                             const isOver = item.quantity > item.stock;
                                             return (
                                             <tr key={`active-${item.product_id}-${item.rack_id}`} className={isOver ? 'bg-red-50' : 'bg-blue-50/50'}>
-                                                <td className="px-3 py-1.5 text-xs font-mono">{item.part_number}</td>
-                                                <td className="px-3 py-1.5 text-xs">
-                                                    {item.name}
-                                                    {isOver && <span className="ml-1 text-[10px] text-red-600 font-medium">⚠ Stok hanya {item.stock}</span>}
+                                                <td className="px-4 py-2.5">
+                                                    <div className="font-mono text-xs text-gray-500 dark:text-gray-400">{item.part_number}</div>
+                                                    <div className="text-sm text-gray-800 dark:text-gray-200">{item.name}</div>
+                                                    {isOver && <span className="text-[11px] text-red-600 font-medium">⚠ Stok hanya {item.stock}</span>}
                                                 </td>
-                                                <td className="px-3 py-1.5 text-xs">
+                                                <td className="px-4 py-2.5 text-sm">
                                                     {item.is_relay ? <span className="text-amber-600">⚠ Relay</span> : item.rack_label}
                                                 </td>
-                                                <td className="px-1 py-1.5 w-24">
+                                                <td className="px-4 py-2.5 w-24">
                                                     <input type="text" inputMode="numeric"
                                                         value={item.quantity || ''}
+                                                        onFocus={(e) => e.target.select()}
                                                         onChange={(e) => updateItem(item.product_id, item.rack_id, 'quantity', parseInt(e.target.value) || 0)}
-                                                        className={`w-full px-1 py-1.5 text-center text-xs border rounded ${isOver ? 'border-red-400 bg-red-50' : ''}`}
+                                                        className={`w-full max-w-[5.5rem] h-9 px-1 text-center text-sm tabular-nums border rounded ${isOver ? 'border-red-400 bg-red-50' : 'border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white'}`}
                                                     />
                                                 </td>
-                                                <td className="px-1 py-1.5">
+                                                <td className="px-2 py-2.5">
                                                     <button type="button"
                                                         onClick={() => updateItem(item.product_id, item.rack_id, 'quantity', 0)}
-                                                        className="text-red-400 hover:text-red-600 text-xs"
+                                                        className="text-red-400 hover:text-red-600 text-sm"
                                                     >✕</button>
                                                 </td>
                                             </tr>
@@ -317,24 +312,32 @@ export default function Create({ products, racks, shoppingLocations }: any) {
                         )}
                     </ComponentCard>
 
+                    </div>
+
+                    <div className="xl:col-span-7">
                     <ComponentCard title="Cari Produk" desc="Gunakan filter lalu isi qty">
-                        <div className="mb-3 flex flex-wrap gap-3 items-end">
-                            <div className="flex-1 min-w-[160px]">
+                        <div className="mb-4 space-y-3">
+                            <div>
+                                <Label>Cari Produk</Label>
                                 <Input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Cari part number / nama..." />
                             </div>
-                            <div className="w-40">
-                                <SearchableSelect
-                                    options={suppliers.map((s: any) => ({ value: s.id, label: s.name }))}
-                                    value={filterSupplierId} onChange={(v) => setFilterSupplierId(v as string)} placeholder="Supplier..." />
+                            <div className="flex flex-wrap items-end gap-3">
+                                <div className="w-full sm:w-48">
+                                    <Label>Supplier</Label>
+                                    <SearchableSelect
+                                        options={suppliers.map((s: any) => ({ value: s.id, label: s.name }))}
+                                        value={filterSupplierId} onChange={(v) => setFilterSupplierId(v as string)} placeholder="Semua supplier" />
+                                </div>
+                                <div className="w-full sm:w-56">
+                                    <Label>Model</Label>
+                                    <SearchableSelect
+                                        options={vehicleModels.map((v: any) => ({ value: v.id, label: v.label }))}
+                                        value={filterVehicleModelId} onChange={(v) => setFilterVehicleModelId(v as string)} placeholder="Semua model" />
+                                </div>
+                                {(searchQuery || filterSupplierId || filterVehicleModelId) && (
+                                    <button type="button" onClick={() => { setSearchQuery(''); setFilterSupplierId(''); setFilterVehicleModelId(''); }} className="mb-1 text-sm text-red-500 hover:text-red-700">✕ Reset</button>
+                                )}
                             </div>
-                            <div className="w-48">
-                                <SearchableSelect
-                                    options={vehicleModels.map((v: any) => ({ value: v.id, label: v.label }))}
-                                    value={filterVehicleModelId} onChange={(v) => setFilterVehicleModelId(v as string)} placeholder="Model..." />
-                            </div>
-                            {(searchQuery || filterSupplierId || filterVehicleModelId) && (
-                                <button type="button" onClick={() => { setSearchQuery(''); setFilterSupplierId(''); setFilterVehicleModelId(''); }} className="text-xs text-red-500 hover:text-red-700 px-2 py-1">✕ Reset</button>
-                            )}
                         </div>
                         {(!searchQuery && !filterSupplierId && !filterVehicleModelId) ? (
                             <p className="text-sm text-gray-400 py-4 text-center">🔍 Gunakan filter di atas untuk mencari produk</p>
@@ -345,27 +348,28 @@ export default function Create({ products, racks, shoppingLocations }: any) {
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50 sticky top-0">
                                         <tr>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Part #</th>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Produk</th>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Rak</th>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Stok</th>
-                                            <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase w-24">Qty</th>
+                                            <th className="px-4 py-2.5 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Part #</th>
+                                            <th className="px-4 py-2.5 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Produk</th>
+                                            <th className="px-4 py-2.5 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Rak</th>
+                                            <th className="px-4 py-2.5 text-center text-[11px] font-medium text-gray-500 uppercase tracking-wider">Stok</th>
+                                            <th className="px-4 py-2.5 text-center text-[11px] font-medium text-gray-500 uppercase tracking-wider w-24">Qty</th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
                                         {filteredItems.map((item, idx) => (
                                             <tr key={`${item.product_id}-${item.rack_id}`} className={item.quantity > 0 ? 'bg-blue-50' : ''}>
-                                                <td className="px-3 py-1.5 text-xs font-mono">{item.part_number}</td>
-                                                <td className="px-3 py-1.5 text-xs">{item.name}</td>
-                                                <td className="px-3 py-1.5 text-xs">
+                                                <td className="px-4 py-2.5 text-xs font-mono">{item.part_number}</td>
+                                                <td className="px-4 py-2.5 text-sm">{item.name}</td>
+                                                <td className="px-4 py-2.5 text-sm">
                                                     {item.is_relay ? <span className="text-amber-600">⚠ Relay</span> : <span>{item.rack_label} <span className="text-gray-400">({item.rack_zone})</span></span>}
                                                 </td>
-                                                <td className="px-3 py-1.5 text-xs">{item.stock}</td>
-                                                <td className="px-1 py-1.5 w-24">
+                                                <td className="px-4 py-2.5 text-sm text-center tabular-nums">{item.stock}</td>
+                                                <td className="px-4 py-2.5 w-24">
                                                     <input type="text" inputMode="numeric"
                                                         value={item.quantity || ''}
+                                                        onFocus={(e) => e.target.select()}
                                                         onChange={(e) => updateItem(item.product_id, item.rack_id, 'quantity', parseInt(e.target.value) || 0)}
-                                                        className="w-full px-1 py-1.5 text-center text-xs border rounded"
+                                                        className="w-full max-w-[5.5rem] h-9 px-1 text-center text-sm tabular-nums border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded"
                                                     />
                                                 </td>
                                             </tr>
@@ -377,17 +381,23 @@ export default function Create({ products, racks, shoppingLocations }: any) {
                         <div className="pt-2 text-xs text-gray-400">Menampilkan {filteredItems.length} dari {tableItems.length} produk</div>
                     </ComponentCard>
                     </div>
+                </div>
 
-                    <div className="flex flex-col gap-2 items-end">
+                {/* Sticky action footer — di luar grid, tetap di dalam <form> */}
+                <div className="sticky bottom-4 z-10 mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E9ECEF] bg-white px-5 py-4 shadow-lg dark:border-gray-700 dark:bg-gray-900">
+                    <div className="flex flex-wrap items-center gap-3 text-sm">
+                        <span className="font-medium text-[#1A1D23] dark:text-white">
+                            {activeItems.length} jenis &bull; {activeItems.reduce((s: number, i: any) => s + i.quantity, 0)} qty
+                        </span>
                         {hasOverStock && (
-                            <p className="text-sm text-red-600 font-medium">
-                                ⚠️ {overStockItems.length} barang melebihi stok tersedia — kurangi qty atau tidak bisa diproses
-                            </p>
+                            <Badge color="error" variant="light" size="sm">
+                                ⚠️ {overStockItems.length} barang melebihi stok
+                            </Badge>
                         )}
-                        <Button onClick={handleSubmit} disabled={!canSubmit || submitting} size="lg" icon={<CheckIcon className="w-4 h-4" />}>
-                            {submitting ? 'Menyimpan...' : hasOverStock ? 'Tidak Bisa Diproses' : activeItems.length > 0 ? 'Proses Shopping' : 'Simpan Header'}
-                        </Button>
                     </div>
+                    <Button type="button" onClick={handleSubmit} disabled={!canSubmit || submitting} icon={<CheckIcon className="w-4 h-4" />}>
+                        {submitting ? 'Menyimpan...' : hasOverStock ? 'Tidak Bisa Diproses' : activeItems.length > 0 ? 'Proses Shopping' : 'Simpan Header'}
+                    </Button>
                 </div>
             </form>
 

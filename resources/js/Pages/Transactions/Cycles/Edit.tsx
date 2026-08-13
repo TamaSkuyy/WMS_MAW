@@ -86,7 +86,7 @@ export default function Edit({ cycle, suppliers, products }: any) {
                                 <SearchableSelect options={filteredProducts.map((p: any) => ({ value: p.id, label: `${p.part_number} - ${p.name}` }))} value={selectedProduct} onChange={(v) => setSelectedProduct(v as string)} placeholder={data.supplier_id ? 'Pilih produk...' : 'Pilih supplier dulu'} />
                             </div>
                             <div className="flex gap-2 items-end">
-                                <div className="w-24 sm:w-28"><Label>Qty</Label><Input type="number" value={selectedQty} onChange={(e) => setSelectedQty(parseInt(e.target.value) || 0)} min={1} /></div>
+                                <div className="w-24 sm:w-28"><Label>Qty</Label><Input type="number" value={selectedQty} onChange={(e) => setSelectedQty(parseInt(e.target.value) || 0)} min={1} selectOnFocus /></div>
                                 <Button type="button" onClick={addItem} className="shrink-0">+ Tambah</Button>
                             </div>
                         </div>

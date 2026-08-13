@@ -178,6 +178,7 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
                                                         type="number"
                                                         value={items[i].received_quantity}
                                                         onChange={(e) => updateItem(i, 'received_quantity', parseInt(e.target.value) || 0)}
+                                                        onFocus={(e) => e.target.select()}
                                                         min={0}
                                                         className="w-14 sm:w-20 text-center text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-800 rounded px-1 py-1.5"
                                                     />

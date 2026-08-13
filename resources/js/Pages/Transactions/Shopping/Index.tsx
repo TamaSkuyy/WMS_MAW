@@ -8,6 +8,8 @@ import Input from '../../../Tailadmin/components/form/input/InputField';
 import SearchableSelect from '../../../Tailadmin/components/form/select/SearchableSelect';
 import TableActions from '../../../Tailadmin/components/common/TableActions';
 import EmptyState from '../../../Tailadmin/components/common/EmptyState';
+import Badge from '../../../Tailadmin/components/ui/badge/Badge';
+import Label from '../../../Tailadmin/components/form/Label';
 
 export default function Index({ shoppings, filters }: any) {
     const permissions = (usePage().props.auth as any)?.user?.permissions || [];
@@ -20,10 +22,10 @@ export default function Index({ shoppings, filters }: any) {
         }
     };
 
-    const statusColors: Record<string, string> = {
-        draft: 'bg-gray-100 text-gray-800',
-        shipped: 'bg-blue-100 text-blue-800',
-        completed: 'bg-green-100 text-green-800',
+    const statusBadges: Record<string, { color: 'light' | 'info' | 'success'; label: string }> = {
+        draft: { color: 'light', label: 'Draft' },
+        shipped: { color: 'info', label: 'Dikirim' },
+        completed: { color: 'success', label: 'Selesai' },
     };
 
     return (
@@ -31,31 +33,31 @@ export default function Index({ shoppings, filters }: any) {
             <Head title="Shopping" />
             <PageBreadcrumb pageTitle="Shopping" />
             <ComponentCard title="Daftar Shopping">
-                <div className="mb-4 flex gap-3 flex-wrap items-end">
-                    <div className="min-w-[200px]">
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Cari Lokasi</label>
-                        <Input
-                            type="text"
-                            defaultValue={filters?.search || ''}
-                            placeholder="Nama lokasi tujuan..."
-                            onChange={(e) => router.get(route('shoppings.index'), { ...filters, search: e.target.value }, { preserveState: true, replace: true })}
-                        />
+                <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+                    <div className="flex flex-wrap items-end gap-3">
+                        <div className="min-w-[200px]">
+                            <Label>Cari Lokasi</Label>
+                            <Input
+                                type="text"
+                                defaultValue={filters?.search || ''}
+                                placeholder="Nama lokasi tujuan..."
+                                onChange={(e) => router.get(route('shoppings.index'), { ...filters, search: e.target.value }, { preserveState: true, replace: true })}
+                            />
+                        </div>
+                        <div className="min-w-[160px]">
+                            <Label>Status</Label>
+                            <SearchableSelect
+                                options={[
+                                    { value: '', label: 'Semua' },
+                                    { value: 'draft', label: 'Draft' },
+                                    { value: 'shipped', label: 'Dikirim' },
+                                    { value: 'completed', label: 'Selesai' },
+                                ]}
+                                value={filters?.status || ''}
+                                onChange={(v) => router.get(route('shoppings.index'), { ...filters, status: v as string }, { preserveState: true, replace: true })}
+                            />
+                        </div>
                     </div>
-                    <div className="min-w-[160px]">
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
-                        <SearchableSelect
-                            options={[
-                                { value: '', label: 'Semua' },
-                                { value: 'draft', label: 'Draft' },
-                                { value: 'shipped', label: 'Dikirim' },
-                                { value: 'completed', label: 'Completed' },
-                            ]}
-                            value={filters?.status || ''}
-                            onChange={(v) => router.get(route('shoppings.index'), { ...filters, status: v as string }, { preserveState: true, replace: true })}
-                        />
-                    </div>
-                </div>
-                <div className="mb-3">
                     {canCreate && (
                         <Link href={route('shoppings.create')}><Button>Tambah Shopping</Button></Link>
                     )}
@@ -86,7 +88,9 @@ export default function Index({ shoppings, filters }: any) {
                                     <td className="px-4 py-3 whitespace-nowrap text-sm">{s.shopping_location?.name || '-'}</td>
                                     <td className="px-4 py-3 whitespace-nowrap text-sm">{s.shopping_date}</td>
                                     <td className="px-4 py-3 whitespace-nowrap">
-                                        <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[s.status]}`}>{s.status}</span>
+                                        <Badge color={statusBadges[s.status]?.color ?? 'light'} variant="light" size="sm">
+                                            {statusBadges[s.status]?.label ?? s.status}
+                                        </Badge>
                                     </td>
                                     <td className="px-4 py-3 whitespace-nowrap text-sm">{s.items_count}</td>
                                     <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">

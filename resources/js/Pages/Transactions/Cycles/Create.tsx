@@ -95,7 +95,7 @@ export default function Create({ suppliers, products }: any) {
                             <div className="flex gap-2 items-end">
                                 <div className="w-24 sm:w-28">
                                     <Label>Qty</Label>
-                                    <Input type="number" value={selectedQty} onChange={(e) => setSelectedQty(parseInt(e.target.value) || 0)} min={1} />
+                                    <Input type="number" value={selectedQty} onChange={(e) => setSelectedQty(parseInt(e.target.value) || 0)} min={1} selectOnFocus />
                                 </div>
                                 <Button type="button" onClick={addItem} className="shrink-0">+ Tambah</Button>
                             </div>

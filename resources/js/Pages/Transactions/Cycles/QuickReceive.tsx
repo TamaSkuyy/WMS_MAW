@@ -285,6 +285,7 @@ export default function QuickReceive({ suppliers, products, racks }: any) {
                                                             )
                                                         }
                                                         min={1}
+                                                        selectOnFocus
                                                     />
                                                 </td>
                                                 <td className="px-3 py-2">

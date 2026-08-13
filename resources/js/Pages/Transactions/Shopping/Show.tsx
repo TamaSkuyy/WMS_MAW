@@ -5,6 +5,7 @@ import { PencilIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
+import Badge from '../../../Tailadmin/components/ui/badge/Badge';
 
 export default function Show({ shopping }: any) {
     const permissions = (usePage().props.auth as any)?.user?.permissions || [];
@@ -12,10 +13,10 @@ export default function Show({ shopping }: any) {
     const canShip = permissions.includes('ship shoppings');
     const [submitting, setSubmitting] = useState(false);
 
-    const statusColors: Record<string, string> = {
-        draft: 'bg-gray-100 text-gray-800',
-        shipped: 'bg-blue-100 text-blue-800',
-        completed: 'bg-green-100 text-green-800',
+    const statusBadges: Record<string, { color: 'light' | 'info' | 'success'; label: string }> = {
+        draft: { color: 'light', label: 'Draft' },
+        shipped: { color: 'info', label: 'Dikirim' },
+        completed: { color: 'success', label: 'Selesai' },
     };
 
     const handleShip = () => {
@@ -39,7 +40,7 @@ export default function Show({ shopping }: any) {
                         <dl className="space-y-4">
                             <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Mitra</dt><dd className="text-sm text-[#1A1D23]">{shopping.shopping_location?.name || '-'}</dd></div>
                             <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Tanggal</dt><dd className="text-sm text-[#1A1D23]">{shopping.shopping_date ? new Date(shopping.shopping_date).toLocaleString('id-ID', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '-'}</dd></div>
-                            <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Status</dt><dd><span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[shopping.status]}`}>{shopping.status}</span></dd></div>
+                            <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Status</dt><dd><Badge color={statusBadges[shopping.status]?.color ?? 'light'} variant="light" size="sm">{statusBadges[shopping.status]?.label ?? shopping.status}</Badge></dd></div>
                             {shopping.notes && <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Catatan</dt><dd className="text-sm text-[#1A1D23]">{shopping.notes}</dd></div>}
                             <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Frame #</dt><dd className="text-sm text-[#1A1D23] font-mono">{shopping.frame_number || '—'}</dd></div>
                         </dl>
@@ -60,21 +61,21 @@ export default function Show({ shopping }: any) {
                             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                 <thead className="bg-gray-50 dark:bg-gray-800">
                                     <tr>
-                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Part #</th>
-                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Produk</th>
-                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Model</th>
-                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Rak</th>
-                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
+                                        <th className="px-4 py-2.5 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Part #</th>
+                                        <th className="px-4 py-2.5 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Produk</th>
+                                        <th className="px-4 py-2.5 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Model</th>
+                                        <th className="px-4 py-2.5 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Rak</th>
+                                        <th className="px-4 py-2.5 text-center text-[11px] font-medium text-gray-500 uppercase tracking-wider">Qty</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
                                     {shopping.items.map((item: any) => (
                                         <tr key={item.id}>
-                                            <td className="px-3 py-2 text-sm font-mono">{item.product?.part_number}</td>
-                                            <td className="px-3 py-2 text-sm">{item.product?.name}</td>
-                                            <td className="px-3 py-2 text-sm text-gray-500">{item.product?.vehicle_model?.name || '-'}</td>
-                                            <td className="px-3 py-2 text-sm font-mono">{item.rack?.code}</td>
-                                            <td className="px-3 py-2 text-sm font-medium">{item.quantity}</td>
+                                            <td className="px-4 py-2.5 text-xs font-mono">{item.product?.part_number}</td>
+                                            <td className="px-4 py-2.5 text-sm">{item.product?.name}</td>
+                                            <td className="px-4 py-2.5 text-sm text-gray-500">{item.product?.vehicle_model?.name || '-'}</td>
+                                            <td className="px-4 py-2.5 text-sm font-mono">{item.rack?.code}</td>
+                                            <td className="px-4 py-2.5 text-sm font-medium text-center tabular-nums">{item.quantity}</td>
                                         </tr>
                                     ))}
                                 </tbody>
