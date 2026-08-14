@@ -15,7 +15,7 @@ class ShoppingFactory extends Factory
     public function definition(): array
     {
         return [
-            'partner_name' => $this->faker->company(),
+            'shopping_location_id' => null,
             'shopping_date' => $this->faker->date(),
             'status' => 'draft',
             'notes' => $this->faker->optional()->sentence(),

@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\VehicleModel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
 class ShoppingControllerTest extends TestCase
@@ -98,6 +99,19 @@ class ShoppingControllerTest extends TestCase
         $this->assertDatabaseHas('shoppings', ['id' => $shopping->id, 'status' => 'shipped']);
         $this->assertDatabaseHas('stocks', ['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 12]);
         $response->assertRedirect();
+    }
+
+    public function test_ship_rejects_shopping_without_items(): void
+    {
+        $this->user->givePermissionTo(Permission::findOrCreate('ship shoppings'));
+
+        $shopping = Shopping::factory()->create(['status' => 'draft']);
+
+        $response = $this->actingAs($this->user)->post(route('shoppings.ship', $shopping));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('shoppings', ['id' => $shopping->id, 'status' => 'draft']); // unchanged
     }
 
     public function test_ship_fails_on_insufficient_stock(): void

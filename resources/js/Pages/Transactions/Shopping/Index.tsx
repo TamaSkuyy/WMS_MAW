@@ -8,7 +8,6 @@ import Input from '../../../Tailadmin/components/form/input/InputField';
 import SearchableSelect from '../../../Tailadmin/components/form/select/SearchableSelect';
 import TableActions from '../../../Tailadmin/components/common/TableActions';
 import EmptyState from '../../../Tailadmin/components/common/EmptyState';
-import Badge from '../../../Tailadmin/components/ui/badge/Badge';
 import Label from '../../../Tailadmin/components/form/Label';
 
 export default function Index({ shoppings, filters }: any) {
@@ -22,10 +21,10 @@ export default function Index({ shoppings, filters }: any) {
         }
     };
 
-    const statusBadges: Record<string, { color: 'light' | 'info' | 'success'; label: string }> = {
-        draft: { color: 'light', label: 'Draft' },
-        shipped: { color: 'info', label: 'Dikirim' },
-        completed: { color: 'success', label: 'Selesai' },
+    const statusColors: Record<string, string> = {
+        draft: 'bg-gray-100 text-gray-800',
+        shipped: 'bg-blue-100 text-blue-800',
+        completed: 'bg-green-100 text-green-800',
     };
 
     return (
@@ -51,7 +50,7 @@ export default function Index({ shoppings, filters }: any) {
                                     { value: '', label: 'Semua' },
                                     { value: 'draft', label: 'Draft' },
                                     { value: 'shipped', label: 'Dikirim' },
-                                    { value: 'completed', label: 'Selesai' },
+                                    { value: 'completed', label: 'Completed' },
                                 ]}
                                 value={filters?.status || ''}
                                 onChange={(v) => router.get(route('shoppings.index'), { ...filters, status: v as string }, { preserveState: true, replace: true })}
@@ -88,9 +87,7 @@ export default function Index({ shoppings, filters }: any) {
                                     <td className="px-4 py-3 whitespace-nowrap text-sm">{s.shopping_location?.name || '-'}</td>
                                     <td className="px-4 py-3 whitespace-nowrap text-sm">{s.shopping_date}</td>
                                     <td className="px-4 py-3 whitespace-nowrap">
-                                        <Badge color={statusBadges[s.status]?.color ?? 'light'} variant="light" size="sm">
-                                            {statusBadges[s.status]?.label ?? s.status}
-                                        </Badge>
+                                        <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[s.status]}`}>{s.status}</span>
                                     </td>
                                     <td className="px-4 py-3 whitespace-nowrap text-sm">{s.items_count}</td>
                                     <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">

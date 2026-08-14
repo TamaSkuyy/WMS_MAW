@@ -185,6 +185,11 @@ class ShoppingController extends Controller
             }
 
             $items = $lockedShopping->items()->with('product', 'rack')->get();
+
+            if ($items->isEmpty()) {
+                return ['ok' => false, 'error' => 'Tidak dapat memproses: part tidak lengkap — shopping ini tidak memiliki item.'];
+            }
+
             $lockedStocks = [];
 
             foreach ($items as $item) {

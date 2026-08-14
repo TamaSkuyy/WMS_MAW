@@ -6,6 +6,7 @@ use App\Models\Supplier;
 use App\Models\SupplierAddress;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
 class SupplierControllerTest extends TestCase
@@ -18,6 +19,30 @@ class SupplierControllerTest extends TestCase
     {
         parent::setUp();
         $this->user = User::factory()->create();
+    }
+
+    public function test_import_template_downloads_csv_and_xlsx(): void
+    {
+        $this->user->givePermissionTo(Permission::findOrCreate('create suppliers'));
+
+        foreach (['csv', 'xlsx'] as $format) {
+            $response = $this->actingAs($this->user)->get(route('suppliers.import-template', ['format' => $format]));
+            $response->assertStatus(200);
+            $this->assertStringContainsString(
+                "import-template-supplier.{$format}",
+                $response->headers->get('Content-Disposition') ?? ''
+            );
+        }
+    }
+
+    public function test_export_not_shadowed_by_show_route(): void
+    {
+        $this->user->givePermissionTo(Permission::findOrCreate('view suppliers'));
+        Supplier::factory()->has(SupplierAddress::factory(), 'addresses')->create();
+
+        $response = $this->actingAs($this->user)->get(route('suppliers.export'));
+
+        $response->assertStatus(200);
     }
 
     /**

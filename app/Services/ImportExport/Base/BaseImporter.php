@@ -74,6 +74,12 @@ abstract class BaseImporter
         );
     }
 
+    /** File name (without extension) for the downloadable template, derived from the importer class name. */
+    public function templateFileName(): string
+    {
+        return 'import-template-' . Str::kebab(Str::replaceLast('Importer', '', class_basename(static::class)));
+    }
+
     public function downloadTemplate(ImportFormat $format): \Symfony\Component\HttpFoundation\BinaryFileResponse|\Symfony\Component\HttpFoundation\StreamedResponse
     {
         $headings = $this->templateHeadings();
@@ -95,7 +101,7 @@ abstract class BaseImporter
             public function headings(): array { return $this->headings; }
         };
 
-        return Excel::download($export, 'import-template.xlsx');
+        return Excel::download($export, $this->templateFileName() . '.xlsx');
     }
 
     private function downloadTemplateCsv(array $headings): \Symfony\Component\HttpFoundation\StreamedResponse
@@ -107,7 +113,7 @@ abstract class BaseImporter
         });
 
         $response->headers->set('Content-Type', 'text/csv');
-        $response->headers->set('Content-Disposition', 'attachment; filename="import-template.csv"');
+        $response->headers->set('Content-Disposition', 'attachment; filename="' . $this->templateFileName() . '.csv"');
 
         return $response;
     }

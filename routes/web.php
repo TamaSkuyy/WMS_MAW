@@ -82,6 +82,16 @@ Route::middleware('auth')->group(function () {
         Route::post('suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
     });
 
+    // Import (pakai create suppliers) / Export (pakai view suppliers)
+    // ⚠️ Harus SEBELUM `suppliers/{supplier}` agar tidak tertangkap sebagai route show
+    Route::middleware(PermissionMiddleware::using('create suppliers'))->group(function () {
+        Route::post('suppliers/import/preview', [SupplierController::class, 'importPreview'])->name('suppliers.import.preview');
+        Route::post('suppliers/import', [SupplierController::class, 'import'])->name('suppliers.import');
+        Route::get('suppliers/import-template', [SupplierController::class, 'importTemplate'])->name('suppliers.import-template');
+    });
+    Route::get('suppliers/export', [SupplierController::class, 'export'])
+        ->middleware(PermissionMiddleware::using('view suppliers'))->name('suppliers.export');
+
     // View (parameterized — after static routes)
     Route::middleware(PermissionMiddleware::using('view suppliers'))->group(function () {
         Route::get('suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
@@ -99,15 +109,6 @@ Route::middleware('auth')->group(function () {
     Route::middleware(PermissionMiddleware::using('delete suppliers'))->group(function () {
         Route::delete('suppliers/{supplier}', [SupplierController::class, 'destroy'])->name('suppliers.destroy');
     });
-
-    // Import (pakai create suppliers) / Export (pakai view suppliers)
-    Route::middleware(PermissionMiddleware::using('create suppliers'))->group(function () {
-        Route::post('suppliers/import/preview', [SupplierController::class, 'importPreview'])->name('suppliers.import.preview');
-        Route::post('suppliers/import', [SupplierController::class, 'import'])->name('suppliers.import');
-        Route::get('suppliers/import-template', [SupplierController::class, 'importTemplate'])->name('suppliers.import-template');
-    });
-    Route::get('suppliers/export', [SupplierController::class, 'export'])
-        ->middleware(PermissionMiddleware::using('view suppliers'))->name('suppliers.export');
 
     // ── Master Data: Products ───────────────────────────────
     // ⚠️ Static routes first to avoid being captured by {product}
