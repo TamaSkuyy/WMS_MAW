@@ -6,9 +6,9 @@ import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb'
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
 import Label from '../../../Tailadmin/components/form/Label';
-import Input from '../../../Tailadmin/components/form/input/InputField';
 import SearchableSelect from '../../../Tailadmin/components/form/select/SearchableSelect';
 import QrScanner from '../../../Components/QrScanner';
+import QtyStepper from '../../../Components/QtyStepper';
 
 interface ScannedItem {
     product_id: number;
@@ -219,23 +219,17 @@ export default function QuickReceive({ suppliers, products, racks }: any) {
                                 Belum ada barang. Pilih supplier lalu scan QR.
                             </p>
                         ) : (
-                            <div className="overflow-x-auto">
+                            <>
+                            {/* Desktop (≥ md): tabel */}
+                            <div className="hidden md:block overflow-x-auto">
                                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                     <thead className="bg-gray-50 dark:bg-gray-800">
                                         <tr>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                                                Part #
-                                            </th>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                                                Produk
-                                            </th>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                                                Rack
-                                            </th>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                                                Qty
-                                            </th>
-                                            <th className="px-3 py-2" />
+                                            <th className="px-4 py-2.5 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Part #</th>
+                                            <th className="px-4 py-2.5 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Produk</th>
+                                            <th className="px-4 py-2.5 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider w-48">Rack</th>
+                                            <th className="px-4 py-2.5 text-center text-[11px] font-medium text-gray-500 uppercase tracking-wider">Qty</th>
+                                            <th className="px-4 py-2.5"></th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
@@ -248,54 +242,47 @@ export default function QuickReceive({ suppliers, products, racks }: any) {
                                                         : 'bg-red-50 dark:bg-red-900/10'
                                                 }
                                             >
-                                                <td className="px-3 py-2 text-xs font-mono whitespace-nowrap">
+                                                <td className="px-4 py-2.5 text-xs font-mono whitespace-nowrap">
                                                     {item.part_number}
                                                 </td>
-                                                <td className="px-3 py-2 text-sm">
+                                                <td className="px-4 py-2.5 text-sm">
                                                     {item.name}
                                                 </td>
-                                                <td className="px-3 py-2 w-36">
-                                                    <SearchableSelect
-                                                        options={racks.map((r: any) => ({
-                                                            value: r.id,
-                                                            label: r.code,
-                                                        }))}
-                                                        value={item.rack_id}
-                                                        onChange={(v) =>
-                                                            updateItem(
-                                                                item.product_id,
-                                                                'rack_id',
-                                                                v as string
-                                                            )
-                                                        }
-                                                    />
+                                                <td className="px-4 py-2.5">
+                                                    <div className="w-40 sm:w-48">
+                                                        <SearchableSelect
+                                                            options={racks.map((r: any) => ({
+                                                                value: r.id,
+                                                                label: r.code,
+                                                            }))}
+                                                            value={item.rack_id}
+                                                            onChange={(v) =>
+                                                                updateItem(
+                                                                    item.product_id,
+                                                                    'rack_id',
+                                                                    v as string
+                                                                )
+                                                            }
+                                                        />
+                                                    </div>
                                                     {!item.rack_id && (
                                                         <span className="text-xs text-amber-600 font-medium">⚠ Relay / Tanpa Rak</span>
                                                     )}
                                                 </td>
-                                                <td className="px-3 py-2 w-20">
-                                                    <Input
-                                                        type="number"
+                                                <td className="px-4 py-2.5">
+                                                    <QtyStepper
                                                         value={item.quantity}
-                                                        onChange={(e) =>
-                                                            updateItem(
-                                                                item.product_id,
-                                                                'quantity',
-                                                                parseInt(e.target.value) || 1
-                                                            )
-                                                        }
+                                                        onChange={(n) => updateItem(item.product_id, 'quantity', n)}
                                                         min={1}
-                                                        selectOnFocus
                                                     />
                                                 </td>
-                                                <td className="px-3 py-2">
+                                                <td className="px-4 py-2.5">
                                                     <button
-                                                        onClick={() =>
-                                                            removeItem(item.product_id)
-                                                        }
-                                                        className="text-red-500 text-sm hover:text-red-700"
+                                                        onClick={() => removeItem(item.product_id)}
+                                                        className="inline-flex items-center justify-center h-11 w-11 rounded-lg text-red-500 text-lg hover:bg-red-50 dark:hover:bg-red-500/20"
+                                                        title="Hapus"
                                                     >
-                                                        &#x2715;
+                                                        ✕
                                                     </button>
                                                 </td>
                                             </tr>
@@ -303,6 +290,59 @@ export default function QuickReceive({ suppliers, products, racks }: any) {
                                     </tbody>
                                 </table>
                             </div>
+
+                            {/* Mobile (< md): kartu per item */}
+                            <div className="md:hidden space-y-3">
+                                {items.map((item) => (
+                                    <div
+                                        key={item.product_id}
+                                        className={`rounded-xl border p-4 ${
+                                            item.rack_id
+                                                ? 'border-[#E9ECEF] dark:border-gray-700 bg-white dark:bg-gray-900'
+                                                : 'border-red-300 bg-red-50 dark:bg-red-900/10'
+                                        }`}
+                                    >
+                                        <div className="flex justify-between items-start gap-2 mb-3">
+                                            <div>
+                                                <div className="font-mono text-xs text-gray-500 dark:text-gray-400">{item.part_number}</div>
+                                                <div className="text-sm font-medium text-gray-800 dark:text-gray-200">{item.name}</div>
+                                            </div>
+                                            <button
+                                                onClick={() => removeItem(item.product_id)}
+                                                className="inline-flex items-center justify-center h-11 w-11 rounded-lg text-red-500 text-lg hover:bg-red-50 dark:hover:bg-red-500/20"
+                                                title="Hapus"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                        <div className="mb-2">
+                                            <QtyStepper
+                                                value={item.quantity}
+                                                onChange={(n) => updateItem(item.product_id, 'quantity', n)}
+                                                min={1}
+                                            />
+                                        </div>
+                                        <SearchableSelect
+                                            options={racks.map((r: any) => ({
+                                                value: r.id,
+                                                label: r.code,
+                                            }))}
+                                            value={item.rack_id}
+                                            onChange={(v) =>
+                                                updateItem(
+                                                    item.product_id,
+                                                    'rack_id',
+                                                    v as string
+                                                )
+                                            }
+                                        />
+                                        {!item.rack_id && (
+                                            <span className="text-xs text-amber-600 font-medium">⚠ Relay / Tanpa Rak</span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                            </>
                         )}
 
                         {missingRack && (
@@ -311,25 +351,31 @@ export default function QuickReceive({ suppliers, products, racks }: any) {
                             </div>
                         )}
                         {items.length > 0 && (
-                            <div className="mt-4 pt-4 border-t border-gray-100 flex gap-3">
-                                <Button
-                                    onClick={handleSubmit}
-                                    disabled={!canSubmit || submitting}
-                                >
-                                    {submitting
-                                        ? 'Menyimpan...'
-                                        : 'Selesaikan Penerimaan'}
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => {
-                                        setItems([]);
-                                        setLastScan('');
-                                        setLastScanStatus(null);
-                                    }}
-                                >
-                                    Reset
-                                </Button>
+                            <div className="sticky bottom-0 z-10 mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E9ECEF] bg-white px-4 py-3 shadow-lg dark:border-gray-700 dark:bg-gray-900">
+                                <div className="text-sm font-medium text-[#1A1D23] dark:text-white">
+                                    {items.length} jenis
+                                    <span className="text-gray-500 dark:text-gray-400 font-normal"> · {totalQty} qty</span>
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            setItems([]);
+                                            setLastScan('');
+                                            setLastScanStatus(null);
+                                        }}
+                                    >
+                                        Reset
+                                    </Button>
+                                    <Button
+                                        onClick={handleSubmit}
+                                        disabled={!canSubmit || submitting}
+                                    >
+                                        {submitting
+                                            ? 'Menyimpan...'
+                                            : 'Selesaikan Penerimaan'}
+                                    </Button>
+                                </div>
                             </div>
                         )}
                     </ComponentCard>

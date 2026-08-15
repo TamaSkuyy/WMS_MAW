@@ -12,6 +12,7 @@ import QrScanner from '../../../Components/QrScanner';
 import Badge from '../../../Tailadmin/components/ui/badge/Badge';
 import Alert from '../../../Tailadmin/components/ui/alert/Alert';
 import EmptyState from '../../../Tailadmin/components/common/EmptyState';
+import QtyStepper from '../../../Components/QtyStepper';
 
 interface TableItem {
     product_id: number;
@@ -289,13 +290,15 @@ export default function Create({ products, racks, shoppingLocations }: any) {
                         {activeItems.length === 0 ? (
                             <EmptyState icon="📦" title="Belum ada barang dipilih" message="Scan QR atau isi qty di tabel Cari Produk." />
                         ) : (
-                            <div className="overflow-x-auto max-h-60 overflow-y-auto">
+                            <>
+                            {/* Desktop (≥ md): tabel */}
+                            <div className="hidden md:block overflow-x-auto max-h-60 overflow-y-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50 sticky top-0">
                                         <tr>
                                             <th className="px-4 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Produk</th>
                                             <th className="px-4 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Rak</th>
-                                            <th className="px-4 py-2 text-center text-[11px] font-medium text-gray-500 uppercase tracking-wider w-24">Qty</th>
+                                            <th className="px-4 py-2 text-center text-[11px] font-medium text-gray-500 uppercase tracking-wider w-48">Qty</th>
                                             <th className="px-4 py-2 w-8"></th>
                                         </tr>
                                     </thead>
@@ -312,18 +315,17 @@ export default function Create({ products, racks, shoppingLocations }: any) {
                                                 <td className="px-4 py-2.5 text-sm">
                                                     {item.is_relay ? <span className="text-amber-600">⚠ Relay</span> : item.rack_label}
                                                 </td>
-                                                <td className="px-4 py-2.5 w-24">
-                                                    <input type="text" inputMode="numeric"
-                                                        value={item.quantity || ''}
-                                                        onFocus={(e) => e.target.select()}
-                                                        onChange={(e) => updateItem(item.product_id, item.rack_id, 'quantity', parseInt(e.target.value) || 0)}
-                                                        className={`w-full max-w-[5.5rem] h-9 px-1 text-center text-sm tabular-nums border rounded ${isOver ? 'border-red-400 bg-red-50' : 'border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white'}`}
+                                                <td className="px-4 py-2.5">
+                                                    <QtyStepper
+                                                        value={item.quantity}
+                                                        onChange={(n) => updateItem(item.product_id, item.rack_id, 'quantity', n)}
+                                                        max={item.stock}
                                                     />
                                                 </td>
                                                 <td className="px-2 py-2.5">
                                                     <button type="button"
                                                         onClick={() => updateItem(item.product_id, item.rack_id, 'quantity', 0)}
-                                                        className="text-red-400 hover:text-red-600 text-sm"
+                                                        className="inline-flex items-center justify-center h-11 w-11 rounded-lg text-red-400 hover:text-red-600 text-lg"
                                                     >✕</button>
                                                 </td>
                                             </tr>
@@ -332,6 +334,41 @@ export default function Create({ products, racks, shoppingLocations }: any) {
                                     </tbody>
                                 </table>
                             </div>
+
+                            {/* Mobile (< md): kartu */}
+                            <div className="md:hidden space-y-3">
+                                {activeItems.map((item) => {
+                                    const isOver = item.quantity > item.stock;
+                                    return (
+                                        <div key={`active-m-${item.product_id}-${item.rack_id}`} className={`rounded-xl border p-4 ${isOver ? 'border-red-300 bg-red-50 dark:bg-red-900/10' : 'border-[#E9ECEF] dark:border-gray-700 bg-blue-50/50 dark:bg-gray-900'}`}>
+                                            <div className="flex justify-between items-start gap-2 mb-3">
+                                                <div>
+                                                    <div className="font-mono text-xs text-gray-500 dark:text-gray-400">{item.part_number}</div>
+                                                    <div className="text-sm font-medium text-gray-800 dark:text-gray-200">{item.name}</div>
+                                                    {isOver && <span className="text-[11px] text-red-600 font-medium">⚠ Stok hanya {item.stock}</span>}
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => updateItem(item.product_id, item.rack_id, 'quantity', 0)}
+                                                    className="inline-flex items-center justify-center h-11 w-11 rounded-lg text-red-400 hover:text-red-600 text-lg"
+                                                    title="Hapus"
+                                                >✕</button>
+                                            </div>
+                                            <div className="flex items-center justify-between gap-3">
+                                                <div className="text-sm text-gray-600 dark:text-gray-300">
+                                                    {item.is_relay ? <span className="text-amber-600">⚠ Relay</span> : <span>{item.rack_label} <span className="text-gray-400">({item.rack_zone})</span></span>}
+                                                </div>
+                                                <QtyStepper
+                                                    value={item.quantity}
+                                                    onChange={(n) => updateItem(item.product_id, item.rack_id, 'quantity', n)}
+                                                    max={item.stock}
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            </>
                         )}
                     </ComponentCard>
 
@@ -367,7 +404,9 @@ export default function Create({ products, racks, shoppingLocations }: any) {
                         ) : filteredItems.length === 0 ? (
                             <p className="text-sm text-gray-400 py-4 text-center">Tidak ada produk ditemukan</p>
                         ) : (
-                            <div className="overflow-x-auto max-h-80 overflow-y-auto">
+                            <>
+                            {/* Desktop (≥ md): tabel */}
+                            <div className="hidden md:block overflow-x-auto max-h-80 overflow-y-auto">
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50 sticky top-0">
                                         <tr>
@@ -375,7 +414,7 @@ export default function Create({ products, racks, shoppingLocations }: any) {
                                             <th className="px-4 py-2.5 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Produk</th>
                                             <th className="px-4 py-2.5 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Rak</th>
                                             <th className="px-4 py-2.5 text-center text-[11px] font-medium text-gray-500 uppercase tracking-wider">Stok</th>
-                                            <th className="px-4 py-2.5 text-center text-[11px] font-medium text-gray-500 uppercase tracking-wider w-24">Qty</th>
+                                            <th className="px-4 py-2.5 text-center text-[11px] font-medium text-gray-500 uppercase tracking-wider w-48">Qty</th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
@@ -387,12 +426,11 @@ export default function Create({ products, racks, shoppingLocations }: any) {
                                                     {item.is_relay ? <span className="text-amber-600">⚠ Relay</span> : <span>{item.rack_label} <span className="text-gray-400">({item.rack_zone})</span></span>}
                                                 </td>
                                                 <td className="px-4 py-2.5 text-sm text-center tabular-nums">{item.stock}</td>
-                                                <td className="px-4 py-2.5 w-24">
-                                                    <input type="text" inputMode="numeric"
-                                                        value={item.quantity || ''}
-                                                        onFocus={(e) => e.target.select()}
-                                                        onChange={(e) => updateItem(item.product_id, item.rack_id, 'quantity', parseInt(e.target.value) || 0)}
-                                                        className="w-full max-w-[5.5rem] h-9 px-1 text-center text-sm tabular-nums border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded"
+                                                <td className="px-4 py-2.5">
+                                                    <QtyStepper
+                                                        value={item.quantity}
+                                                        onChange={(n) => updateItem(item.product_id, item.rack_id, 'quantity', n)}
+                                                        max={item.stock}
                                                     />
                                                 </td>
                                             </tr>
@@ -400,6 +438,34 @@ export default function Create({ products, racks, shoppingLocations }: any) {
                                     </tbody>
                                 </table>
                             </div>
+
+                            {/* Mobile (< md): kartu */}
+                            <div className="md:hidden space-y-3">
+                                {filteredItems.map((item) => (
+                                    <div key={`m-${item.product_id}-${item.rack_id}`} className={`rounded-xl border p-4 ${item.quantity > 0 ? 'border-blue-200 bg-blue-50 dark:bg-blue-900/10' : 'border-[#E9ECEF] dark:border-gray-700 bg-white dark:bg-gray-900'}`}>
+                                        <div className="flex justify-between items-start gap-2 mb-3">
+                                            <div>
+                                                <div className="font-mono text-xs text-gray-500 dark:text-gray-400">{item.part_number}</div>
+                                                <div className="text-sm font-medium text-gray-800 dark:text-gray-200">{item.name}</div>
+                                            </div>
+                                            <span className="h-fit whitespace-nowrap px-2 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                                                Stok: {item.stock}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div className="text-sm text-gray-600 dark:text-gray-300">
+                                                {item.is_relay ? <span className="text-amber-600">⚠ Relay</span> : <span>{item.rack_label} <span className="text-gray-400">({item.rack_zone})</span></span>}
+                                            </div>
+                                            <QtyStepper
+                                                value={item.quantity}
+                                                onChange={(n) => updateItem(item.product_id, item.rack_id, 'quantity', n)}
+                                                max={item.stock}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            </>
                         )}
                         <div className="pt-2 text-xs text-gray-400">Menampilkan {filteredItems.length} dari {tableItems.length} produk</div>
                     </ComponentCard>

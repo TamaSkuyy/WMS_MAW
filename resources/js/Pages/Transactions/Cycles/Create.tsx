@@ -5,9 +5,9 @@ import { ArrowLeftIcon, CheckIcon } from '@heroicons/react/24/outline';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
-import Input from '../../../Tailadmin/components/form/input/InputField';
 import Label from '../../../Tailadmin/components/form/Label';
 import SearchableSelect from '../../../Tailadmin/components/form/select/SearchableSelect';
+import QtyStepper from '../../../Components/QtyStepper';
 import { Link } from '@inertiajs/react';
 
 export default function Create({ suppliers, products }: any) {
@@ -93,9 +93,9 @@ export default function Create({ suppliers, products }: any) {
                                 />
                             </div>
                             <div className="flex gap-2 items-end">
-                                <div className="w-24 sm:w-28">
+                                <div className="w-64 sm:w-72">
                                     <Label>Qty</Label>
-                                    <Input type="number" value={selectedQty} onChange={(e) => setSelectedQty(parseInt(e.target.value) || 0)} min={1} selectOnFocus />
+                                    <QtyStepper value={selectedQty} onChange={setSelectedQty} min={1} />
                                 </div>
                                 <Button type="button" onClick={addItem} className="shrink-0">+ Tambah</Button>
                             </div>

@@ -10,6 +10,7 @@ import Input from '../../../Tailadmin/components/form/input/InputField';
 import Label from '../../../Tailadmin/components/form/Label';
 import QrScanner from '../../../Components/QrScanner';
 import Alert from '../../../Tailadmin/components/ui/alert/Alert';
+import QtyStepper from '../../../Components/QtyStepper';
 
 function beep() {
     try {
@@ -111,6 +112,8 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
 
     const missingRack = items.some((it: any) => !it.rack_id);
     const canReceive = !submitting;
+    const itemsComplete = items.filter((it: any, i: number) => (it.received_quantity || 0) >= (cycle.items[i]?.quantity || 0)).length;
+    const totalQty = items.reduce((s: number, it: any) => s + (it.received_quantity || 0), 0);
 
     const handleReceive = (e: React.FormEvent) => {
         e.preventDefault();
@@ -173,44 +176,37 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
                 <div className="xl:col-span-2">
                     {isReceiving ? (
                         <ComponentCard title="Terima Barang" desc="Masukkan jumlah dan rak tujuan">
-                            <div className="mb-4">
-                                <Button type="button" variant="outline" size="sm" onClick={() => setScannerOpen(true)}>
-                                    📷 Scan QR
-                                </Button>
-                            </div>
                             <form onSubmit={handleReceive}>
-                                <div className="overflow-x-auto">
-                                <table className="min-w-[850px] sm:min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                {/* Desktop (≥ md): tabel */}
+                                <div className="hidden md:block overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                     <thead className="bg-gray-50 dark:bg-gray-800">
                                         <tr>
-                                            <th className="px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase">Part Number / Nama Produk</th>
-                                            <th className="px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase w-14">Qty Doc</th>
-                                            <th className="px-2 py-2 text-center text-[10px] font-semibold text-gray-500 uppercase w-16">Diterima</th>
-                                            <th className="px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase w-32">Rak</th>
-                                            <th className="px-2 py-2 text-left text-[10px] font-semibold text-gray-500 uppercase hidden sm:table-cell">Catatan</th>
+                                            <th className="px-4 py-2.5 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Part Number / Nama Produk</th>
+                                            <th className="px-4 py-2.5 text-center text-[11px] font-medium text-gray-500 uppercase tracking-wider w-16">Qty Doc</th>
+                                            <th className="px-4 py-2.5 text-center text-[11px] font-medium text-gray-500 uppercase tracking-wider">Diterima</th>
+                                            <th className="px-4 py-2.5 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider w-48">Rak</th>
+                                            <th className="px-4 py-2.5 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Catatan</th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
                                         {cycle.items.map((item: any, i: number) => (
-                                            <tr key={item.id}>
-                                                <td className="px-2 py-2 min-w-[180px]">
+                                            <tr key={item.id} className={!items[i].rack_id ? 'bg-red-50 dark:bg-red-900/10' : ''}>
+                                                <td className="px-4 py-2.5 min-w-[180px]">
                                                     <span className="text-xs font-mono text-gray-700 dark:text-gray-300">{item.product?.part_number}</span>
-                                                    <span className="text-xs sm:text-sm text-gray-800 dark:text-white/90 block mt-0.5">{item.product?.name}</span>
+                                                    <span className="text-sm text-gray-800 dark:text-white/90 block mt-0.5">{item.product?.name}</span>
                                                 </td>
-                                                <td className="px-2 py-2 text-xs text-center tabular-nums">{item.quantity}</td>
-                                                <td className="px-2 py-2">
-                                                    <input
-                                                        type="number"
+                                                <td className="px-4 py-2.5 text-sm text-center tabular-nums">{item.quantity}</td>
+                                                <td className="px-4 py-2.5">
+                                                    <QtyStepper
                                                         value={items[i].received_quantity}
-                                                        onChange={(e) => updateItem(i, 'received_quantity', parseInt(e.target.value) || 0)}
-                                                        onFocus={(e) => e.target.select()}
-                                                        min={0}
-                                                        className="w-14 sm:w-20 text-center text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-800 rounded px-1 py-1.5"
+                                                        onChange={(n) => updateItem(i, 'received_quantity', n)}
+                                                        max={item.quantity}
                                                     />
                                                 </td>
-                                                <td className="px-2 py-2">
+                                                <td className="px-4 py-2.5">
                                                     <div className="flex flex-col gap-0.5">
-                                                        <div className="w-28 sm:w-36">
+                                                        <div className="w-40 sm:w-48">
                                                             <SearchableSelect options={racks.map((r: any) => ({ value: r.id, label: r.code }))} value={items[i].rack_id} onChange={(v) => updateItem(i, 'rack_id', v as string)} />
                                                         </div>
                                                         {!items[i].rack_id ? (
@@ -227,24 +223,72 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
                                                         )}
                                                     </div>
                                                 </td>
-                                                <td className="px-2 py-2 hidden sm:table-cell">
-                                                    <input type="text" value={items[i].notes} onChange={(e) => updateItem(i, 'notes', e.target.value)} className="w-full text-xs border rounded px-2 py-1 dark:bg-gray-800 dark:border-gray-700" placeholder="cth: rusak" />
+                                                <td className="px-4 py-2.5">
+                                                    <input type="text" value={items[i].notes} onChange={(e) => updateItem(i, 'notes', e.target.value)} className="w-full text-sm border rounded-lg px-3 py-2 dark:bg-gray-800 dark:border-gray-700" placeholder="cth: rusak" />
                                                 </td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
                                 </div>
+
+                                {/* Mobile (< md): kartu per item */}
+                                <div className="md:hidden space-y-3">
+                                    {cycle.items.map((item: any, i: number) => (
+                                        <div key={item.id} className={`rounded-xl border p-4 ${!items[i].rack_id ? 'border-red-300 bg-red-50 dark:bg-red-900/10' : 'border-[#E9ECEF] dark:border-gray-700 bg-white dark:bg-gray-900'}`}>
+                                            <div className="flex justify-between gap-2 mb-3">
+                                                <div>
+                                                    <div className="font-mono text-xs text-gray-500 dark:text-gray-400">{item.product?.part_number}</div>
+                                                    <div className="text-sm font-medium text-gray-800 dark:text-gray-200">{item.product?.name}</div>
+                                                </div>
+                                                <span className="h-fit whitespace-nowrap px-2 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                                                    Doc: {item.quantity}
+                                                </span>
+                                            </div>
+                                            <div className="mb-3">
+                                                <QtyStepper
+                                                    value={items[i].received_quantity}
+                                                    onChange={(n) => updateItem(i, 'received_quantity', n)}
+                                                    max={item.quantity}
+                                                />
+                                            </div>
+                                            <div className="mb-2">
+                                                <SearchableSelect options={racks.map((r: any) => ({ value: r.id, label: r.code }))} value={items[i].rack_id} onChange={(v) => updateItem(i, 'rack_id', v as string)} />
+                                                {!items[i].rack_id ? (
+                                                    <span className="text-[11px] font-medium text-amber-600">⚠ Relay / tanpa rak</span>
+                                                ) : (
+                                                    <>
+                                                        {items[i].rack_source === 'default' && <span className="text-[11px] font-medium text-blue-600">Default</span>}
+                                                        {items[i].rack_source === 'history' && <span className="text-[11px] font-medium text-gray-500">Terakhir</span>}
+                                                    </>
+                                                )}
+                                            </div>
+                                            <input type="text" value={items[i].notes} onChange={(e) => updateItem(i, 'notes', e.target.value)} className="w-full h-11 text-sm border rounded-lg px-3 dark:bg-gray-800 dark:border-gray-700" placeholder="Catatan (cth: rusak)" />
+                                        </div>
+                                    ))}
+                                </div>
+
                                 {missingRack && (
                                     <div className="mt-3 flex items-center gap-2 px-3 py-2 text-sm text-amber-700 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
                                         <span>⚠️</span> <span>Beberapa item belum memilih rak — stok akan dicatat tanpa lokasi rak (Overflow).</span>
                                     </div>
                                 )}
-                                <div className="mt-4 flex gap-3">
-                                    <Button type="submit" disabled={!canReceive}>
-                                        {submitting ? 'Menyimpan...' : 'Selesaikan Penerimaan'}
-                                    </Button>
-                                    <Button type="button" variant="outline" onClick={() => setIsReceiving(false)} disabled={submitting}>Batal</Button>
+
+                                {/* Sticky action bar */}
+                                <div className="sticky bottom-0 z-10 mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E9ECEF] bg-white px-4 py-3 shadow-lg dark:border-gray-700 dark:bg-gray-900">
+                                    <div className="text-sm font-medium text-[#1A1D23] dark:text-white">
+                                        {itemsComplete}/{cycle.items.length} selesai
+                                        <span className="text-gray-500 dark:text-gray-400 font-normal"> · {totalQty} qty</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Button type="button" variant="outline" size="sm" onClick={() => setScannerOpen(true)} title="Scan QR">
+                                            📷
+                                        </Button>
+                                        <Button type="button" variant="outline" size="sm" onClick={() => setIsReceiving(false)} disabled={submitting}>Batal</Button>
+                                        <Button type="submit" disabled={!canReceive}>
+                                            {submitting ? 'Menyimpan...' : 'Selesaikan Penerimaan'}
+                                        </Button>
+                                    </div>
                                 </div>
                             </form>
                             {/* Receive Logs */}
