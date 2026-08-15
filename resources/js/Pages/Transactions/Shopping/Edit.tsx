@@ -51,7 +51,7 @@ export default function Edit({ shopping, products, racks, shoppingLocations }: a
     const [submitting, setSubmitting] = useState(false);
     const [tableItems, setTableItems] = useState<TableItem[]>([]);
     const [scannerOpen, setScannerOpen] = useState(false);
-    const [scanTarget, setScanTarget] = useState<'part' | 'frame'>('part');
+    const [scanTarget, setScanTarget] = useState<'part' | 'frame' | 'location'>('part');
     const [lastScan, setLastScan] = useState('');
     const [lastScanStatus, setLastScanStatus] = useState<'ok' | 'unknown' | 'no_stock' | null>(null);
     const scanSuccessRef = useRef(false);
@@ -126,6 +126,22 @@ export default function Edit({ shopping, products, racks, shoppingLocations }: a
             setLastScanStatus('ok');
             return;
         }
+        // Location scan mode — auto-select lokasi tujuan by barcode
+        if (scanTarget === 'location') {
+            const loc = shoppingLocations.find(
+                (l: any) => (l.barcode || '').toLowerCase() === code.toLowerCase()
+            );
+            if (!loc) {
+                setLastScan(code);
+                setLastScanStatus('unknown');
+                return;
+            }
+            beep();
+            setLocationId(String(loc.id));
+            setLastScan(code);
+            setLastScanStatus('ok');
+            return;
+        }
         const item = tableItems.find(i =>
             i.part_number.toLowerCase() === code.toLowerCase() && i.stock > 0
         );
@@ -144,7 +160,7 @@ export default function Edit({ shopping, products, racks, shoppingLocations }: a
                 ? { ...i, quantity: i.quantity + 1 }
                 : i
         ));
-    }, [tableItems, scanTarget]);
+    }, [tableItems, scanTarget, shoppingLocations]);
 
     useEffect(() => {
         if (scanSuccessRef.current && !scannerOpen && scanTarget === 'part') {
@@ -223,12 +239,19 @@ export default function Edit({ shopping, products, racks, shoppingLocations }: a
                         <div className="space-y-4">
                             <div>
                                 <Label>Lokasi Tujuan *</Label>
-                                <SearchableSelect
-                                    options={shoppingLocations.map((l: any) => ({ value: l.id, label: l.name }))}
-                                    value={locationId}
-                                    onChange={(v) => setLocationId(v as string)}
-                                    placeholder="Pilih lokasi tujuan..."
-                                />
+                                <div className="flex gap-2">
+                                    <div className="flex-1">
+                                        <SearchableSelect
+                                            options={shoppingLocations.map((l: any) => ({ value: l.id, label: l.name }))}
+                                            value={locationId}
+                                            onChange={(v) => setLocationId(v as string)}
+                                            placeholder="Pilih lokasi tujuan..."
+                                        />
+                                    </div>
+                                    <Button type="button" variant="outline" size="sm" onClick={() => { setScanTarget('location'); setScannerOpen(true); }} title="Scan barcode lokasi">
+                                        📷
+                                    </Button>
+                                </div>
                                 {errors.shopping_location_id && <p className="mt-1 text-sm text-red-500">{errors.shopping_location_id}</p>}
                             </div>
                             <div>
@@ -261,7 +284,7 @@ export default function Edit({ shopping, products, racks, shoppingLocations }: a
                             {lastScan && lastScanStatus !== null && (
                                 <Alert
                                     variant={lastScanStatus === 'ok' ? 'success' : lastScanStatus === 'no_stock' ? 'warning' : 'error'}
-                                    title={lastScanStatus === 'ok' ? 'Scan Berhasil' : lastScanStatus === 'no_stock' ? 'Stok Habis' : 'Part Tidak Dikenal'}
+                                    title={lastScanStatus === 'ok' ? 'Scan Berhasil' : lastScanStatus === 'no_stock' ? 'Stok Habis' : (scanTarget === 'location' ? 'Barcode Tidak Dikenal' : 'Part Tidak Dikenal')}
                                     message={lastScan}
                                 />
                             )}
@@ -410,7 +433,7 @@ export default function Edit({ shopping, products, racks, shoppingLocations }: a
                 isOpen={scannerOpen}
                 onClose={() => setScannerOpen(false)}
                 onScan={handleScan}
-                mode={scanTarget === 'frame' ? 'barcode' : 'qr'}
+                mode={scanTarget === 'frame' || scanTarget === 'location' ? 'barcode' : 'qr'}
                 feedback={scanTarget === 'frame' ? { message: '📷 Scan barcode untuk Frame Number', type: 'ok' } : undefined}
             />
         </>

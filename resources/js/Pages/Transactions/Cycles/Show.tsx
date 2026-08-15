@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { PencilIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
@@ -9,6 +9,7 @@ import SearchableSelect from '../../../Tailadmin/components/form/select/Searchab
 import Input from '../../../Tailadmin/components/form/input/InputField';
 import Label from '../../../Tailadmin/components/form/Label';
 import QrScanner from '../../../Components/QrScanner';
+import Alert from '../../../Tailadmin/components/ui/alert/Alert';
 
 function beep() {
     try {
@@ -22,6 +23,7 @@ function beep() {
 }
 
 export default function Show({ cycle, racks, lastUsedRacks }: any) {
+    const { errors = {}, flash = {} } = usePage().props as any;
     const permissions = (usePage().props.auth as any)?.user?.permissions || [];
     const canEdit = permissions.includes('edit cycles');
     const [isReceiving, setIsReceiving] = useState(false);
@@ -49,6 +51,11 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
         })
     );
 
+    // Latest items snapshot for scan feedback — handleScan identity stays stable
+    // so the QR scanner does not restart after every scan.
+    const itemsRef = useRef(items);
+    useEffect(() => { itemsRef.current = items; });
+
     const [scannerOpen, setScannerOpen] = useState(false);
     const [scanFeedback, setScanFeedback] = useState<{ message: string; type: 'ok' | 'warning' | 'error' } | null>(null);
 
@@ -66,16 +73,16 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
             setScanFeedback({ message: `"${code}" tidak ada dalam cycle ini`, type: 'error' });
             return;
         }
-        const current = items[index].received_quantity;
-        beep();
+        const current = itemsRef.current[index]?.received_quantity ?? 0;
         const qtyPlan = cycle.items[index].quantity;
+        beep();
         setScanFeedback({ message: `✓ ${code} — ${current + 1} (plan: ${qtyPlan})`, type: 'ok' });
         setItems(prev => {
             const updated = [...prev];
-            updated[index] = { ...updated[index], received_quantity: current + 1 };
+            updated[index] = { ...updated[index], received_quantity: prev[index].received_quantity + 1 };
             return updated;
         });
-    }, [cycle.items, items]);
+    }, [cycle.items]);
 
     const statusColors: Record<string, string> = {
         draft: 'bg-gray-100 text-gray-800',
@@ -99,9 +106,7 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
     const totalDuration = cycleEnd - cycleStart;
 
     const updateItem = (index: number, field: string, value: any) => {
-        const newItems = [...items];
-        newItems[index][field] = value;
-        setItems(newItems);
+        setItems(prev => prev.map((it, i) => (i === index ? { ...it, [field]: value } : it)));
     };
 
     const missingRack = items.some((it: any) => !it.rack_id);
@@ -122,6 +127,26 @@ export default function Show({ cycle, racks, lastUsedRacks }: any) {
         <>
             <Head title={`Cycle #${cycle.cycle_number}`} />
             <PageBreadcrumb pageTitle={`${cycle.supplier?.name} — Cycle #${cycle.cycle_number}`} />
+
+            {flash?.success && (
+                <div className="mb-4">
+                    <Alert variant="success" title="Berhasil" message={flash.success} />
+                </div>
+            )}
+            {flash?.error && (
+                <div className="mb-4">
+                    <Alert variant="error" title="Gagal" message={flash.error} />
+                </div>
+            )}
+            {Object.keys(errors).length > 0 && (
+                <div className="mb-4">
+                    <Alert
+                        variant="error"
+                        title="Periksa input"
+                        message={Object.values(errors as Record<string, string[]>).flat().join('; ')}
+                    />
+                </div>
+            )}
 
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
                 <div className="xl:col-span-1">

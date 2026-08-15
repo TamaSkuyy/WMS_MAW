@@ -98,6 +98,54 @@ class CycleControllerTest extends TestCase
         $response->assertRedirect();
     }
 
+    public function test_receive_manual_full_qty_completes_cycle(): void
+    {
+        $this->user->givePermissionTo(\Spatie\Permission\Models\Permission::findOrCreate('receive cycles'));
+
+        $rack = Rack::factory()->create();
+        $product = Product::factory()->create(['default_rack_id' => $rack->id]);
+        $cycle = Cycle::factory()->create(['status' => 'draft']);
+        $item = $cycle->items()->create([
+            'product_id' => $product->id,
+            'quantity' => 5,
+            'received_quantity' => 0,
+            'rack_id' => $rack->id,
+        ]);
+
+        $response = $this->actingAs($this->user)->post(route('cycles.receive', $cycle), [
+            'items' => [
+                ['id' => $item->id, 'received_quantity' => 5, 'rack_id' => (string) $rack->id, 'notes' => '', 'rack_source' => 'default'],
+            ],
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('cycles', ['id' => $cycle->id, 'status' => 'completed']);
+        $this->assertDatabaseHas('cycle_items', ['id' => $item->id, 'received_quantity' => 5]);
+    }
+
+    public function test_receive_accepts_relay_item_without_rack(): void
+    {
+        $this->user->givePermissionTo(\Spatie\Permission\Models\Permission::findOrCreate('receive cycles'));
+
+        $product = Product::factory()->create(['default_rack_id' => null]);
+        $cycle = Cycle::factory()->create(['status' => 'draft']);
+        $item = $cycle->items()->create([
+            'product_id' => $product->id,
+            'quantity' => 2,
+            'received_quantity' => 0,
+            'rack_id' => null,
+        ]);
+
+        $response = $this->actingAs($this->user)->post(route('cycles.receive', $cycle), [
+            'items' => [
+                ['id' => $item->id, 'received_quantity' => 2, 'rack_id' => '', 'notes' => ''],
+            ],
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('cycles', ['id' => $cycle->id, 'status' => 'completed']);
+    }
+
     public function test_receive_completes_cycle_and_updates_stock(): void
     {
         $rack = Rack::factory()->create();

@@ -48,6 +48,7 @@ export default function Index({ locations, filters }: any) {
                         <thead className="bg-[#F8F9FC] border-b border-[#E9ECEF]">
                             <tr>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Nama Lokasi</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Barcode</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider w-24">Aksi</th>
                             </tr>
                         </thead>
@@ -55,6 +56,7 @@ export default function Index({ locations, filters }: any) {
                             {locations.data.map((l: any) => (
                                 <tr key={l.id} className="border-b border-[#F1F3F5] hover:bg-[#F8F9FC] transition-all duration-150">
                                     <td className="px-4 py-3 text-sm text-[#1A1D23] font-medium">{l.name}</td>
+                                    <td className="px-4 py-3 text-sm font-mono text-[#1A1D23]">{l.barcode || '—'}</td>
                                     <td className="px-4 py-3 text-sm text-[#1A1D23]">
                                         <TableActions
                                             editRoute={canEdit ? route('shopping-locations.edit', l.id) : undefined}

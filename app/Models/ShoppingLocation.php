@@ -10,7 +10,7 @@ class ShoppingLocation extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'barcode'];
 
     public function shoppings(): HasMany
     {

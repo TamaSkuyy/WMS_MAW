@@ -9,7 +9,7 @@ import Input from '../../../Tailadmin/components/form/input/InputField';
 import Label from '../../../Tailadmin/components/form/Label';
 
 export default function Create() {
-    const { data, setData, post, errors } = useForm({ name: '' });
+    const { data, setData, post, errors } = useForm({ name: '', barcode: '' });
 
     return (
         <>
@@ -30,6 +30,11 @@ export default function Create() {
                             <Label>Nama Lokasi *</Label>
                             <Input type="text" value={data.name} onChange={(e) => setData('name', e.target.value)} placeholder="contoh: Gudang Jakarta" />
                             {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+                        </div>
+                        <div>
+                            <Label>Barcode</Label>
+                            <Input type="text" value={data.barcode} onChange={(e) => setData('barcode', e.target.value)} placeholder="Scan atau ketik kode barcode (opsional)" />
+                            {errors.barcode && <p className="mt-1 text-sm text-red-500">{errors.barcode}</p>}
                         </div>
                         <div className="flex gap-3 pt-4 border-t border-[#F1F3F5]">
                             <Button type="submit" icon={<CheckIcon className="w-4 h-4" />}>Simpan</Button>

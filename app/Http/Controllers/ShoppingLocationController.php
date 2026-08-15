@@ -30,6 +30,7 @@ class ShoppingLocationController extends Controller
         abort_unless(auth()->user()->can('create shopping locations'), 403);
         $validated = $request->validate([
             'name' => 'required|string|max:100|unique:shopping_locations',
+            'barcode' => 'nullable|string|max:100|unique:shopping_locations,barcode',
         ]);
 
         ShoppingLocation::create($validated);
@@ -50,6 +51,7 @@ class ShoppingLocationController extends Controller
         abort_unless(auth()->user()->can('edit shopping locations'), 403);
         $validated = $request->validate([
             'name' => 'required|string|max:100|unique:shopping_locations,name,' . $shoppingLocation->id,
+            'barcode' => 'nullable|string|max:100|unique:shopping_locations,barcode,' . $shoppingLocation->id,
         ]);
 
         $shoppingLocation->update($validated);
