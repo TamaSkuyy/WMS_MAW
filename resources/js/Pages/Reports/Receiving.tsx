@@ -104,6 +104,7 @@ export default function Receiving({ items, summary, filters, suppliers }: any) {
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Supplier</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Produk</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rak</th>
+                                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Qty Doc</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty Diterima</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                 </tr>
@@ -118,7 +119,8 @@ export default function Receiving({ items, summary, filters, suppliers }: any) {
                                         <td className="px-4 py-3 text-sm whitespace-nowrap">{item.cycle?.supplier?.name || '-'}</td>
                                         <td className="px-4 py-3 text-sm whitespace-nowrap">{item.product?.part_number} — {item.product?.name}</td>
                                         <td className="px-4 py-3 text-sm whitespace-nowrap">{item.rack?.code || '-'}</td>
-                                        <td className="px-4 py-3 text-sm whitespace-nowrap">{item.received_quantity}</td>
+                                        <td className="px-4 py-3 text-sm text-center tabular-nums whitespace-nowrap">{item.quantity}</td>
+                                        <td className="px-4 py-3 text-sm tabular-nums whitespace-nowrap">{item.received_quantity}</td>
                                         <td className="px-4 py-3 whitespace-nowrap">
                                             <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[item.cycle?.status] || ''}`}>
                                                 {item.cycle?.status}

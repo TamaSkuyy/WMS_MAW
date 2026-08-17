@@ -101,6 +101,27 @@ class ShoppingControllerTest extends TestCase
         $response->assertRedirect();
     }
 
+    public function test_ship_records_shipped_by_and_shipped_at(): void
+    {
+        $this->user->givePermissionTo(Permission::findOrCreate('ship shoppings'));
+
+        $rack = Rack::factory()->create();
+        $product = Product::factory()->create();
+        Stock::create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 20]);
+
+        $shopping = Shopping::factory()->create(['status' => 'draft']);
+        $shopping->items()->create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 8]);
+
+        $this->actingAs($this->user)->post(route('shoppings.ship', $shopping));
+
+        $this->assertDatabaseHas('shoppings', [
+            'id' => $shopping->id,
+            'status' => 'shipped',
+            'shipped_by' => $this->user->id,
+        ]);
+        $this->assertNotNull($shopping->fresh()->shipped_at);
+    }
+
     public function test_ship_rejects_shopping_without_items(): void
     {
         $this->user->givePermissionTo(Permission::findOrCreate('ship shoppings'));

@@ -85,7 +85,9 @@ export default function Index({ shoppings, filters }: any) {
                             {shoppings.data.map((s: any) => (
                                 <tr key={s.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                     <td className="px-4 py-3 whitespace-nowrap text-sm">{s.shopping_location?.name || '-'}</td>
-                                    <td className="px-4 py-3 whitespace-nowrap text-sm">{s.shopping_date}</td>
+                                    <td className="px-4 py-3 whitespace-nowrap text-sm">
+                                        {s.shopping_date ? new Date(s.shopping_date).toLocaleString('id-ID', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '-'}
+                                    </td>
                                     <td className="px-4 py-3 whitespace-nowrap">
                                         <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[s.status]}`}>{s.status}</span>
                                     </td>

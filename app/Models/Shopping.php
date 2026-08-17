@@ -14,19 +14,20 @@ class Shopping extends Model
     use HasFactory;
     use LogsActivity;
 
-    protected $fillable = ['shopping_location_id', 'shopping_date', 'status', 'notes', 'frame_number'];
+    protected $fillable = ['shopping_location_id', 'shopping_date', 'status', 'notes', 'frame_number', 'shipped_by', 'shipped_at'];
 
     protected function casts(): array
     {
         return [
             'shopping_date' => 'date',
+            'shipped_at' => 'datetime',
         ];
     }
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['shopping_location_id', 'shopping_date', 'status', 'notes', 'frame_number'])
+            ->logOnly(['shopping_location_id', 'shopping_date', 'status', 'notes', 'frame_number', 'shipped_by', 'shipped_at'])
             ->logOnlyDirty()
             ->dontLogEmptyChanges();
     }
@@ -34,6 +35,11 @@ class Shopping extends Model
     public function shoppingLocation(): BelongsTo
     {
         return $this->belongsTo(ShoppingLocation::class);
+    }
+
+    public function shippedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'shipped_by');
     }
 
     public function items(): HasMany

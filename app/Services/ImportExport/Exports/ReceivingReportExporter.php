@@ -12,7 +12,7 @@ class ReceivingReportExporter extends BaseExporter
 
     public function headings(): array
     {
-        return ['Tanggal', 'No. Cycle', 'Supplier', 'Part Number', 'Nama Produk', 'Rak', 'Qty Diterima', 'Status'];
+        return ['Tanggal', 'No. Cycle', 'Supplier', 'Part Number', 'Nama Produk', 'Rak', 'Qty Doc', 'Qty Diterima', 'Status'];
     }
 
     public function exportQuery(): Builder
@@ -47,6 +47,7 @@ class ReceivingReportExporter extends BaseExporter
             $model->product->part_number,
             $model->product->name,
             $model->rack?->code ?? '-',
+            $model->quantity,
             $model->received_quantity,
             $model->cycle->status,
         ];

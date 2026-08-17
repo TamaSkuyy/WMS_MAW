@@ -95,7 +95,7 @@ class ShoppingController extends Controller
     public function show(Shopping $shopping)
     {
         return Inertia::render('Transactions/Shopping/Show', [
-            'shopping' => $shopping->load('items.product.vehicleModel', 'items.rack', 'shoppingLocation'),
+            'shopping' => $shopping->load('items.product.vehicleModel', 'items.rack', 'shoppingLocation', 'shippedBy'),
         ]);
     }
 
@@ -219,7 +219,11 @@ class ShoppingController extends Controller
                 $stock->save();
             }
 
-            $lockedShopping->update(['status' => 'shipped']);
+            $lockedShopping->update([
+                'status' => 'shipped',
+                'shipped_by' => auth()->id(),
+                'shipped_at' => now(),
+            ]);
 
             return ['ok' => true];
         });

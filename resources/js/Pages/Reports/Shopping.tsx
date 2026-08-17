@@ -95,21 +95,25 @@ export default function Shopping({ items, summary, filters }: any) {
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead className="bg-gray-50 dark:bg-gray-800">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal Kirim</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Partner</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Frame #</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Produk</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rak</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dikirim Oleh</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Waktu Kirim</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
                                 {items.data.map((item: any) => (
                                     <tr key={item.id}>
                                         <td className="px-4 py-3 text-sm whitespace-nowrap">
-                                            {item.shopping?.shopping_date ? new Date(item.shopping.shopping_date).toLocaleString('id-ID', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '-'}
+                                            {item.shopping?.shopping_date ? new Date(item.shopping.shopping_date).toLocaleDateString('id-ID', {day:'2-digit',month:'2-digit',year:'numeric'}) : '-'}
                                         </td>
                                         <td className="px-4 py-3 text-sm whitespace-nowrap">{item.shopping?.shopping_location?.name || '-'}</td>
+                                        <td className="px-4 py-3 text-sm whitespace-nowrap font-mono">{item.shopping?.frame_number || '—'}</td>
                                         <td className="px-4 py-3 text-sm whitespace-nowrap">{item.product?.part_number} — {item.product?.name}</td>
                                         <td className="px-4 py-3 text-sm whitespace-nowrap">{item.rack?.code}</td>
                                         <td className="px-4 py-3 text-sm whitespace-nowrap">{item.quantity}</td>
@@ -117,6 +121,10 @@ export default function Shopping({ items, summary, filters }: any) {
                                             <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[item.shopping?.status] || ''}`}>
                                                 {item.shopping?.status}
                                             </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-sm whitespace-nowrap">{item.shopping?.shipped_by?.name || '—'}</td>
+                                        <td className="px-4 py-3 text-sm whitespace-nowrap">
+                                            {item.shopping?.shipped_at ? new Date(item.shopping.shipped_at).toLocaleString('id-ID', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '—'}
                                         </td>
                                     </tr>
                                 ))}
