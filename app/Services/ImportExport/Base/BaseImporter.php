@@ -80,6 +80,12 @@ abstract class BaseImporter
         return 'import-template-' . Str::kebab(Str::replaceLast('Importer', '', class_basename(static::class)));
     }
 
+    /** Extra context carried through the import config to the (reconstructed) importer in the job. */
+    public function contextParams(): array
+    {
+        return [];
+    }
+
     public function downloadTemplate(ImportFormat $format): \Symfony\Component\HttpFoundation\BinaryFileResponse|\Symfony\Component\HttpFoundation\StreamedResponse
     {
         $headings = $this->templateHeadings();
@@ -193,6 +199,7 @@ abstract class BaseImporter
             uniqueKey: $this->uniqueKey(),
             importerClass: static::class,
             chunkSize: $this->chunkSize(),
+            importerParams: $this->contextParams(),
         );
     }
 }

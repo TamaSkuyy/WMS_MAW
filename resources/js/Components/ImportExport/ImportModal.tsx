@@ -17,6 +17,8 @@ interface ImportModalProps {
   templateUrl: string;
   fields: ImportField[];
   title: string;
+  extraNode?: React.ReactNode;
+  extraParams?: () => Record<string, string>;
 }
 
 function getCsrfToken(): string {
@@ -49,7 +51,7 @@ function extractError(text: string, status: number): string {
   return `Server error (HTTP ${status})`;
 }
 
-export default function ImportModal({ isOpen, onClose, onComplete, importUrl, previewUrl, templateUrl, fields, title }: ImportModalProps) {
+export default function ImportModal({ isOpen, onClose, onComplete, importUrl, previewUrl, templateUrl, fields, title, extraNode, extraParams }: ImportModalProps) {
   const [step, setStep] = useState<'upload' | 'mapping' | 'importing'>('upload');
   const [file, setFile] = useState<File | null>(null);
   const [headers, setHeaders] = useState<string[]>([]);
@@ -69,6 +71,9 @@ export default function ImportModal({ isOpen, onClose, onComplete, importUrl, pr
 
     const formData = new FormData();
     formData.append('file', f);
+    if (extraParams) {
+      Object.entries(extraParams()).forEach(([key, value]) => formData.append(key, value));
+    }
 
     try {
       const res = await fetch(previewUrl, {
@@ -117,6 +122,9 @@ export default function ImportModal({ isOpen, onClose, onComplete, importUrl, pr
 
     const formData = new FormData();
     formData.append('file', file);
+    if (extraParams) {
+      Object.entries(extraParams()).forEach(([key, value]) => formData.append(key, value));
+    }
     Object.entries(columnMapping).forEach(([key, value]) => {
       formData.append(`column_mapping[${key}]`, value);
     });
@@ -181,6 +189,7 @@ export default function ImportModal({ isOpen, onClose, onComplete, importUrl, pr
 
           {step === 'upload' && (
             <div>
+              {extraNode && <div className="mb-4">{extraNode}</div>}
               <div
                 className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-brand-500 transition-colors"
                 onClick={() => fileRef.current?.click()}

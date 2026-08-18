@@ -396,6 +396,9 @@ Route::middleware('auth')->group(function () {
     Route::middleware(PermissionMiddleware::using('create shoppings'))->group(function () {
         Route::get('shoppings/create', [ShoppingController::class, 'create'])->name('shoppings.create');
         Route::post('shoppings', [ShoppingController::class, 'store'])->name('shoppings.store');
+        Route::post('shoppings/import/preview', [ShoppingController::class, 'importPreview'])->name('shoppings.import.preview');
+        Route::post('shoppings/import', [ShoppingController::class, 'import'])->name('shoppings.import');
+        Route::get('shoppings/import-template', [ShoppingController::class, 'importTemplate'])->name('shoppings.import-template');
     });
 
     // View (parameterized — must come AFTER static routes)

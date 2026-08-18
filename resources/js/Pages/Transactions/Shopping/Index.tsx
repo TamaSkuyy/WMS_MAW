@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
+import ImportModal from '../../../Components/ImportExport/ImportModal';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
@@ -10,11 +11,14 @@ import TableActions from '../../../Tailadmin/components/common/TableActions';
 import EmptyState from '../../../Tailadmin/components/common/EmptyState';
 import Label from '../../../Tailadmin/components/form/Label';
 
-export default function Index({ shoppings, filters }: any) {
+export default function Index({ shoppings, filters, shoppingLocations = [] }: any) {
     const permissions = (usePage().props.auth as any)?.user?.permissions || [];
     const canCreate = permissions.includes('create shoppings');
     const canEdit = permissions.includes('edit shoppings');
     const canDelete = permissions.includes('delete shoppings');
+    const [importModalOpen, setImportModalOpen] = useState(false);
+    const [importLocationId, setImportLocationId] = useState('');
+
     const handleDelete = (id: number) => {
         if (confirm('Hapus shopping ini?')) {
             router.delete(route('shoppings.destroy', id));
@@ -57,9 +61,14 @@ export default function Index({ shoppings, filters }: any) {
                             />
                         </div>
                     </div>
-                    {canCreate && (
-                        <Link href={route('shoppings.create')}><Button>Tambah Shopping</Button></Link>
-                    )}
+                    <div className="flex flex-wrap items-center gap-2">
+                        {canCreate && (
+                            <Link href={route('shoppings.create')}><Button>Tambah Shopping</Button></Link>
+                        )}
+                        {canCreate && (
+                            <Button variant="outline" onClick={() => setImportModalOpen(true)}>Import</Button>
+                        )}
+                    </div>
                 </div>
                 {shoppings.data.length === 0 ? (
                     <EmptyState
@@ -156,6 +165,37 @@ export default function Index({ shoppings, filters }: any) {
                     </div>
                 )}
             </ComponentCard>
+
+            {canCreate && (
+                <ImportModal
+                    isOpen={importModalOpen}
+                    onClose={() => setImportModalOpen(false)}
+                    onComplete={() => window.location.reload()}
+                    importUrl={route('shoppings.import')}
+                    previewUrl={route('shoppings.import.preview')}
+                    templateUrl={route('shoppings.import-template')}
+                    title="Shopping"
+                    fields={[
+                        { key: 'frame_number', label: 'Frame Number', required: true },
+                        { key: 'part_number', label: 'Part Number', required: true },
+                        { key: 'quantity', label: 'Quantity', required: true },
+                        { key: 'confirmed', label: 'Confirmed', required: false },
+                        { key: 'modify_date', label: 'Modify Date', required: false },
+                    ]}
+                    extraNode={
+                        <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Lokasi Tujuan *</label>
+                            <SearchableSelect
+                                options={shoppingLocations.map((l: any) => ({ value: l.id, label: l.name }))}
+                                value={importLocationId}
+                                onChange={(v) => setImportLocationId(v as string)}
+                                placeholder="Pilih lokasi tujuan..."
+                            />
+                        </div>
+                    }
+                    extraParams={() => ({ shopping_location_id: importLocationId })}
+                />
+            )}
         </>
     );
 }

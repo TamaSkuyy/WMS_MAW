@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Events\StockChanged;
 use App\Models\Product;
+use App\Services\ImportExport\Enums\ImportFormat;
+use App\Services\ImportExport\Imports\ShoppingImporter;
+use App\Services\ImportExport\Managers\ImportManager;
 use App\Models\Rack;
 use App\Models\Shopping;
 use App\Models\ShoppingLocation;
@@ -27,6 +30,7 @@ class ShoppingController extends Controller
         return Inertia::render('Transactions/Shopping/Index', [
             'shoppings' => $shoppings,
             'filters' => $request->only(['status', 'search']),
+            'shoppingLocations' => ShoppingLocation::orderBy('name')->get(),
         ]);
     }
 
@@ -39,6 +43,55 @@ class ShoppingController extends Controller
             'racks'              => Rack::orderBy('zone')->orderBy('code')->get(),
             'shoppingLocations'  => ShoppingLocation::orderBy('name')->get(),
         ]);
+    }
+
+    public function importPreview(Request $request)
+    {
+        abort_unless(auth()->user()->can('create shoppings'), 403);
+
+        $validated = $request->validate([
+            'shopping_location_id' => 'required|exists:shopping_locations,id',
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+        ]);
+
+        $result = app(ImportManager::class)->preview(
+            new ShoppingImporter((int) $validated['shopping_location_id']),
+            $request->file('file')
+        );
+
+        return response()->json($result);
+    }
+
+    public function import(Request $request)
+    {
+        abort_unless(auth()->user()->can('create shoppings'), 403);
+
+        $validated = $request->validate([
+            'shopping_location_id' => 'required|exists:shopping_locations,id',
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+            'column_mapping' => 'required|array',
+        ]);
+
+        $importLog = app(ImportManager::class)->start(
+            new ShoppingImporter((int) $validated['shopping_location_id']),
+            $request->file('file'),
+            $request->input('column_mapping'),
+            auth()->id(),
+        );
+
+        return response()->json([
+            'import_log_id' => $importLog->id,
+            'status' => $importLog->status,
+        ]);
+    }
+
+    public function importTemplate(Request $request)
+    {
+        abort_unless(auth()->user()->can('create shoppings'), 403);
+
+        $format = ImportFormat::from($request->query('format', 'xlsx'));
+
+        return (new ShoppingImporter(0))->downloadTemplate($format);
     }
 
     private function mergeDuplicateItems(array $items): array

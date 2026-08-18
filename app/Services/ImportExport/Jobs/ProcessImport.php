@@ -35,6 +35,9 @@ class ProcessImport implements ShouldQueue
 
         $importerClass = $this->config->importerClass;
         $importer = new $importerClass();
+        if (! empty($this->config->importerParams) && method_exists($importer, 'setContext')) {
+            $importer->setContext($this->config->importerParams);
+        }
         $fixedFields = $importer->fixedFields($importLog->user_id);
 
         $errors = [];

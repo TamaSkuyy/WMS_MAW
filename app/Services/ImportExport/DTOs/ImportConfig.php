@@ -15,5 +15,6 @@ readonly class ImportConfig
         public string|array $uniqueKey,
         public string $importerClass,
         public int $chunkSize = 500,
+        public array $importerParams = [],
     ) {}
 }
