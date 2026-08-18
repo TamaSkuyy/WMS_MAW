@@ -23,6 +23,8 @@ class CycleControllerTest extends TestCase
     {
         parent::setUp();
         $this->user = User::factory()->create();
+        $this->user->givePermissionTo(\Spatie\Permission\Models\Permission::findOrCreate('create cycles'));
+        $this->user->givePermissionTo(\Spatie\Permission\Models\Permission::findOrCreate('receive cycles'));
     }
 
     public function test_index_displays_cycles(): void

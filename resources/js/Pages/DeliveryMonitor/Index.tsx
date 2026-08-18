@@ -93,6 +93,17 @@ export default function Index({ suppliers, slots, cycles, parts, receipts: initi
         };
     }, []);
 
+    // Fallback polling: kalau websocket gagal (jaringan/port TV berbeda), data
+    // tetap ter-refresh otomatis tiap 15 detik. Skip saat tab tidak terlihat.
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (document.hidden) return;
+            router.reload({ only: ['suppliers', 'cycles', 'parts', 'receipts'], preserveState: true, preserveScroll: true });
+        }, 15000);
+
+        return () => clearInterval(interval);
+    }, []);
+
     const handleToggleTvMode = () => {
         setTvMode((current) => {
             const next = !current;
