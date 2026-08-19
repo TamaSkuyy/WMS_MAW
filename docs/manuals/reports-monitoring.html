@@ -149,6 +149,18 @@
   </table>
 </div>
 
+<div class="card">
+  <h3>Kolom Tabel</h3>
+  <table>
+    <tr><th>Kolom</th><th>Keterangan</th></tr>
+    <tr><td>Tanggal</td><td>Waktu penerimaan cycle (sampai detik)</td></tr>
+    <tr><td>No. Cycle / Supplier / Produk / Rak</td><td>Identitas transaksi</td></tr>
+    <tr><td><strong>Qty Doc</strong></td><td>Jumlah menurut dokumen — bandingkan dengan Qty Diterima untuk melihat kurang/lebih dengan cepat</td></tr>
+    <tr><td>Qty Diterima</td><td>Jumlah yang benar-benar masuk</td></tr>
+    <tr><td>Status</td><td>draft / receiving / completed</td></tr>
+  </table>
+</div>
+
 <div class="callout info">
   <strong>💡 Export mengikuti filter</strong>
   Export hanya mengeluarkan data sesuai filter yang aktif. Untuk export seluruh data, kosongkan semua filter lalu klik Export.
@@ -178,6 +190,19 @@
     <tr><td>📍 Filter Lokasi</td><td>Dropdown Shopping Location — tampilkan pengiriman ke lokasi tertentu</td></tr>
     <tr><td>📅 Date Range</td><td>Filter rentang tanggal pengiriman</td></tr>
     <tr><td>📤 Export</td><td>Export hasil filter ke Excel</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h3>Kolom Tabel</h3>
+  <table>
+    <tr><th>Kolom</th><th>Keterangan</th></tr>
+    <tr><td>Tanggal Kirim</td><td>Tanggal pengiriman sesuai form</td></tr>
+    <tr><td>Partner / Produk / Rak / Qty</td><td>Identitas transaksi</td></tr>
+    <tr><td><strong>Frame #</strong></td><td>Nomor frame untuk tracing produksi</td></tr>
+    <tr><td>Status</td><td>draft / shipped / completed</td></tr>
+    <tr><td><strong>Dikirim Oleh</strong></td><td>User yang menekan "Kirim Sekarang"</td></tr>
+    <tr><td><strong>Waktu Kirim</strong></td><td>Kapan dikirim — tercatat otomatis sampai detik (kosong "—" untuk draft)</td></tr>
   </table>
 </div>
 
@@ -277,6 +302,10 @@
   <li>
     <strong>Panel Detail</strong>
     <p>Klik kartu supplier untuk melihat detail: riwayat cycle, item yang diterima, status terkini.</p>
+  </li>
+  <li>
+    <strong>Update otomatis</strong>
+    <p>Data ter-update <strong>real-time</strong> via websocket setiap ada penerimaan. Sebagai jaring pengaman, monitor juga <strong>auto-refresh tiap 15 detik</strong> — walau websocket gagal (mis. jaringan TV berbeda), data tetap masuk maksimal 15 detik tanpa refresh manual.</p>
   </li>
 </ol>
 
