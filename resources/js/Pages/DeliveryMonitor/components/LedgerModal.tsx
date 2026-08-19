@@ -31,6 +31,16 @@ export default function LedgerModal({ supplierId, supplierName, onClose }: Ledge
     const [error, setError] = useState<string | null>(null);
 
     const loadPage = (url: string) => {
+        // Normalisasi URL absolut (mis. http:// dari APP_URL salah konfigurasi)
+        // menjadi path relatif — mencegah blokir CSP connect-src 'self' di https.
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            try {
+                const u = new URL(url);
+                url = u.pathname + u.search;
+            } catch {
+                // biarkan apa adanya
+            }
+        }
         setLoading(true);
         setError(null);
         fetch(url, { headers: { Accept: 'application/json' } })

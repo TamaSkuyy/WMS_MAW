@@ -15,6 +15,21 @@ interface PaginationProps {
  * Memakai path relatif dari Laravel paginator (prev_page_url/next_page_url).
  */
 export default function Pagination({ prevUrl, nextUrl, currentPage, lastPage, from, to, total }: PaginationProps) {
+    // Normalisasi URL absolut (mis. http:// dari APP_URL yang salah konfigurasi)
+    // menjadi path relatif — mencegah blokir CSP connect-src 'self' di https.
+    const toRelative = (url: string | null | undefined): string | null | undefined => {
+        if (!url) return url;
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            try {
+                const u = new URL(url);
+                return u.pathname + u.search;
+            } catch {
+                return url;
+            }
+        }
+        return url;
+    };
+
     const btnClass = 'inline-flex items-center justify-center min-h-11 px-4 text-sm border rounded-lg transition-colors';
     const disabledClass = 'text-gray-400 cursor-not-allowed opacity-60';
 
@@ -27,7 +42,7 @@ export default function Pagination({ prevUrl, nextUrl, currentPage, lastPage, fr
             )}
             <div className="flex items-center justify-center gap-2">
                 {prevUrl ? (
-                    <Link href={prevUrl} className={`${btnClass} hover:bg-gray-100 dark:hover:bg-gray-800`}>
+                    <Link href={toRelative(prevUrl) as string} className={`${btnClass} hover:bg-gray-100 dark:hover:bg-gray-800`}>
                         Sebelumnya
                     </Link>
                 ) : (
@@ -37,7 +52,7 @@ export default function Pagination({ prevUrl, nextUrl, currentPage, lastPage, fr
                     Halaman {currentPage} dari {lastPage}
                 </span>
                 {nextUrl ? (
-                    <Link href={nextUrl} className={`${btnClass} hover:bg-gray-100 dark:hover:bg-gray-800`}>
+                    <Link href={toRelative(nextUrl) as string} className={`${btnClass} hover:bg-gray-100 dark:hover:bg-gray-800`}>
                         Berikutnya
                     </Link>
                 ) : (
