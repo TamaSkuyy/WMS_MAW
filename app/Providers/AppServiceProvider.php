@@ -62,8 +62,11 @@ class AppServiceProvider extends ServiceProvider
 
         // Paginator tidak pakai URL generator, dia pakai $request->url() langsung.
         // Override agar pagination URL ikut terpengaruh forceScheme('https').
+        // Gunakan PATH RELATIF (bukan URL absolut): aman untuk semua scheme
+        // (http/https) dan tidak memicu blokir CSP connect-src 'self' saat
+        // halaman https memuat link pagination http (mismatch APP_URL).
         Paginator::currentPathResolver(function () {
-            return app('url')->current();
+            return '/' . ltrim(request()->path(), '/');
         });
     }
 }

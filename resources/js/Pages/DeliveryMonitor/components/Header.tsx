@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { TvIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import DatePicker from '../../../Tailadmin/components/form/date-picker';
 import { ThemeToggleButton } from '../../../Tailadmin/components/common/ThemeToggleButton';
@@ -37,6 +37,14 @@ export default function Header({
     otifPercent,
 }: HeaderProps) {
     const clock = useClock();
+
+    // Identitas onChange harus stabil — DatePicker menghancurkan & membuat
+    // ulang instance flatpickr setiap kali deps effect berubah, yang akan
+    // menutup kalender yang sedang terbuka (mis. saat auto-refresh 15 detik).
+    const handleDateChange = useCallback(
+        (dates: Date[], dateStr: string) => onSelectDate(dateStr),
+        [onSelectDate]
+    );
 
     return (
         <header className="sticky top-0 z-30 border-b border-gray-200 dark:border-gray-800 bg-white/90 dark:bg-gray-950/90 backdrop-blur px-4 py-3">
@@ -87,7 +95,7 @@ export default function Header({
                         <DatePicker
                             id="monitoring-date"
                             defaultDate={selectedDate}
-                            onChange={(dates, dateStr) => onSelectDate(dateStr)}
+                            onChange={handleDateChange}
                         />
                     </div>
 

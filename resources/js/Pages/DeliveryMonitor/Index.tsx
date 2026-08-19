@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import Header from './components/Header';
 import SupplierGrid from './components/SupplierGrid';
@@ -104,6 +104,21 @@ export default function Index({ suppliers, slots, cycles, parts, receipts: initi
         return () => clearInterval(interval);
     }, []);
 
+    // Pilih tanggal (cek back date) → fetch data untuk tanggal itu dan simpan
+    // di URL, supaya polling 15 detik tetap memakai tanggal yang sama.
+    // Identitas harus STABIL (useCallback) — kalau berganti setiap render,
+    // DatePicker (flatpickr) di Header akan di-destroy & dibuat ulang sehingga
+    // kalender yang sedang terbuka menutup sendiri.
+    const handleSelectDate = useCallback((date: string) => {
+        setSelectedDateState(date);
+        router.get('/delivery-monitor', { date }, {
+            preserveState: true,
+            preserveScroll: true,
+            only: ['suppliers', 'cycles', 'parts', 'receipts'],
+            replace: true,
+        });
+    }, []);
+
     const handleToggleTvMode = () => {
         setTvMode((current) => {
             const next = !current;
@@ -124,7 +139,7 @@ export default function Index({ suppliers, slots, cycles, parts, receipts: initi
                 selectedSupplierId={selectedSupplierId}
                 onSelectSupplier={setSelectedSupplierId}
                 selectedDate={selectedDateState}
-                onSelectDate={setSelectedDateState}
+                onSelectDate={handleSelectDate}
                 tvMode={tvMode}
                 onToggleTvMode={handleToggleTvMode}
                 rotate={rotate}
