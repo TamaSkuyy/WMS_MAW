@@ -3,6 +3,7 @@ import AppLayout from '../../Tailadmin/layout/AppLayout';
 import { Head, Link } from '@inertiajs/react';
 import PageBreadcrumb from '../../Tailadmin/components/common/PageBreadCrumb';
 import MetricCard from '../Dashboard/MetricCard';
+import Pagination from '../../Tailadmin/components/common/Pagination';
 
 export default function SupplierPerformance({ cycles, incompleteItems, perSupplier, metrics, suppliers, filters }: any) {
     const buildUrl = (overrides: Record<string, string>) => {
@@ -176,13 +177,15 @@ export default function SupplierPerformance({ cycles, incompleteItems, perSuppli
                     </table>
                 </div>
                 {cycles.total > cycles.per_page && (
-                    <div className="mt-4 flex justify-between text-sm">
-                        <span className="text-gray-500">{cycles.from}-{cycles.to} dari {cycles.total}</span>
-                        <div className="flex gap-2">
-                            {cycles.prev_page_url && <Link href={cycles.prev_page_url} className="text-brand-500">← Sebelumnya</Link>}
-                            {cycles.next_page_url && <Link href={cycles.next_page_url} className="text-brand-500">Berikutnya →</Link>}
-                        </div>
-                    </div>
+                    <Pagination
+                        prevUrl={cycles.prev_page_url}
+                        nextUrl={cycles.next_page_url}
+                        currentPage={cycles.current_page}
+                        lastPage={cycles.last_page}
+                        from={cycles.from}
+                        to={cycles.to}
+                        total={cycles.total}
+                    />
                 )}
             </div>
         </>

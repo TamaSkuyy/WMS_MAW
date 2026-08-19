@@ -7,6 +7,7 @@ import Button from '../../../Tailadmin/components/ui/button/Button';
 import SearchInput from '../../../Tailadmin/components/form/input/SearchInput';
 import TableActions from '../../../Tailadmin/components/common/TableActions';
 import EmptyState from '../../../Tailadmin/components/common/EmptyState';
+import Pagination from '../../../Tailadmin/components/common/Pagination';
 import ImportExportToolbar from '../../../Components/ImportExport/ImportExportToolbar';
 import ImportModal from '../../../Components/ImportExport/ImportModal';
 
@@ -134,14 +135,15 @@ export default function Index({ employees, filters }: any) {
                 </div>
                 )}
                 {employees.total > employees.per_page && (
-                    <div className="mt-4 flex justify-between items-center">
-                        <div className="text-sm text-gray-500">Menampilkan {employees.from} sampai {employees.to} dari {employees.total}</div>
-                        <div className="flex gap-2">
-                            {employees.prev_page_url ? <Link href={employees.prev_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Sebelumnya</Link> : <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Sebelumnya</span>}
-                            <span className="px-3 py-1 text-sm">Halaman {employees.current_page} dari {employees.last_page}</span>
-                            {employees.next_page_url ? <Link href={employees.next_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Berikutnya</Link> : <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Berikutnya</span>}
-                        </div>
-                    </div>
+                    <Pagination
+                        prevUrl={employees.prev_page_url}
+                        nextUrl={employees.next_page_url}
+                        currentPage={employees.current_page}
+                        lastPage={employees.last_page}
+                        from={employees.from}
+                        to={employees.to}
+                        total={employees.total}
+                    />
                 )}
             </ComponentCard>
         </>

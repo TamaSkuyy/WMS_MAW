@@ -104,12 +104,12 @@ export default function LedgerModal({ supplierId, supplierName, onClose }: Ledge
                             </table>
 
                             {(page.prev_page_url || page.next_page_url) && (
-                                <div className="flex items-center justify-between mt-4 text-xs">
+                                <div className="flex flex-wrap items-center justify-between gap-2 mt-4 text-xs">
                                     <button
                                         type="button"
                                         disabled={!page.prev_page_url}
                                         onClick={() => page.prev_page_url && loadPage(page.prev_page_url)}
-                                        className="px-3 py-1 border rounded disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800"
+                                        className="min-h-11 px-4 inline-flex items-center justify-center border rounded disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800"
                                     >
                                         Sebelumnya
                                     </button>
@@ -120,7 +120,7 @@ export default function LedgerModal({ supplierId, supplierName, onClose }: Ledge
                                         type="button"
                                         disabled={!page.next_page_url}
                                         onClick={() => page.next_page_url && loadPage(page.next_page_url)}
-                                        className="px-3 py-1 border rounded disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800"
+                                        className="min-h-11 px-4 inline-flex items-center justify-center border rounded disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800"
                                     >
                                         Berikutnya
                                     </button>

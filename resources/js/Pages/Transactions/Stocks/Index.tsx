@@ -4,6 +4,7 @@ import { Head, Link } from '@inertiajs/react';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import EmptyState from '../../../Tailadmin/components/common/EmptyState';
+import Pagination from '../../../Tailadmin/components/common/Pagination';
 
 export default function Index({ stocks }: any) {
     return (
@@ -70,16 +71,15 @@ export default function Index({ stocks }: any) {
                 </div>
                 )}
                 {stocks.total > stocks.per_page && (
-                    <div className="mt-4 flex justify-between items-center">
-                        <div className="text-sm text-gray-500">Menampilkan {stocks.from || 0} sampai {stocks.to || 0} dari {stocks.total}</div>
-                        <div className="flex gap-2">
-                            {stocks.prev_page_url ? <Link href={stocks.prev_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Sebelumnya</Link>
-                                : <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Sebelumnya</span>}
-                            <span className="px-3 py-1 text-sm">Halaman {stocks.current_page} dari {stocks.last_page}</span>
-                            {stocks.next_page_url ? <Link href={stocks.next_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Berikutnya</Link>
-                                : <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Berikutnya</span>}
-                        </div>
-                    </div>
+                    <Pagination
+                        prevUrl={stocks.prev_page_url}
+                        nextUrl={stocks.next_page_url}
+                        currentPage={stocks.current_page}
+                        lastPage={stocks.last_page}
+                        from={stocks.from}
+                        to={stocks.to}
+                        total={stocks.total}
+                    />
                 )}
             </ComponentCard>
         </>

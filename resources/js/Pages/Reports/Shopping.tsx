@@ -1,6 +1,6 @@
 import React from 'react';
 import AppLayout from '../../Tailadmin/layout/AppLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import PageBreadcrumb from '../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../Tailadmin/components/common/ComponentCard';
 import Button from '../../Tailadmin/components/ui/button/Button';
@@ -9,6 +9,7 @@ import SearchableSelect from '../../Tailadmin/components/form/select/SearchableS
 import EmptyState from '../../Tailadmin/components/common/EmptyState';
 import MetricCard from '../Dashboard/MetricCard';
 import { ListIcon, ArrowUpIcon, BoxCubeIcon } from '../../Tailadmin/icons';
+import Pagination from '../../Tailadmin/components/common/Pagination';
 
 export default function Shopping({ items, summary, filters }: any) {
     const updateFilter = (key: string, value: string) => {
@@ -134,22 +135,15 @@ export default function Shopping({ items, summary, filters }: any) {
                 )}
 
                 {items.total > items.per_page && (
-                    <div className="mt-4 flex justify-between items-center">
-                        <div className="text-sm text-gray-500">Menampilkan {items.from || 0} sampai {items.to || 0} dari {items.total}</div>
-                        <div className="flex gap-2">
-                            {items.prev_page_url ? (
-                                <Link href={items.prev_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Sebelumnya</Link>
-                            ) : (
-                                <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Sebelumnya</span>
-                            )}
-                            <span className="px-3 py-1 text-sm">Halaman {items.current_page} dari {items.last_page}</span>
-                            {items.next_page_url ? (
-                                <Link href={items.next_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Berikutnya</Link>
-                            ) : (
-                                <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Berikutnya</span>
-                            )}
-                        </div>
-                    </div>
+                    <Pagination
+                        prevUrl={items.prev_page_url}
+                        nextUrl={items.next_page_url}
+                        currentPage={items.current_page}
+                        lastPage={items.last_page}
+                        from={items.from}
+                        to={items.to}
+                        total={items.total}
+                    />
                 )}
             </ComponentCard>
         </>

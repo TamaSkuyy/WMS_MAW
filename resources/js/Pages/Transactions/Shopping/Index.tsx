@@ -10,6 +10,7 @@ import SearchableSelect from '../../../Tailadmin/components/form/select/Searchab
 import TableActions from '../../../Tailadmin/components/common/TableActions';
 import EmptyState from '../../../Tailadmin/components/common/EmptyState';
 import Label from '../../../Tailadmin/components/form/Label';
+import Pagination from '../../../Tailadmin/components/common/Pagination';
 
 export default function Index({ shoppings, filters, shoppingLocations = [] }: any) {
     const permissions = (usePage().props.auth as any)?.user?.permissions || [];
@@ -147,22 +148,15 @@ export default function Index({ shoppings, filters, shoppingLocations = [] }: an
                 </div>
                 )}
                 {shoppings.total > shoppings.per_page && (
-                    <div className="mt-4 flex justify-between items-center">
-                        <div className="text-sm text-gray-500">Menampilkan {shoppings.from || 0} sampai {shoppings.to || 0} dari {shoppings.total}</div>
-                        <div className="flex gap-2">
-                            {shoppings.prev_page_url ? (
-                                <Link href={shoppings.prev_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Sebelumnya</Link>
-                            ) : (
-                                <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Sebelumnya</span>
-                            )}
-                            <span className="px-3 py-1 text-sm">Halaman {shoppings.current_page} dari {shoppings.last_page}</span>
-                            {shoppings.next_page_url ? (
-                                <Link href={shoppings.next_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Berikutnya</Link>
-                            ) : (
-                                <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Berikutnya</span>
-                            )}
-                        </div>
-                    </div>
+                    <Pagination
+                        prevUrl={shoppings.prev_page_url}
+                        nextUrl={shoppings.next_page_url}
+                        currentPage={shoppings.current_page}
+                        lastPage={shoppings.last_page}
+                        from={shoppings.from}
+                        to={shoppings.to}
+                        total={shoppings.total}
+                    />
                 )}
             </ComponentCard>
 

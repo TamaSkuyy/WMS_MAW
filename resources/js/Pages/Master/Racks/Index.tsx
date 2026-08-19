@@ -7,6 +7,7 @@ import Button from '../../../Tailadmin/components/ui/button/Button';
 import SearchInput from '../../../Tailadmin/components/form/input/SearchInput';
 import TableActions from '../../../Tailadmin/components/common/TableActions';
 import EmptyState from '../../../Tailadmin/components/common/EmptyState';
+import Pagination from '../../../Tailadmin/components/common/Pagination';
 import ImportExportToolbar from '../../../Components/ImportExport/ImportExportToolbar';
 import ImportModal from '../../../Components/ImportExport/ImportModal';
 
@@ -120,16 +121,15 @@ export default function Index({ racks, filters }: any) {
                 </div>
                 )}
                 {racks.total > racks.per_page && (
-                    <div className="mt-4 flex justify-between items-center">
-                        <div className="text-sm text-gray-500">Menampilkan {racks.from || 0} sampai {racks.to || 0} dari {racks.total}</div>
-                        <div className="flex gap-2">
-                            {racks.prev_page_url ? <Link href={racks.prev_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Sebelumnya</Link>
-                                : <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Sebelumnya</span>}
-                            <span className="px-3 py-1 text-sm">Halaman {racks.current_page} dari {racks.last_page}</span>
-                            {racks.next_page_url ? <Link href={racks.next_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Berikutnya</Link>
-                                : <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Berikutnya</span>}
-                        </div>
-                    </div>
+                    <Pagination
+                        prevUrl={racks.prev_page_url}
+                        nextUrl={racks.next_page_url}
+                        currentPage={racks.current_page}
+                        lastPage={racks.last_page}
+                        from={racks.from}
+                        to={racks.to}
+                        total={racks.total}
+                    />
                 )}
             </ComponentCard>
         </>

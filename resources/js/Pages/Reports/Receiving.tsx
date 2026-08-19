@@ -1,12 +1,13 @@
 import React from 'react';
 import AppLayout from '../../Tailadmin/layout/AppLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import PageBreadcrumb from '../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../Tailadmin/components/common/ComponentCard';
 import Button from '../../Tailadmin/components/ui/button/Button';
 import Input from '../../Tailadmin/components/form/input/InputField';
 import SearchableSelect from '../../Tailadmin/components/form/select/SearchableSelect';
 import EmptyState from '../../Tailadmin/components/common/EmptyState';
+import Pagination from '../../Tailadmin/components/common/Pagination';
 import MetricCard from '../Dashboard/MetricCard';
 import { ListIcon, ArrowDownIcon, BoxCubeIcon } from '../../Tailadmin/icons';
 
@@ -106,6 +107,7 @@ export default function Receiving({ items, summary, filters, suppliers }: any) {
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rak</th>
                                     <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Qty Doc</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty Diterima</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Diterima Oleh</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                 </tr>
                             </thead>
@@ -121,6 +123,7 @@ export default function Receiving({ items, summary, filters, suppliers }: any) {
                                         <td className="px-4 py-3 text-sm whitespace-nowrap">{item.rack?.code || '-'}</td>
                                         <td className="px-4 py-3 text-sm text-center tabular-nums whitespace-nowrap">{item.quantity}</td>
                                         <td className="px-4 py-3 text-sm tabular-nums whitespace-nowrap">{item.received_quantity}</td>
+                                        <td className="px-4 py-3 text-sm whitespace-nowrap">{item.latest_receive_log?.user?.name || '—'}</td>
                                         <td className="px-4 py-3 whitespace-nowrap">
                                             <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[item.cycle?.status] || ''}`}>
                                                 {item.cycle?.status}
@@ -134,22 +137,15 @@ export default function Receiving({ items, summary, filters, suppliers }: any) {
                 )}
 
                 {items.total > items.per_page && (
-                    <div className="mt-4 flex justify-between items-center">
-                        <div className="text-sm text-gray-500">Menampilkan {items.from || 0} sampai {items.to || 0} dari {items.total}</div>
-                        <div className="flex gap-2">
-                            {items.prev_page_url ? (
-                                <Link href={items.prev_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Sebelumnya</Link>
-                            ) : (
-                                <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Sebelumnya</span>
-                            )}
-                            <span className="px-3 py-1 text-sm">Halaman {items.current_page} dari {items.last_page}</span>
-                            {items.next_page_url ? (
-                                <Link href={items.next_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Berikutnya</Link>
-                            ) : (
-                                <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Berikutnya</span>
-                            )}
-                        </div>
-                    </div>
+                    <Pagination
+                        prevUrl={items.prev_page_url}
+                        nextUrl={items.next_page_url}
+                        currentPage={items.current_page}
+                        lastPage={items.last_page}
+                        from={items.from}
+                        to={items.to}
+                        total={items.total}
+                    />
                 )}
             </ComponentCard>
         </>

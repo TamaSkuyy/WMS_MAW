@@ -12,7 +12,7 @@ class ReceivingReportExporter extends BaseExporter
 
     public function headings(): array
     {
-        return ['Tanggal', 'No. Cycle', 'Supplier', 'Part Number', 'Nama Produk', 'Rak', 'Qty Doc', 'Qty Diterima', 'Status'];
+        return ['Tanggal', 'No. Cycle', 'Supplier', 'Part Number', 'Nama Produk', 'Rak', 'Qty Doc', 'Qty Diterima', 'Diterima Oleh', 'Status'];
     }
 
     public function exportQuery(): Builder
@@ -20,7 +20,7 @@ class ReceivingReportExporter extends BaseExporter
         $filters = $this->filters;
 
         return CycleItem::query()
-            ->with(['cycle.supplier', 'product', 'rack'])
+            ->with(['cycle.supplier', 'product', 'rack', 'latestReceiveLog.user'])
             ->whereHas('cycle', function ($q) use ($filters) {
                 if (! empty($filters['date_from'])) {
                     $q->whereDate('received_at', '>=', $filters['date_from']);
@@ -49,6 +49,7 @@ class ReceivingReportExporter extends BaseExporter
             $model->rack?->code ?? '-',
             $model->quantity,
             $model->received_quantity,
+            $model->latestReceiveLog?->user?->name ?? '-',
             $model->cycle->status,
         ];
     }

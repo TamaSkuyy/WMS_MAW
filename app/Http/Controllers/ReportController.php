@@ -51,7 +51,7 @@ class ReportController extends Controller
     private function receivingQuery(array $filters): Builder
     {
         return CycleItem::query()
-            ->with(['cycle.supplier', 'product', 'rack'])
+            ->with(['cycle.supplier', 'product', 'rack', 'latestReceiveLog.user'])
             ->whereHas('cycle', function ($q) use ($filters) {
                 if (! empty($filters['date_from'])) {
                     $q->whereDate('received_at', '>=', $filters['date_from']);

@@ -7,6 +7,7 @@ import Button from '../../../Tailadmin/components/ui/button/Button';
 import SearchInput from '../../../Tailadmin/components/form/input/SearchInput';
 import TableActions from '../../../Tailadmin/components/common/TableActions';
 import EmptyState from '../../../Tailadmin/components/common/EmptyState';
+import Pagination from '../../../Tailadmin/components/common/Pagination';
 
 export default function Index({ locations, filters }: any) {
     const permissions = (usePage().props.auth as any)?.user?.permissions || [];
@@ -70,16 +71,15 @@ export default function Index({ locations, filters }: any) {
                 </div>
                 )}
                 {locations.total > locations.per_page && (
-                    <div className="mt-4 flex justify-between items-center">
-                        <div className="text-sm text-gray-500">Menampilkan {locations.from} sampai {locations.to} dari {locations.total}</div>
-                        <div className="flex gap-2">
-                            {locations.prev_page_url ? <Link href={locations.prev_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100">Sebelumnya</Link>
-                                : <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Sebelumnya</span>}
-                            <span className="px-3 py-1 text-sm">Halaman {locations.current_page} dari {locations.last_page}</span>
-                            {locations.next_page_url ? <Link href={locations.next_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100">Berikutnya</Link>
-                                : <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Berikutnya</span>}
-                        </div>
-                    </div>
+                    <Pagination
+                        prevUrl={locations.prev_page_url}
+                        nextUrl={locations.next_page_url}
+                        currentPage={locations.current_page}
+                        lastPage={locations.last_page}
+                        from={locations.from}
+                        to={locations.to}
+                        total={locations.total}
+                    />
                 )}
             </ComponentCard>
         </>

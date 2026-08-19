@@ -7,6 +7,7 @@ import Button from '../../../Tailadmin/components/ui/button/Button';
 import SearchInput from '../../../Tailadmin/components/form/input/SearchInput';
 import TableActions from '../../../Tailadmin/components/common/TableActions';
 import EmptyState from '../../../Tailadmin/components/common/EmptyState';
+import Pagination from '../../../Tailadmin/components/common/Pagination';
 import ImportExportToolbar from '../../../Components/ImportExport/ImportExportToolbar';
 import ImportModal from '../../../Components/ImportExport/ImportModal';
 
@@ -119,26 +120,15 @@ export default function Index({ suppliers, filters }: any) {
                 )}
 
                 {suppliers.total > suppliers.per_page && (
-                    <div className="mt-4 flex justify-between items-center">
-                        <div className="text-sm text-gray-500">
-                            Menampilkan {suppliers.from || 0} sampai {suppliers.to || 0} dari {suppliers.total || 0}
-                        </div>
-                        <div className="flex gap-2">
-                            {suppliers.prev_page_url ? (
-                                <Link href={suppliers.prev_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Sebelumnya</Link>
-                            ) : (
-                                <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Sebelumnya</span>
-                            )}
-                            <span className="px-3 py-1 text-sm">
-                                Halaman {suppliers.current_page} dari {suppliers.last_page}
-                            </span>
-                            {suppliers.next_page_url ? (
-                                <Link href={suppliers.next_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Berikutnya</Link>
-                            ) : (
-                                <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Berikutnya</span>
-                            )}
-                        </div>
-                    </div>
+                    <Pagination
+                        prevUrl={suppliers.prev_page_url}
+                        nextUrl={suppliers.next_page_url}
+                        currentPage={suppliers.current_page}
+                        lastPage={suppliers.last_page}
+                        from={suppliers.from}
+                        to={suppliers.to}
+                        total={suppliers.total}
+                    />
                 )}
             </ComponentCard>
         </>

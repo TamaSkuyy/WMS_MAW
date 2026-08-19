@@ -6,6 +6,7 @@ import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
 import SearchableSelect from '../../../Tailadmin/components/form/select/SearchableSelect';
 import EmptyState from '../../../Tailadmin/components/common/EmptyState';
+import Pagination from '../../../Tailadmin/components/common/Pagination';
 import ImportExportToolbar from '../../../Components/ImportExport/ImportExportToolbar';
 import ImportModal from '../../../Components/ImportExport/ImportModal';
 
@@ -178,16 +179,15 @@ export default function Index({ cycles, suppliers, filters }: any) {
                 </div>
                 )}
                 {cycles.total > cycles.per_page && (
-                    <div className="mt-4 flex justify-between items-center">
-                        <div className="text-sm text-gray-500">Menampilkan {cycles.from || 0} sampai {cycles.to || 0} dari {cycles.total}</div>
-                        <div className="flex gap-2">
-                            {cycles.prev_page_url ? <Link href={cycles.prev_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Sebelumnya</Link>
-                                : <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Sebelumnya</span>}
-                            <span className="px-3 py-1 text-sm">Halaman {cycles.current_page} dari {cycles.last_page}</span>
-                            {cycles.next_page_url ? <Link href={cycles.next_page_url} className="px-3 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-800">Berikutnya</Link>
-                                : <span className="px-3 py-1 text-sm border rounded text-gray-400 cursor-not-allowed">Berikutnya</span>}
-                        </div>
-                    </div>
+                    <Pagination
+                        prevUrl={cycles.prev_page_url}
+                        nextUrl={cycles.next_page_url}
+                        currentPage={cycles.current_page}
+                        lastPage={cycles.last_page}
+                        from={cycles.from}
+                        to={cycles.to}
+                        total={cycles.total}
+                    />
                 )}
             </ComponentCard>
         </>
