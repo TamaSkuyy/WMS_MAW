@@ -4,12 +4,18 @@ import { Head, Link } from '@inertiajs/react';
 import PageBreadcrumb from '../../Tailadmin/components/common/PageBreadCrumb';
 import MetricCard from '../Dashboard/MetricCard';
 import Pagination from '../../Tailadmin/components/common/Pagination';
+import Button from '../../Tailadmin/components/ui/button/Button';
 
 export default function SupplierPerformance({ cycles, incompleteItems, perSupplier, metrics, suppliers, filters }: any) {
     const buildUrl = (overrides: Record<string, string>) => {
         const params = new URLSearchParams({ ...filters, ...overrides });
         Array.from(params.keys()).forEach(k => { if (!params.get(k)) params.delete(k); });
         return route('reports.supplier-performance') + '?' + params.toString();
+    };
+
+    const exportUrl = (format: 'xlsx' | 'pdf') => {
+        const params = new URLSearchParams({ ...filters, format }).toString();
+        return `${route('reports.supplier-performance.export')}?${params}`;
     };
 
     return (
@@ -131,7 +137,13 @@ export default function SupplierPerformance({ cycles, incompleteItems, perSuppli
 
             {/* Cycle History */}
             <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] p-6">
-                <h3 className="text-base font-medium text-gray-800 dark:text-white/90 mb-4">📋 Riwayat Cycle</h3>
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-base font-medium text-gray-800 dark:text-white/90">📋 Riwayat Cycle</h3>
+                    <div className="flex gap-2">
+                        <a href={exportUrl('xlsx')}><Button variant="outline" size="sm">Export Excel</Button></a>
+                        <a href={exportUrl('pdf')}><Button variant="outline" size="sm">Export PDF</Button></a>
+                    </div>
+                </div>
                 <div className="overflow-x-auto">
                     <table className="min-w-full">
                         <thead className="bg-gray-50 dark:bg-gray-800">

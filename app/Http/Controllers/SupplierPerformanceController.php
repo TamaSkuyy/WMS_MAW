@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Cycle;
 use App\Models\ReceiveLog;
 use App\Models\Supplier;
+use App\Services\ImportExport\DTOs\ExportConfig;
+use App\Services\ImportExport\Enums\ExportFormat;
+use App\Services\ImportExport\Exports\SupplierPerformanceExporter;
+use App\Services\ImportExport\Managers\ExportManager;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -90,5 +94,23 @@ class SupplierPerformanceController extends Controller
             'suppliers' => Supplier::orderBy('name')->get(),
             'filters' => $filters,
         ]);
+    }
+
+    public function export(Request $request)
+    {
+        $filters = $request->only(['supplier_id', 'date_from', 'date_to']);
+        $format = ExportFormat::from($request->query('format', 'xlsx'));
+
+        $exporter = new SupplierPerformanceExporter($filters);
+
+        $config = new ExportConfig(
+            format: $format,
+            fileName: 'supplier-performance-' . now()->format('Y-m-d-His'),
+            headings: $exporter->headings(),
+            columns: [],
+            exportableClass: SupplierPerformanceExporter::class,
+        );
+
+        return app(ExportManager::class)->download($exporter, $config);
     }
 }

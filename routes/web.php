@@ -443,6 +443,8 @@ Route::middleware('auth')->group(function () {
     Route::middleware(PermissionMiddleware::using('view supplier performance'))->group(function () {
         Route::get('reports/supplier-performance', [SupplierPerformanceController::class, 'index'])
             ->name('reports.supplier-performance');
+        Route::get('reports/supplier-performance/export', [SupplierPerformanceController::class, 'export'])
+            ->name('reports.supplier-performance.export');
     });
 
     // ── System (superadmin only) ────────────────────────────
