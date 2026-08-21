@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
 import { Head, useForm } from '@inertiajs/react';
 import { ArrowLeftIcon, CheckIcon } from '@heroicons/react/24/outline';
@@ -8,6 +8,7 @@ import Button from '../../../Tailadmin/components/ui/button/Button';
 import Input from '../../../Tailadmin/components/form/input/InputField';
 import Label from '../../../Tailadmin/components/form/Label';
 import SearchableSelect from '../../../Tailadmin/components/form/select/SearchableSelect';
+import QrScanner from '../../../Components/QrScanner';
 import { Link } from '@inertiajs/react';
 
 export default function Edit({ product, vehicleModels, categories, suppliers, racks }: any) {
@@ -24,6 +25,8 @@ export default function Edit({ product, vehicleModels, categories, suppliers, ra
         min_stock: product.min_stock ?? '',
         max_stock: product.max_stock ?? '',
     });
+
+    const [scannerOpen, setScannerOpen] = useState(false);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -48,7 +51,12 @@ export default function Edit({ product, vehicleModels, categories, suppliers, ra
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div>
                             <Label>Part Number *</Label>
-                            <Input type="text" value={data.part_number} onChange={(e) => setData('part_number', e.target.value)} />
+                            <div className="flex gap-2">
+                                <Input type="text" value={data.part_number} onChange={(e) => setData('part_number', e.target.value)} placeholder="Scan atau ketik part number..." />
+                                <Button type="button" variant="outline" size="sm" onClick={() => setScannerOpen(true)} title="Scan QR part number">
+                                    📷
+                                </Button>
+                            </div>
                             {errors.part_number && <p className="mt-1 text-sm text-red-500">{errors.part_number}</p>}
                         </div>
                         <div>
@@ -148,6 +156,13 @@ export default function Edit({ product, vehicleModels, categories, suppliers, ra
                     </form>
                 </ComponentCard>
             </div>
+
+            <QrScanner
+                isOpen={scannerOpen}
+                onClose={() => setScannerOpen(false)}
+                onScan={(code) => setData('part_number', code)}
+                mode="qr"
+            />
         </>
     );
 }
