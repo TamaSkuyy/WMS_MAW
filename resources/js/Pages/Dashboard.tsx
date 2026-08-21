@@ -1,9 +1,22 @@
+import { useEffect } from 'react';
 import AppLayout from '../Tailadmin/layout/AppLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { Package, Layers, AlertTriangle, TrendingUp, ArrowDownToLine, CheckCircle, Inbox, ShoppingCart, Clock, Warehouse } from 'lucide-react';
 import MetricCard from './Dashboard/MetricCard';
+import OperatorPerformance from './Dashboard/OperatorPerformance';
 
-export default function Dashboard({ metrics, lowStockItems, overStockItems, pendingCycles, todayShoppings, recentCycles, avgDurationToday, rackAlerts, rackFullCount, rackNearFullCount }: any) {
+export default function Dashboard({ metrics, lowStockItems, overStockItems, pendingCycles, todayShoppings, recentCycles, avgDurationToday, rackAlerts, rackFullCount, rackNearFullCount, operatorPerformance }: any) {
+
+    // Refresh performa operator tiap 15 detik (pola polling Delivery Monitor).
+    // Skip saat tab tidak terlihat supaya tidak membebani server.
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (document.hidden) return;
+            router.reload({ only: ['operatorPerformance'], preserveState: true, preserveScroll: true });
+        }, 15000);
+
+        return () => clearInterval(interval);
+    }, []);
 
     const fmtDuration = (s: number) => {
         if (!s || s < 0) return '-';
@@ -351,6 +364,11 @@ export default function Dashboard({ metrics, lowStockItems, overStockItems, pend
                             <EmptyState icon={Inbox} text="Belum ada data rak" />
                         )}
                     </div>
+                </div>
+
+                {/* Operator Performance */}
+                <div className="col-span-12">
+                    <OperatorPerformance operatorPerformance={operatorPerformance} />
                 </div>
 
                 {/* Shopping Today */}

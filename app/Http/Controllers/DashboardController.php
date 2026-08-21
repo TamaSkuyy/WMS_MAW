@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\Rack;
 use App\Models\Shopping;
 use App\Models\Stock;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
@@ -131,6 +132,29 @@ class DashboardController extends Controller
         $rackFullCount = $rackAlerts->where('pct', '>=', 100)->count();
         $rackNearFullCount = $rackAlerts->where('pct', '>=', 80)->where('pct', '<', 100)->count();
 
+        // Performa operator hari ini: qty shopping & receiving per akun (top 10)
+        $shoppingOperators = DB::table('shopping_items')
+            ->join('shoppings', 'shoppings.id', '=', 'shopping_items.shopping_id')
+            ->join('users', 'users.id', '=', 'shoppings.shipped_by')
+            ->where('shoppings.status', 'shipped')
+            ->whereDate('shoppings.shipped_at', today())
+            ->selectRaw('users.name, SUM(shopping_items.quantity) as qty')
+            ->groupBy('users.id', 'users.name')
+            ->orderByDesc('qty')
+            ->limit(10)
+            ->get()
+            ->map(fn ($r) => ['name' => $r->name, 'qty' => (int) $r->qty]);
+
+        $receivingOperators = DB::table('receive_logs')
+            ->join('users', 'users.id', '=', 'receive_logs.user_id')
+            ->whereDate('receive_logs.created_at', today())
+            ->selectRaw('users.name, SUM(receive_logs.quantity) as qty')
+            ->groupBy('users.id', 'users.name')
+            ->orderByDesc('qty')
+            ->limit(10)
+            ->get()
+            ->map(fn ($r) => ['name' => $r->name, 'qty' => (int) $r->qty]);
+
         return Inertia::render('Dashboard', [
             'metrics' => [
                 'total_products' => $totalProducts,
@@ -154,6 +178,10 @@ class DashboardController extends Controller
             'rackNearFullCount' => $rackNearFullCount,
             'totalRacks' => Rack::count(),
             'racksWithCapacity' => Rack::whereNotNull('capacity')->count(),
+            'operatorPerformance' => [
+                'shopping' => $shoppingOperators,
+                'receiving' => $receivingOperators,
+            ],
         ]);
     }
 }
