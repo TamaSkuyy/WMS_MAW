@@ -307,12 +307,14 @@ quick_update() {
     # Restart queue workers (pick up new code)
     dc exec -T app php artisan queue:restart 2>/dev/null || true
 
-    # 7. Graceful reload Octane workers (FrankenPHP)
-    log "7/7 Graceful reload Octane workers..."
-    if dc exec -T app php artisan octane:reload 2>/dev/null; then
-        log "  Workers di-reload via octane:reload ✓"
+    # 7. Reload Octane workers — restart container agar code baru PASTI ter-load
+    # (octane:reload via admin endpoint tidak selalu mempan; worker bisa
+    #  tetap memegang code/config lama di memory walau file sudah dicopy)
+    log "7/7 Restart app container (reload Octane workers)..."
+    if dc restart app 2>/dev/null; then
+        log "  Workers di-reload via container restart ✓"
     else
-        warn "  octane:reload gagal — workers mungkin baru akan direfresh setelah container direstart"
+        warn "  Restart app gagal — restart manual: ${RUNTIME} restart ${APP_CONTAINER}"
     fi
 
     # Maintenance mode OFF — juga ditangani oleh trap EXIT di atas
