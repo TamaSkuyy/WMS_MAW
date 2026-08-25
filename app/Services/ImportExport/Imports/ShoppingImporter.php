@@ -63,6 +63,14 @@ class ShoppingImporter extends BaseImporter implements Importable
         return ['Frame Number', 'Part Number', 'Quantity', 'Confirmed', 'Modify Date'];
     }
 
+    public function fixedFields(int $userId): array
+    {
+        return [
+            'created_by' => $userId,
+            'updated_by' => $userId,
+        ];
+    }
+
     public function transformRow(array $mapped): array
     {
         // Lokasi tujuan wajib tersedia sebelum memproses baris
@@ -144,6 +152,8 @@ class ShoppingImporter extends BaseImporter implements Importable
                     'shopping_date' => $data['shopping_date'],
                     'frame_number' => $frame,
                     'status' => 'draft',
+                    'created_by' => $data['created_by'] ?? null,
+                    'updated_by' => $data['updated_by'] ?? null,
                 ]);
             }
             $this->currentFrameNumber = $frame;
@@ -155,6 +165,8 @@ class ShoppingImporter extends BaseImporter implements Importable
             'product_id' => $data['product_id'],
             'rack_id' => $product?->default_rack_id,
             'quantity' => $data['quantity'],
+            'created_by' => $data['created_by'] ?? null,
+            'updated_by' => $data['updated_by'] ?? null,
         ]);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\AuditableBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Product extends Model
 {
     use HasFactory;
+    use AuditableBy;
 
     protected $fillable = [
         'part_number',
@@ -24,6 +26,8 @@ class Product extends Model
         'default_rack_id',
         'min_stock',
         'max_stock',
+        'created_by',
+        'updated_by',
     ];
 
     protected function casts(): array

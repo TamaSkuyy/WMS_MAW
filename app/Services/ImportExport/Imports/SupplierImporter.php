@@ -39,6 +39,14 @@ class SupplierImporter extends BaseImporter implements Importable
         return ['Kode', 'Nama', 'Kontak', 'Email', 'Telepon', 'Jalan', 'Kota', 'Provinsi', 'KodePos', 'Negara'];
     }
 
+    public function fixedFields(int $userId): array
+    {
+        return [
+            'created_by' => $userId,
+            'updated_by' => $userId,
+        ];
+    }
+
     public function insertRow(array $data): void
     {
         $supplier = Supplier::create([
@@ -47,6 +55,8 @@ class SupplierImporter extends BaseImporter implements Importable
             'contact_person' => $data['contact_person'] ?? null,
             'email' => $data['email'],
             'phone' => $data['phone'] ?? null,
+            'created_by' => $data['created_by'] ?? null,
+            'updated_by' => $data['updated_by'] ?? null,
         ]);
 
         $supplier->addresses()->create([
@@ -56,6 +66,8 @@ class SupplierImporter extends BaseImporter implements Importable
             'postal_code' => $data['postal_code'],
             'country' => $data['country'],
             'address_type' => 'primary',
+            'created_by' => $data['created_by'] ?? null,
+            'updated_by' => $data['updated_by'] ?? null,
         ]);
     }
 }

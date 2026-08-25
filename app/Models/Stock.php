@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\AuditableBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,8 +10,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Stock extends Model
 {
     use HasFactory;
+    use AuditableBy;
 
-    protected $fillable = ['product_id', 'rack_id', 'quantity'];
+    protected $fillable = ['product_id', 'rack_id', 'quantity', 'created_by', 'updated_by'];
 
     public function product(): BelongsTo
     {

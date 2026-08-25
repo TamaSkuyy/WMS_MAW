@@ -23,8 +23,9 @@ class CycleControllerTest extends TestCase
     {
         parent::setUp();
         $this->user = User::factory()->create();
-        $this->user->givePermissionTo(\Spatie\Permission\Models\Permission::findOrCreate('create cycles'));
-        $this->user->givePermissionTo(\Spatie\Permission\Models\Permission::findOrCreate('receive cycles'));
+        foreach (['create cycles', 'view cycles', 'edit cycles', 'delete cycles', 'receive cycles', 'export cycles'] as $perm) {
+            $this->user->givePermissionTo(\Spatie\Permission\Models\Permission::findOrCreate($perm));
+        }
     }
 
     public function test_index_displays_cycles(): void

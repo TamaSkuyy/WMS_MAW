@@ -2,19 +2,21 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\AuditableBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Spatie\Activitylog\Support\LogOptions;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class Cycle extends Model
 {
+    use AuditableBy;
     use HasFactory;
     use LogsActivity;
 
-    protected $fillable = ['supplier_id', 'cycle_number', 'status', 'received_at', 'notes', 'delivery_date', 'delivery_slot_id'];
+    protected $fillable = ['supplier_id', 'created_by', 'updated_by', 'cycle_number', 'status', 'received_at', 'notes', 'delivery_date', 'delivery_slot_id'];
 
     protected function casts(): array
     {

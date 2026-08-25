@@ -30,4 +30,12 @@ class ProductCategoryImporter extends BaseImporter implements Importable
     {
         return ['Nama', 'Deskripsi'];
     }
+
+    public function fixedFields(int $userId): array
+    {
+        return [
+            'created_by' => $userId,
+            'updated_by' => $userId,
+        ];
+    }
 }

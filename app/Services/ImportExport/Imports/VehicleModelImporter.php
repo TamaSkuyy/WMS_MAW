@@ -32,6 +32,14 @@ class VehicleModelImporter extends BaseImporter implements Importable
         return ['Nama', 'Suffix'];
     }
 
+    public function fixedFields(int $userId): array
+    {
+        return [
+            'created_by' => $userId,
+            'updated_by' => $userId,
+        ];
+    }
+
     public function transformRow(array $mapped): array
     {
         $mapped['brand'] = ! empty($mapped['brand']) ? $mapped['brand'] : 'Toyota';

@@ -55,6 +55,14 @@ class CycleImporter extends BaseImporter implements Importable
         return $mapped;
     }
 
+    public function fixedFields(int $userId): array
+    {
+        return [
+            'created_by' => $userId,
+            'updated_by' => $userId,
+        ];
+    }
+
     public function isDuplicate(array $data): bool
     {
         $cycleNumber = $data['cycle_number'];
@@ -84,6 +92,8 @@ class CycleImporter extends BaseImporter implements Importable
                 'delivery_date' => $data['delivery_date'],
                 'notes' => $data['notes'] ?? null,
                 'status' => 'draft',
+                'created_by' => $data['created_by'] ?? null,
+                'updated_by' => $data['updated_by'] ?? null,
             ]);
             $this->currentCycleNumber = $cycleNumber;
         }
@@ -94,6 +104,8 @@ class CycleImporter extends BaseImporter implements Importable
             'product_id' => $data['product_id'],
             'quantity' => $data['quantity'],
             'received_quantity' => 0,
+            'created_by' => $data['created_by'] ?? null,
+            'updated_by' => $data['updated_by'] ?? null,
         ]);
     }
 }

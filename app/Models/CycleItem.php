@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\AuditableBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,8 +12,9 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class CycleItem extends Model
 {
     use HasFactory;
+    use AuditableBy;
 
-    protected $fillable = ['cycle_id', 'product_id', 'quantity', 'received_quantity', 'rack_id', 'notes'];
+    protected $fillable = ['cycle_id', 'product_id', 'quantity', 'received_quantity', 'rack_id', 'notes', 'created_by', 'updated_by'];
 
     public function cycle(): BelongsTo
     {

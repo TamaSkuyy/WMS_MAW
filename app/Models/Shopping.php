@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\AuditableBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,8 +14,9 @@ class Shopping extends Model
 {
     use HasFactory;
     use LogsActivity;
+    use AuditableBy;
 
-    protected $fillable = ['shopping_location_id', 'shopping_date', 'status', 'notes', 'frame_number', 'shipped_by', 'shipped_at'];
+    protected $fillable = ['shopping_location_id', 'shopping_date', 'status', 'notes', 'frame_number', 'shipped_by', 'shipped_at', 'created_by', 'updated_by'];
 
     protected function casts(): array
     {

@@ -31,4 +31,12 @@ class RackImporter extends BaseImporter implements Importable
     {
         return ['Kode', 'Zona', 'Kapasitas'];
     }
+
+    public function fixedFields(int $userId): array
+    {
+        return [
+            'created_by' => $userId,
+            'updated_by' => $userId,
+        ];
+    }
 }

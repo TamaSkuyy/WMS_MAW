@@ -43,6 +43,14 @@ class ProductImporter extends BaseImporter implements Importable
         return ['PartNumber', 'Nama', 'Merek', 'Model', 'Supplier', 'Kategori', 'Satuan', 'Deskripsi', 'Aktif', 'Rak'];
     }
 
+    public function fixedFields(int $userId): array
+    {
+        return [
+            'created_by' => $userId,
+            'updated_by' => $userId,
+        ];
+    }
+
     public function transformRow(array $mapped): array
     {
         $brand = is_string($mapped['brand'] ?? null) ? trim($mapped['brand']) : null;

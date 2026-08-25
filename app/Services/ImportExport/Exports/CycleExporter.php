@@ -10,12 +10,12 @@ class CycleExporter extends BaseExporter
 {
     public function headings(): array
     {
-        return ['Cycle Number', 'Supplier', 'Delivery Date', 'Total Items', 'Status', 'Notes'];
+        return ['Cycle Number', 'Supplier', 'Delivery Date', 'Total Items', 'Total Qty', 'Status', 'Notes', 'PIC'];
     }
 
     public function exportQuery(): Builder
     {
-        return Cycle::query()->with('supplier')->withCount('items')->orderBy('created_at', 'desc');
+        return Cycle::query()->with('supplier', 'creator')->withCount('items')->orderBy('created_at', 'desc');
     }
 
     public function mapRow($model): array
@@ -25,8 +25,10 @@ class CycleExporter extends BaseExporter
             $model->supplier?->name ?? '',
             $model->delivery_date?->format('Y-m-d') ?? '',
             $model->items_count ?? 0,
+            $model->items()->sum('quantity'),
             $model->status,
             $model->notes ?? '',
+            $model->creator?->name ?? '',
         ];
     }
 }

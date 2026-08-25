@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\AuditableBy;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,8 +11,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class DeliverySlot extends Model
 {
     use HasFactory;
+    use AuditableBy;
 
-    protected $fillable = ['slot_number', 'time_start', 'time_end', 'label'];
+    protected $fillable = ['slot_number', 'time_start', 'time_end', 'label', 'created_by', 'updated_by'];
 
     public function scheduledSuppliers(): BelongsToMany
     {

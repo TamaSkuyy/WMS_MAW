@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\AuditableBy;
 use App\Support\SupplierCodeGenerator;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,12 +13,15 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Supplier extends Model
 {
     use HasFactory;
+    use AuditableBy;
     protected $fillable = [
         'name',
         'code',
         'contact_person',
         'email',
         'phone',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [

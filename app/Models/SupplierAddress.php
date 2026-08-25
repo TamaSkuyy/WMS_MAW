@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\AuditableBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class SupplierAddress extends Model
 {
     use HasFactory;
+    use AuditableBy;
 
     protected $table = 'supplier_addresses';
 
@@ -20,6 +22,8 @@ class SupplierAddress extends Model
         'postal_code',
         'country',
         'address_type',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [

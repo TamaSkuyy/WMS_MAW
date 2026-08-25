@@ -29,4 +29,12 @@ class DepartmentImporter extends BaseImporter implements Importable
     {
         return ['Nama'];
     }
+
+    public function fixedFields(int $userId): array
+    {
+        return [
+            'created_by' => $userId,
+            'updated_by' => $userId,
+        ];
+    }
 }
