@@ -29,6 +29,7 @@ export default function Index({ shoppings, filters, shoppingLocations = [] }: an
     const statusColors: Record<string, string> = {
         draft: 'bg-gray-100 text-gray-800',
         shipped: 'bg-blue-100 text-blue-800',
+        cripple: 'bg-red-100 text-red-800',
         completed: 'bg-green-100 text-green-800',
     };
 
@@ -55,6 +56,7 @@ export default function Index({ shoppings, filters, shoppingLocations = [] }: an
                                     { value: '', label: 'Semua' },
                                     { value: 'draft', label: 'Draft' },
                                     { value: 'shipped', label: 'Dikirim' },
+                                    { value: 'cripple', label: 'Cripple' },
                                     { value: 'completed', label: 'Completed' },
                                 ]}
                                 value={filters?.status || ''}
@@ -174,6 +176,7 @@ export default function Index({ shoppings, filters, shoppingLocations = [] }: an
                         { key: 'part_number', label: 'Part Number', required: true },
                         { key: 'quantity', label: 'Quantity', required: true },
                         { key: 'confirmed', label: 'Confirmed', required: false },
+                        { key: 'cripple', label: 'Cripple', required: false },
                         { key: 'modify_date', label: 'Modify Date', required: false },
                     ]}
                     extraNode={

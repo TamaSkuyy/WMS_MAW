@@ -297,4 +297,77 @@ class ShoppingControllerTest extends TestCase
 
         Event::assertNotDispatched(StockChanged::class);
     }
+
+    public function test_store_saves_is_cripple_flag(): void
+    {
+        $this->user->givePermissionTo(Permission::findOrCreate('create shoppings'));
+        $location = \App\Models\ShoppingLocation::create(['name' => 'Lokasi Test']);
+
+        $data = [
+            'shopping_location_id' => $location->id,
+            'shopping_date' => '2026-06-10',
+            'is_cripple' => true,
+            'items' => [],
+        ];
+
+        $this->actingAs($this->user)->post(route('shoppings.store'), $data);
+
+        $this->assertDatabaseHas('shoppings', ['is_cripple' => 1]);
+    }
+
+    public function test_store_defaults_is_cripple_to_false(): void
+    {
+        $this->user->givePermissionTo(Permission::findOrCreate('create shoppings'));
+        $location = \App\Models\ShoppingLocation::create(['name' => 'Lokasi Test 2']);
+
+        $data = [
+            'shopping_location_id' => $location->id,
+            'shopping_date' => '2026-06-10',
+            'items' => [],
+        ];
+
+        $this->actingAs($this->user)->post(route('shoppings.store'), $data);
+
+        $this->assertDatabaseHas('shoppings', ['is_cripple' => 0]);
+    }
+
+    public function test_ship_cripple_sets_status_cripple_and_deducts_stock(): void
+    {
+        $this->user->givePermissionTo(Permission::findOrCreate('ship shoppings'));
+
+        $rack = Rack::factory()->create();
+        $product = Product::factory()->create();
+        Stock::create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 20]);
+
+        $shopping = Shopping::factory()->create(['status' => 'draft', 'is_cripple' => true]);
+        $shopping->items()->create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 8]);
+
+        $this->actingAs($this->user)->post(route('shoppings.ship', $shopping));
+
+        $this->assertDatabaseHas('shoppings', [
+            'id' => $shopping->id,
+            'status' => 'cripple',
+            'is_cripple' => 1,
+            'shipped_by' => $this->user->id,
+        ]);
+        $this->assertNotNull($shopping->fresh()->shipped_at);
+        // Stok tetap dikurangi walau cripple — barang dikirim apa adanya
+        $this->assertDatabaseHas('stocks', ['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 12]);
+    }
+
+    public function test_ship_non_cripple_sets_status_shipped(): void
+    {
+        $this->user->givePermissionTo(Permission::findOrCreate('ship shoppings'));
+
+        $rack = Rack::factory()->create();
+        $product = Product::factory()->create();
+        Stock::create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 20]);
+
+        $shopping = Shopping::factory()->create(['status' => 'draft', 'is_cripple' => false]);
+        $shopping->items()->create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 8]);
+
+        $this->actingAs($this->user)->post(route('shoppings.ship', $shopping));
+
+        $this->assertDatabaseHas('shoppings', ['id' => $shopping->id, 'status' => 'shipped']);
+    }
 }

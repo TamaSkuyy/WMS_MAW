@@ -54,13 +54,14 @@ class ShoppingImporter extends BaseImporter implements Importable
             'part_number' => ['required', 'string', 'max:100'],
             'quantity' => ['required', 'integer', 'min:1'],
             'confirmed' => ['nullable'],
+            'cripple' => ['nullable'],
             'modify_date' => ['nullable'],
         ];
     }
 
     public function templateHeadings(): array
     {
-        return ['Frame Number', 'Part Number', 'Quantity', 'Confirmed', 'Modify Date'];
+        return ['Frame Number', 'Part Number', 'Quantity', 'Confirmed', 'Cripple', 'Modify Date'];
     }
 
     public function fixedFields(int $userId): array
@@ -86,6 +87,13 @@ class ShoppingImporter extends BaseImporter implements Importable
         if (in_array($confirmed, ['false', '0', 'no'], true)) {
             throw new RowTransformException("Baris tidak terkonfirmasi (Confirmed = {$confirmed}).");
         }
+
+        // Cripple (part tidak lengkap) — kosong/No/FALSE/0 = tidak; Ya/TRUE/1 = ya.
+        // Nilai diambil dari baris pertama frame (aturan: baris pertama frame menang).
+        $rawCripple = $mapped['cripple'] ?? '';
+        $mapped['is_cripple'] = is_bool($rawCripple)
+            ? $rawCripple
+            : in_array(strtolower(trim((string) $rawCripple)), ['yes', 'ya', 'y', 'true', '1'], true);
 
         // Frame sudah ada di sistem
         $frame = (string) ($mapped['frame_number'] ?? '');
@@ -152,6 +160,8 @@ class ShoppingImporter extends BaseImporter implements Importable
                     'shopping_date' => $data['shopping_date'],
                     'frame_number' => $frame,
                     'status' => 'draft',
+                    // Cripple dari baris pertama frame — saat merge ke draft existing, flag tidak diubah.
+                    'is_cripple' => (bool) ($data['is_cripple'] ?? false),
                     'created_by' => $data['created_by'] ?? null,
                     'updated_by' => $data['updated_by'] ?? null,
                 ]);

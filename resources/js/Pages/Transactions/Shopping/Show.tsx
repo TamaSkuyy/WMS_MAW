@@ -15,12 +15,16 @@ export default function Show({ shopping }: any) {
     const statusColors: Record<string, string> = {
         draft: 'bg-gray-100 text-gray-800',
         shipped: 'bg-blue-100 text-blue-800',
+        cripple: 'bg-red-100 text-red-800',
         completed: 'bg-green-100 text-green-800',
     };
 
     const handleShip = () => {
         if (submitting) return;
-        if (confirm('Proses pengiriman ini? Stok akan dikurangi.')) {
+        const crippleNote = shopping.is_cripple
+            ? ' Barang ditandai CRIPPLE (part tidak lengkap) — status akhir akan Cripple.'
+            : '';
+        if (confirm(`Proses pengiriman ini? Stok akan dikurangi.${crippleNote}`)) {
             setSubmitting(true);
             router.post(route('shoppings.ship', shopping.id), {}, {
                 onFinish: () => setSubmitting(false),
@@ -40,6 +44,7 @@ export default function Show({ shopping }: any) {
                             <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Mitra</dt><dd className="text-sm text-[#1A1D23]">{shopping.shopping_location?.name || '-'}</dd></div>
                             <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Tanggal</dt><dd className="text-sm text-[#1A1D23]">{shopping.shopping_date ? new Date(shopping.shopping_date).toLocaleDateString('id-ID', {day:'2-digit',month:'2-digit',year:'numeric'}) : '-'}</dd></div>
                             <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Status</dt><dd><span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[shopping.status]}`}>{shopping.status}</span></dd></div>
+                            {shopping.is_cripple && <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Cripple</dt><dd><span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">Ya — part tidak lengkap</span></dd></div>}
                             {shopping.shipped_at && <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Dikirim</dt><dd className="text-sm text-[#1A1D23]">{shopping.shippedBy?.name || '—'} — {new Date(shopping.shipped_at).toLocaleString('id-ID', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'})}</dd></div>}
                             {shopping.notes && <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Catatan</dt><dd className="text-sm text-[#1A1D23]">{shopping.notes}</dd></div>}
                             <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Frame #</dt><dd className="text-sm text-[#1A1D23] font-mono">{shopping.frame_number || '—'}</dd></div>

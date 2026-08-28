@@ -16,12 +16,13 @@ class Shopping extends Model
     use LogsActivity;
     use AuditableBy;
 
-    protected $fillable = ['shopping_location_id', 'shopping_date', 'status', 'notes', 'frame_number', 'shipped_by', 'shipped_at', 'created_by', 'updated_by'];
+    protected $fillable = ['shopping_location_id', 'shopping_date', 'status', 'is_cripple', 'notes', 'frame_number', 'shipped_by', 'shipped_at', 'created_by', 'updated_by'];
 
     protected function casts(): array
     {
         return [
             'shopping_date' => 'date',
+            'is_cripple' => 'boolean',
             'shipped_at' => 'datetime',
         ];
     }
@@ -29,7 +30,7 @@ class Shopping extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['shopping_location_id', 'shopping_date', 'status', 'notes', 'frame_number', 'shipped_by', 'shipped_at'])
+            ->logOnly(['shopping_location_id', 'shopping_date', 'status', 'is_cripple', 'notes', 'frame_number', 'shipped_by', 'shipped_at'])
             ->logOnlyDirty()
             ->dontLogEmptyChanges();
     }

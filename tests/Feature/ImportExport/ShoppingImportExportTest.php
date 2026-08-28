@@ -221,4 +221,83 @@ class ShoppingImportExportTest extends TestCase
 
         $response->assertSessionHasErrors('shopping_location_id');
     }
+
+    public function test_import_sets_is_cripple_from_first_row_of_frame(): void
+    {
+        Product::factory()->create(['part_number' => 'P5022-BYA03']);
+        Product::factory()->create(['part_number' => '60118-TAD26']);
+        Product::factory()->create(['part_number' => '21004-TAD26']);
+        Product::factory()->create(['part_number' => 'P5634-BYA18']);
+        $this->actingAs($this->user);
+
+        // Frame A: baris pertama Cripple=Ya → frame cripple; baris kedua kosong (diabaikan).
+        // Frame B: Cripple kosong → tidak cripple.
+        $file = UploadedFile::fake()->createWithContent(
+            'shopping.csv',
+            "Frame Number,Part Number,Quantity,Confirmed,Cripple,Modify Date\n"
+            . "MHKAA1BY4TJ021240,P5022-BYA03,1,TRUE,Ya,10/08/2026 21:18:09\n"
+            . "MHKAA1BY4TJ021240,60118-TAD26,1,TRUE,,10/08/2026 21:18:09\n"
+            . "MHK6GK6JTJ093724,P5634-BYA18,1,TRUE,,10/08/2026 21:19:10"
+        );
+
+        $this->post(route('shoppings.import'), [
+            'file' => $file,
+            'shopping_location_id' => $this->location->id,
+            'column_mapping' => [
+                'frame_number' => 'Frame Number',
+                'part_number' => 'Part Number',
+                'quantity' => 'Quantity',
+                'confirmed' => 'Confirmed',
+                'cripple' => 'Cripple',
+                'modify_date' => 'Modify Date',
+            ],
+        ])->assertOk();
+
+        $frame1 = Shopping::where('frame_number', 'MHKAA1BY4TJ021240')->first();
+        $frame2 = Shopping::where('frame_number', 'MHK6GK6JTJ093724')->first();
+
+        $this->assertTrue($frame1->is_cripple);
+        $this->assertFalse($frame2->is_cripple);
+    }
+
+    public function test_import_does_not_change_is_cripple_when_merging_existing_draft(): void
+    {
+        $part = Product::factory()->create(['part_number' => 'P5022-BYA03']);
+        Product::factory()->create(['part_number' => '60118-TAD26']);
+        $this->actingAs($this->user);
+
+        // Draft existing TANPA cripple; import frame yang sama dengan Cripple=Ya
+        // → flag tidak boleh berubah (merge hanya menambah item).
+        $shopping = Shopping::create([
+            'shopping_location_id' => $this->location->id,
+            'shopping_date' => now(),
+            'frame_number' => 'MHKAA1BY4TJ021240',
+            'status' => 'draft',
+            'is_cripple' => false,
+        ]);
+        $shopping->items()->create(['product_id' => $part->id, 'quantity' => 1]);
+
+        $file = UploadedFile::fake()->createWithContent(
+            'shopping.csv',
+            "Frame Number,Part Number,Quantity,Confirmed,Cripple,Modify Date\n"
+            . "MHKAA1BY4TJ021240,60118-TAD26,1,TRUE,Ya,10/08/2026 21:18:09"
+        );
+
+        $this->post(route('shoppings.import'), [
+            'file' => $file,
+            'shopping_location_id' => $this->location->id,
+            'column_mapping' => [
+                'frame_number' => 'Frame Number',
+                'part_number' => 'Part Number',
+                'quantity' => 'Quantity',
+                'confirmed' => 'Confirmed',
+                'cripple' => 'Cripple',
+                'modify_date' => 'Modify Date',
+            ],
+        ])->assertOk();
+
+        $shopping->refresh();
+        $this->assertFalse($shopping->is_cripple);
+        $this->assertCount(2, $shopping->items); // part baru tetap ditambahkan
+    }
 }

@@ -117,6 +117,7 @@ class ShoppingController extends Controller
             'shopping_date' => 'required|date',
             'notes' => 'nullable|string|max:500',
             'frame_number' => 'nullable|string|max:100',
+            'is_cripple' => 'nullable|boolean',
             'items' => 'nullable|array',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.rack_id' => 'nullable|exists:racks,id',
@@ -127,6 +128,7 @@ class ShoppingController extends Controller
             'shopping_location_id' => $validated['shopping_location_id'],
             'shopping_date' => $validated['shopping_date'],
             'status' => 'draft',
+            'is_cripple' => (bool) ($validated['is_cripple'] ?? false),
             'notes' => $validated['notes'] ?? null,
             'frame_number' => $validated['frame_number'] ?? null,
         ]);
@@ -181,6 +183,7 @@ class ShoppingController extends Controller
             'shopping_date' => 'required|date',
             'notes' => 'nullable|string|max:500',
             'frame_number' => 'nullable|string|max:100',
+            'is_cripple' => 'nullable|boolean',
             'items' => 'nullable|array',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.rack_id' => 'nullable|exists:racks,id',
@@ -190,6 +193,7 @@ class ShoppingController extends Controller
         $shopping->update([
             'shopping_location_id' => $validated['shopping_location_id'],
             'shopping_date' => $validated['shopping_date'],
+            'is_cripple' => (bool) ($validated['is_cripple'] ?? false),
             'notes' => $validated['notes'] ?? null,
             'frame_number' => $validated['frame_number'] ?? null,
         ]);
@@ -273,7 +277,9 @@ class ShoppingController extends Controller
             }
 
             $lockedShopping->update([
-                'status' => 'shipped',
+                // Barang cripple (part tidak lengkap, checklist "Apakah barang ini cripple?")
+                // tetap diproses & stok dikurangi, tapi statusnya 'cripple', bukan 'shipped'.
+                'status' => $lockedShopping->is_cripple ? 'cripple' : 'shipped',
                 'shipped_by' => auth()->id(),
                 'shipped_at' => now(),
             ]);
@@ -291,6 +297,10 @@ class ShoppingController extends Controller
             report($e);
         }
 
-        return redirect()->route('shoppings.show', $shopping)->with('success', 'Shopping diproses. Stok dikurangi.');
+        $message = $shopping->fresh()->is_cripple
+            ? 'Shopping diproses sebagai CRIPPLE (part tidak lengkap). Stok dikurangi.'
+            : 'Shopping diproses. Stok dikurangi.';
+
+        return redirect()->route('shoppings.show', $shopping)->with('success', $message);
     }
 }

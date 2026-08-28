@@ -18,6 +18,7 @@ class ShoppingFactory extends Factory
             'shopping_location_id' => null,
             'shopping_date' => $this->faker->date(),
             'status' => 'draft',
+            'is_cripple' => false,
             'notes' => $this->faker->optional()->sentence(),
         ];
     }

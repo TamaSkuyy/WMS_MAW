@@ -13,6 +13,7 @@ import Badge from '../../../Tailadmin/components/ui/badge/Badge';
 import Alert from '../../../Tailadmin/components/ui/alert/Alert';
 import EmptyState from '../../../Tailadmin/components/common/EmptyState';
 import QtyStepper from '../../../Components/QtyStepper';
+import Checkbox from '../../../Tailadmin/components/form/input/Checkbox';
 
 interface TableItem {
     product_id: number;
@@ -44,6 +45,7 @@ export default function Create({ products, racks, shoppingLocations }: any) {
     const [shoppingDate, setShoppingDate] = useState(new Date().toISOString().split('T')[0]);
     const [notes, setNotes] = useState('');
     const [frameNumber, setFrameNumber] = useState('');
+    const [isCripple, setIsCripple] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [tableItems, setTableItems] = useState<TableItem[]>([]);
     const [scannerOpen, setScannerOpen] = useState(false);
@@ -197,8 +199,9 @@ export default function Create({ products, racks, shoppingLocations }: any) {
         if (!canSubmit) return;
         const loc = shoppingLocations.find((l: any) => String(l.id) === String(locationId));
         const itemCount = activeItems.length;
+        const crippleNote = isCripple ? ' (barang ditandai CRIPPLE — part tidak lengkap)' : '';
         const msg = itemCount > 0
-            ? `Konfirmasi pengiriman ke "${loc?.name}" dengan ${itemCount} item? Stok akan dikurangi.`
+            ? `Konfirmasi pengiriman ke "${loc?.name}" dengan ${itemCount} item${crippleNote}? Stok akan dikurangi.`
             : `Konfirmasi buat Shopping ke "${loc?.name}" tanpa item?`;
         if (!confirm(msg)) return;
         setSubmitting(true);
@@ -207,6 +210,7 @@ export default function Create({ products, racks, shoppingLocations }: any) {
             shopping_date: shoppingDate,
             notes,
             frame_number: frameNumber || null,
+            is_cripple: isCripple,
             items: activeItems.map(i => ({ product_id: i.product_id, rack_id: i.rack_id || null, quantity: i.quantity })),
         }, { onFinish: () => setSubmitting(false) });
     };
@@ -266,6 +270,18 @@ export default function Create({ products, racks, shoppingLocations }: any) {
                                     </Button>
                                 </div>
                                 {errors.frame_number && <p className="mt-1 text-sm text-red-500">{errors.frame_number}</p>}
+                            </div>
+
+                            {/* Apakah barang ini cripple? — default no */}
+                            <div className="rounded-lg border border-[#E9ECEF] dark:border-gray-700 p-3">
+                                <Checkbox
+                                    checked={isCripple}
+                                    onChange={setIsCripple}
+                                    label="Apakah barang ini cripple? (part tidak lengkap)"
+                                />
+                                <p className="mt-1.5 text-xs text-gray-400">
+                                    Jika ya, saat diproses status otomatis menjadi <strong>Cripple</strong>, bukan Dikirim.
+                                </p>
                             </div>
 
                             <Button onClick={() => { setScanTarget('part'); setScannerOpen(true); }} className="w-full" type="button">
