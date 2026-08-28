@@ -228,6 +228,14 @@ quick_update() {
     # Pastikan resources dir exist sebelum copy
     dc exec -T app mkdir -p /var/www/html/resources
     ${RUNTIME} cp resources/. "${APP_CONTAINER}:/var/www/html/resources/" 2>/dev/null || warn "Resources copy partial atau kosong"
+    # Salin Manual Book (public/docs) — image lama TIDAK punya folder ini,
+    # dan response()->file() pada route /docs menghasilkan 500 kalau file hilang.
+    if [ -d "public/docs" ]; then
+        log "  → Salin Manual Book (public/docs) ke app container..."
+        dc exec -T app mkdir -p /var/www/html/public/docs
+        ${RUNTIME} cp public/docs/. "${APP_CONTAINER}:/var/www/html/public/docs/" 2>/dev/null \
+            || warn "public/docs copy gagal/partial — cek manual: docker cp public/docs app:/var/www/html/public/docs/"
+    fi
 
     # 3. Build & salin frontend assets (opsional)
     if [ "${BUILD_ASSETS}" = true ]; then
@@ -288,6 +296,9 @@ quick_update() {
         copy_dir_to_container "resources" "$NGINX_CONTAINER" "/var/www/html/resources" "nginx-resources" || true
         if [ -d "public/build/" ]; then
             copy_dir_to_container "public/build" "$NGINX_CONTAINER" "/var/www/html/public/build" "nginx-build" || true
+        fi
+        if [ -d "public/docs/" ]; then
+            copy_dir_to_container "public/docs" "$NGINX_CONTAINER" "/var/www/html/public/docs" "nginx-docs" || true
         fi
     fi
 

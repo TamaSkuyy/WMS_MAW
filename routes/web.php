@@ -39,7 +39,11 @@ Route::get('/', fn () => redirect()->route('login'));
 Route::get('/docs/{file?}', function (?string $file = null) {
     // /docs atau /docs/ → index.html
     if ($file === null || $file === '') {
-        return response()->file(public_path('docs/index.html'));
+        $index = public_path('docs/index.html');
+        // Guard file_exists: response()->file() melempar FileNotFoundException
+        // (HTTP 500) jika file tidak ada — mis. image production belum punya docs.
+        abort_unless(file_exists($index), 404);
+        return response()->file($index);
     }
     if (! str_ends_with($file, '.html') || ! file_exists(public_path("docs/{$file}"))) {
         abort(404);

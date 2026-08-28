@@ -234,10 +234,11 @@
     <li>Pilih <strong>Supplier</strong>.</li>
     <li>Scan barcode/QR code <strong>Part Number</strong> produk.</li>
     <li>Sistem otomatis menambah quantity +1 untuk produk tersebut di cycle.</li>
-    <li>Setiap scan menambah quantity. Scan berkali-kali = quantity bertambah.</li>
-    <li>Setelah selesai scan semua item, klik <strong>Simpan</strong>.</li>
+    <li>Quantity juga bisa diatur manual dengan tombol <strong>− / +</strong> (stepper) di samping angka.</li>
+    <li>Di layar HP, setiap item tampil sebagai <strong>kartu</strong> (part number, nama, stepper qty, pilih rak) — nyaman dipakai di handheld.</li>
+    <li>Setelah selesai scan semua item, klik <strong>Selesaikan Penerimaan</strong> di bar bawah (menampilkan ringkasan <em>X jenis · Y qty</em> + tombol Reset).</li>
   </ol>
-  Sistem membuat satu cycle baru dengan semua item yang di-scan. Status: <strong>Draft</strong>. Lanjutkan ke proses receive untuk memasukkan ke rak.
+  Sistem membuat satu cycle baru dengan semua item yang di-scan. Status langsung: <strong>Completed</strong> (stok langsung bertambah). Item tanpa rak dicatat sebagai Overflow.
 </div>
 
 <h3 id="rec-receive">Proses Penerimaan (Receive)</h3>
@@ -259,22 +260,23 @@
       <table>
         <tr><th>Field</th><th>Keterangan</th></tr>
         <tr><td>Qty Doc</td><td>Quantity di dokumen/surat jalan (read-only, dari data cycle)</td></tr>
-        <tr><td>Diterima</td><td>Jumlah yang benar-benar diterima. Default: 0. Bisa kurang dari Qty Doc (shortfall).</td></tr>
+        <tr><td>Diterima</td><td>Jumlah yang benar-benar diterima. Diisi dengan tombol <strong>− / +</strong> (stepper, tombol besar 44px) atau ketik langsung — tombol + berhenti di Qty Doc (tidak bisa melebihi dokumen lewat tombol).</td></tr>
         <tr><td>Rak</td><td>Dropdown searchable — pilih rak tujuan. Sistem otomatis mengisi rak default produk (label <em>"Default"</em>) atau rak terakhir (label <em>"Terakhir"</em>). Jika tidak dipilih, stok dicatat tanpa lokasi (<em>"Overflow"</em>).</td></tr>
         <tr><td>Catatan</td><td>Catatan per item (opsional), contoh: <code>rusak</code>, <code>kemasan sobek</code></td></tr>
       </table>
+      <p>Di layar <strong>HP</strong>, setiap item tampil sebagai <strong>kartu</strong> (part number + nama + badge Qty Doc + stepper + rak full-width + catatan) — tanpa scroll horizontal. Di desktop tampil sebagai tabel.</p>
     </div>
   </li>
   <li>
     <strong>Scan QR (opsional)</strong>
-    <p>Klik <strong>📷 Scan QR</strong> untuk membuka QR scanner. Scan part number produk — quantity otomatis +1. Berguna untuk hitung fisik sambil scan.</p>
+    <p>Klik <strong>📷</strong> di bar bawah (sticky). Scan part number produk — quantity otomatis +1. Berguna untuk hitung fisik sambil scan.</p>
   </li>
   <li>
     <strong>Selesaikan Penerimaan</strong>
-    <p>Klik <strong>Selesaikan Penerimaan</strong>. Sistem akan:
+    <p>Klik <strong>Selesaikan Penerimaan</strong> di bar bawah — bar selalu terlihat dan menampilkan progres <em>X/Y selesai · total qty</em>. Sistem akan:
       <br>• Menambah stok produk di rak yang dipilih
       <br>• Mencatat receive log (siapa, kapan, berapa)
-      <br>• Mengubah status cycle menjadi <strong>Completed</strong>
+      <br>• Mengubah status cycle menjadi <strong>Completed</strong> bila SEMUA item terpenuhi; bila masih ada item kurang (received &lt; qty doc) status menjadi <strong>Receiving</strong> dan bisa dilanjutkan lagi
       <br>• Menghitung total durasi penerimaan
     </p>
   </li>
@@ -289,6 +291,7 @@
 <div class="card">
   <p><strong>Edit:</strong> Hanya bisa untuk cycle status <strong>Draft</strong>. Cycle yang sudah receiving/completed tidak bisa diedit.</p>
   <p><strong>Hapus:</strong> Bisa untuk semua status. Hati-hati — cycle completed yang dihapus akan menghilangkan riwayat penerimaan.</p>
+  <p>Di form Tambah/Edit Cycle, input <strong>Qty</strong> memakai stepper <strong>− / +</strong> (minimal 1) — ketik manual tetap bisa.</p>
 </div>
 
 <h3 id="rec-import">Import & Export Cycle</h3>
@@ -341,13 +344,14 @@
     <strong>Isi data:</strong>
     <table>
       <tr><th>Field</th><th>Wajib</th><th>Keterangan</th></tr>
-      <tr><td>Lokasi Tujuan</td><td>✅ Ya</td><td>Dropdown dari Shopping Location</td></tr>
+      <tr><td>Lokasi Tujuan</td><td>✅ Ya</td><td>Dropdown dari Shopping Location — bisa juga di-scan: klik <strong>📷</strong> di samping dropdown lalu scan barcode lokasi (setiap lokasi punya kode barcode di master data), lokasi otomatis terpilih.</td></tr>
       <tr><td>Tanggal</td><td>✅ Ya</td><td>Tanggal pengiriman</td></tr>
-      <tr><td>Frame Number</td><td>Tidak</td><td>Nomor frame/barcode untuk tracking</td></tr>
+      <tr><td>Frame Number</td><td>Tidak</td><td>Nomor frame/barcode untuk tracking — bisa di-scan dengan tombol 📷 di sampingnya</td></tr>
       <tr><td>Notes</td><td>Tidak</td><td>Catatan</td></tr>
     </table>
   </li>
-  <li>Tambah item: pilih <strong>Produk</strong>, <strong>Rak</strong> (dari mana stok diambil), dan <strong>Quantity</strong>.</li>
+  <li>Tambah item: isi <strong>Quantity</strong> per produk dengan tombol <strong>− / +</strong> (stepper) — tombol + berhenti di jumlah <strong>stok</strong> yang tersedia, jadi overstock tercegah dari awal. Scan part/QR tetap menambah +1.</li>
+  <li>Di layar <strong>HP</strong>, daftar "Barang Dipilih" dan "Cari Produk" tampil sebagai <strong>kartu per item</strong>; di desktop tampil sebagai tabel. Bar bawah (sticky) selalu menampilkan ringkasan <em>X jenis • Y qty</em> + tombol simpan.</li>
   <li>Simpan — status <strong>Draft</strong>.</li>
 </ol>
 
@@ -359,9 +363,41 @@
   <li>Status berubah: <strong>Draft → Shipped</strong>.</li>
 </ol>
 
+<div class="callout warning">
+  <strong>⚠️ Part tidak lengkap tidak bisa dikirim</strong>
+  Shopping tanpa item (belum ada part) <strong>tidak bisa di-ship</strong> — tombol Kirim tidak muncul dan sistem menampilkan peringatan <em>"Part tidak lengkap — tambah item dulu sebelum kirim"</em>. Backend juga menolak walau dipaksa dari URL.
+</div>
+
+<div class="callout info">
+  <strong>🕐 Siapa & kapan mengirim tercatat</strong>
+  Saat <strong>Kirim Sekarang</strong> ditekan, sistem mencatat <strong>Dikirim Oleh</strong> (user yang menekan) dan <strong>Waktu Kirim</strong> (sampai detik). Keduanya tampil di detail Shopping (baris <em>"Dikirim"</em>) dan di Shopping Report.
+</div>
+
 <div class="callout danger">
   <strong>⚠️ Ship = Kurangi Stok</strong>
   Setelah Ship, stok di rak berkurang permanen. Pastikan quantity benar sebelum klik Kirim. Shopping yang sudah shipped <strong>tidak bisa dibatalkan</strong> dari UI.
+</div>
+
+<h3 id="shop-import">Import Shopping dari Excel (SharePoint)</h3>
+<p>Rencana pengiriman dari file Excel SharePoint bisa diimpor langsung menjadi banyak Shopping sekaligus.</p>
+
+<ol class="steps">
+  <li>Akses halaman daftar Shopping, klik tombol <strong>Import</strong>.</li>
+  <li>Pilih <strong>Lokasi Tujuan</strong> — satu lokasi untuk seluruh isi file.</li>
+  <li>Download <em>template</em> bila perlu (kolom: Frame Number, Part Number, Quantity, Confirmed, Modify Date), atau upload langsung file Excel/CSV dari SharePoint.</li>
+  <li>Petakan kolom file ke kolom sistem, lalu <strong>Start Import</strong>. Progres & laporan error bisa dilihat setelah selesai.</li>
+</ol>
+
+<div class="card">
+  <h3>Aturan Import</h3>
+  <table>
+    <tr><th>Aturan</th><th>Keterangan</th></tr>
+    <tr><td>Grouping per Frame Number</td><td>Semua baris dengan Frame Number sama menjadi SATU Shopping dengan part-part sebagai item-nya.</td></tr>
+    <tr><td>Confirmed</td><td>Hanya baris <strong>Confirmed = TRUE</strong> yang diimpor (kosong dianggap TRUE; FALSE di-skip dan dilaporkan).</td></tr>
+    <tr><td>Part Number</td><td>Harus ada di master Produk. Part tidak dikenal → baris gagal (dilaporkan), import tetap lanjut.</td></tr>
+    <tr><td>Modify Date</td><td>Menjadi Tanggal Kirim shopping (format d/m/Y H:i:s). Kosong → tanggal hari ini.</td></tr>
+    <tr><td>Frame sudah ada</td><td>Status draft → item baru digabung (part duplikat di-skip; butuh izin <em>edit shoppings</em>). Status shipped/completed → ditolak.</td></tr>
+  </table>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════ -->
@@ -431,7 +467,13 @@
 <div class="card">
   <h3>📊 Stok negatif — bagaimana bisa?</h3>
   <p><strong>Penyebab:</strong> Shopping mengirim lebih banyak dari stok yang tersedia di rak.</p>
-  <p><strong>Solusi:</strong> Sistem tidak memblokir pengiriman melebihi stok. Pastikan quantity di Shopping tidak melebihi stok Rak yang dipilih. Gunakan halaman Stocks untuk cek stok terkini sebelum kirim.</p>
+  <p><strong>Solusi:</strong> Sistem tidak memblokir pengiriman melebihi stok. Pastikan quantity di Shopping tidak melebihi stok Rak yang dipilih. Gunakan halaman Stocks untuk cek stok terkini sebelum kirim. <em>(Catatan: input qty di form kini memakai stepper yang dibatasi stok, jadi overstock tercegah dari UI — pengaman lama tetap ada.)</em></p>
+</div>
+
+<div class="card">
+  <h3>📺 Delivery Monitor tidak update otomatis</h3>
+  <p><strong>Penyebab:</strong> Koneksi realtime (websocket) TV gagal — mis. TV di jaringan/port berbeda dari server reverb.</p>
+  <p><strong>Solusi:</strong> Monitor kini punya <strong>auto-refresh 15 detik</strong> — data selalu masuk maksimal 15 detik tanpa refresh manual, walau websocket gagal. Realtime tetap jalan sebagai jalur utama (update instan).</p>
 </div>
 
 <hr style="margin:3rem 0 1.5rem; border:none; border-top:1px solid var(--border)">
