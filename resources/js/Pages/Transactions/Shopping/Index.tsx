@@ -12,13 +12,12 @@ import EmptyState from '../../../Tailadmin/components/common/EmptyState';
 import Label from '../../../Tailadmin/components/form/Label';
 import Pagination from '../../../Tailadmin/components/common/Pagination';
 
-export default function Index({ shoppings, filters, shoppingLocations = [] }: any) {
+export default function Index({ shoppings, filters }: any) {
     const permissions = (usePage().props.auth as any)?.user?.permissions || [];
     const canCreate = permissions.includes('create shoppings');
     const canEdit = permissions.includes('edit shoppings');
     const canDelete = permissions.includes('delete shoppings');
     const [importModalOpen, setImportModalOpen] = useState(false);
-    const [importLocationId, setImportLocationId] = useState('');
 
     const handleDelete = (id: number) => {
         if (confirm('Hapus shopping ini?')) {
@@ -179,18 +178,6 @@ export default function Index({ shoppings, filters, shoppingLocations = [] }: an
                         { key: 'cripple', label: 'Cripple', required: false },
                         { key: 'modify_date', label: 'Modify Date', required: false },
                     ]}
-                    extraNode={
-                        <div>
-                            <label className="block text-xs font-medium text-gray-500 mb-1">Lokasi Tujuan *</label>
-                            <SearchableSelect
-                                options={shoppingLocations.map((l: any) => ({ value: l.id, label: l.name }))}
-                                value={importLocationId}
-                                onChange={(v) => setImportLocationId(v as string)}
-                                placeholder="Pilih lokasi tujuan..."
-                            />
-                        </div>
-                    }
-                    extraParams={() => ({ shopping_location_id: importLocationId })}
                 />
             )}
         </>

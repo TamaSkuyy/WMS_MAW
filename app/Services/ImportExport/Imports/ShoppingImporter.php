@@ -74,10 +74,8 @@ class ShoppingImporter extends BaseImporter implements Importable
 
     public function transformRow(array $mapped): array
     {
-        // Lokasi tujuan wajib tersedia sebelum memproses baris
-        if (! $this->shoppingLocationId) {
-            throw new RowTransformException('Lokasi tujuan tidak tersedia untuk import ini.');
-        }
+        // Lokasi tujuan OPSIONAL — data import dari TAM tidak punya lokasi/line;
+        // shopping dibuat dengan shopping_location_id null dan bisa diisi via Edit.
 
         // Hanya baris terkonfirmasi (kosong dianggap TRUE; Excel memparse TRUE/FALSE jadi boolean)
         $rawConfirmed = $mapped['confirmed'] ?? '';

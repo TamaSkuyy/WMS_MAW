@@ -210,16 +210,24 @@ class ShoppingImportExportTest extends TestCase
         $this->assertSame(1, Shopping::count()); // tidak ada shopping baru untuk frame itu
     }
 
-    public function test_import_requires_location(): void
+    public function test_import_without_location_is_accepted(): void
     {
+        // Data dari TAM tidak punya Lokasi Tujuan — import harus tetap jalan
+        // tanpa shopping_location_id, dan shopping dibuat dengan lokasi null.
+        Product::factory()->create(['part_number' => 'P5022-BYA03']);
+        Product::factory()->create(['part_number' => '60118-TAD26']);
+        Product::factory()->create(['part_number' => '21004-TAD26']);
+        Product::factory()->create(['part_number' => 'P5634-BYA18']);
         $this->actingAs($this->user);
 
-        $response = $this->post(route('shoppings.import'), [
+        $this->post(route('shoppings.import'), [
             'file' => $this->sampleCsv(),
             'column_mapping' => $this->mapping(),
-        ]);
+        ])->assertOk();
 
-        $response->assertSessionHasErrors('shopping_location_id');
+        $shopping = Shopping::where('frame_number', 'MHKAA1BY4TJ021240')->first();
+        $this->assertNotNull($shopping);
+        $this->assertNull($shopping->shopping_location_id);
     }
 
     public function test_import_sets_is_cripple_from_first_row_of_frame(): void

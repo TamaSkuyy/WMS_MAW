@@ -50,12 +50,14 @@ class ShoppingController extends Controller
         abort_unless(auth()->user()->can('create shoppings'), 403);
 
         $validated = $request->validate([
-            'shopping_location_id' => 'required|exists:shopping_locations,id',
+            // Lokasi tujuan OPSIONAL: data import dari TAM tidak punya lokasi/line.
+            // Lokasi & frame number adalah input tambahan WMS untuk lookup data TAM.
+            'shopping_location_id' => 'nullable|exists:shopping_locations,id',
             'file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
         ]);
 
         $result = app(ImportManager::class)->preview(
-            new ShoppingImporter((int) $validated['shopping_location_id']),
+            new ShoppingImporter(isset($validated['shopping_location_id']) ? (int) $validated['shopping_location_id'] : null),
             $request->file('file')
         );
 
@@ -67,13 +69,14 @@ class ShoppingController extends Controller
         abort_unless(auth()->user()->can('create shoppings'), 403);
 
         $validated = $request->validate([
-            'shopping_location_id' => 'required|exists:shopping_locations,id',
+            // Lokasi tujuan OPSIONAL — lihat importPreview().
+            'shopping_location_id' => 'nullable|exists:shopping_locations,id',
             'file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
             'column_mapping' => 'required|array',
         ]);
 
         $importLog = app(ImportManager::class)->start(
-            new ShoppingImporter((int) $validated['shopping_location_id']),
+            new ShoppingImporter(isset($validated['shopping_location_id']) ? (int) $validated['shopping_location_id'] : null),
             $request->file('file'),
             $request->input('column_mapping'),
             auth()->id(),
