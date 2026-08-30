@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeftIcon, CheckIcon } from '@heroicons/react/24/outline';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
@@ -10,9 +10,11 @@ import SearchableSelect from '../../../Tailadmin/components/form/select/Searchab
 import QtyStepper from '../../../Components/QtyStepper';
 import { Link } from '@inertiajs/react';
 
-export default function Create({ suppliers, products }: any) {
+export default function Create({ suppliers, products, users }: any) {
+    const authUser = (usePage().props.auth as any)?.user;
     const { data, setData, post, errors, processing } = useForm({
         supplier_id: '',
+        carrier_id: authUser?.id ? String(authUser.id) : '',
         notes: '',
         items: [] as { product_id: string; quantity: number }[],
     });
@@ -73,6 +75,17 @@ export default function Create({ suppliers, products }: any) {
                                 <Label>Supplier *</Label>
                                 <SearchableSelect options={suppliers.map((s: any) => ({ value: s.id, label: s.name }))} value={data.supplier_id} onChange={handleSupplierChange} />
                                 {errors.supplier_id && <p className="mt-1 text-sm text-red-500">{errors.supplier_id}</p>}
+                            </div>
+                            <div>
+                                <Label>PIC yang membawa part</Label>
+                                <SearchableSelect
+                                    options={users.map((u: any) => ({ value: u.id, label: u.name }))}
+                                    value={data.carrier_id}
+                                    onChange={(v) => setData('carrier_id', v as string)}
+                                    placeholder="Pilih PIC..."
+                                />
+                                <p className="mt-1 text-xs text-gray-400">Orang yang membawa part untuk cycle ini (default: Anda).</p>
+                                {errors.carrier_id && <p className="mt-1 text-sm text-red-500">{errors.carrier_id}</p>}
                             </div>
                             <div>
                                 <Label>Catatan</Label>

@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\Rack;
 use App\Models\Stock;
 use App\Models\Supplier;
+use App\Models\User;
 use App\Services\ImportExport\Base\BaseExporter;
 use App\Services\ImportExport\Base\BaseImporter;
 use App\Services\ImportExport\Exports\CycleExporter;
@@ -39,7 +40,7 @@ class CycleController extends Controller
     }
     public function index(Request $request)
     {
-        $cycles = Cycle::with('supplier')
+        $cycles = Cycle::with(['supplier', 'creator', 'carrier'])
             ->when($request->supplier_id, fn($q, $id) => $q->where('supplier_id', $id))
             ->when($request->status, fn($q, $s) => $q->where('status', $s))
             ->latest()
@@ -60,6 +61,7 @@ class CycleController extends Controller
         return Inertia::render('Transactions/Cycles/Create', [
             'suppliers' => Supplier::orderBy('name')->get(),
             'products' => Product::with(['vehicleModel', 'category'])->where('is_active', true)->orderBy('name')->get(),
+            'users' => User::orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -83,6 +85,7 @@ class CycleController extends Controller
 
         $validated = $request->validate([
             'supplier_id' => 'required|exists:suppliers,id',
+            'carrier_id' => 'nullable|exists:users,id',
             'notes' => 'nullable|string|max:500',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
@@ -97,6 +100,7 @@ class CycleController extends Controller
 
         $cycle = Cycle::create([
             'supplier_id' => $validated['supplier_id'],
+            'carrier_id' => $validated['carrier_id'] ?? null,
             'cycle_number' => $cycleNumber,
             'status' => 'draft',
             'notes' => $validated['notes'] ?? null,
@@ -116,7 +120,7 @@ class CycleController extends Controller
 
     public function show(Cycle $cycle)
     {
-        $cycle->load(['supplier', 'items.product.vehicleModel', 'items.product.category', 'items.product.defaultRack', 'items.receiveLogs.user']);
+        $cycle->load(['supplier', 'creator', 'carrier', 'items.product.vehicleModel', 'items.product.category', 'items.product.defaultRack', 'items.receiveLogs.user']);
 
         $productIds = $cycle->items->pluck('product_id')->toArray();
         $lastUsedRacks = CycleItem::whereIn('product_id', $productIds)
@@ -145,6 +149,7 @@ class CycleController extends Controller
             'cycle' => $cycle->load('items.product'),
             'suppliers' => Supplier::orderBy('name')->get(),
             'products' => Product::with(['vehicleModel', 'category'])->where('is_active', true)->orderBy('name')->get(),
+            'users' => User::orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -157,6 +162,7 @@ class CycleController extends Controller
 
         $validated = $request->validate([
             'supplier_id' => 'required|exists:suppliers,id',
+            'carrier_id' => 'nullable|exists:users,id',
             'notes' => 'nullable|string|max:500',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
@@ -169,6 +175,7 @@ class CycleController extends Controller
         // for the same supplier.
         $cycle->update([
             'supplier_id' => $validated['supplier_id'],
+            'carrier_id' => $validated['carrier_id'] ?? null,
             'notes' => $validated['notes'] ?? null,
         ]);
 
@@ -303,6 +310,7 @@ class CycleController extends Controller
             'suppliers' => Supplier::orderBy('name')->get(),
             'products'  => Product::with('defaultRack')->where('is_active', true)->orderBy('name')->get(),
             'racks'     => Rack::orderBy('zone')->orderBy('code')->get(),
+            'users'     => User::orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -311,6 +319,7 @@ class CycleController extends Controller
         abort_unless(auth()->user()->can('create cycles'), 403);
         $validated = $request->validate([
             'supplier_id'        => 'required|exists:suppliers,id',
+            'carrier_id'         => 'nullable|exists:users,id',
             'items'              => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.rack_id'    => 'nullable|exists:racks,id',
@@ -324,6 +333,7 @@ class CycleController extends Controller
 
             $cycle = Cycle::create([
                 'supplier_id'  => $supplierId,
+                'carrier_id'   => $validated['carrier_id'] ?? null,
                 'cycle_number' => $cycleNumber,
                 'status'       => 'completed',
                 'received_at'  => now(),

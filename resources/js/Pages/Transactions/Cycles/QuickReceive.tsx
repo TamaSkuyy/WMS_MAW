@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
@@ -29,8 +29,10 @@ function beep() {
     } catch (_) {}
 }
 
-export default function QuickReceive({ suppliers, products, racks }: any) {
+export default function QuickReceive({ suppliers, products, racks, users }: any) {
+    const authUser = (usePage().props.auth as any)?.user;
     const [supplierId, setSupplierId] = useState('');
+    const [carrierId, setCarrierId] = useState(authUser?.id ? String(authUser.id) : '');
     const [scannerOpen, setScannerOpen] = useState(false);
     const [items, setItems] = useState<ScannedItem[]>([]);
     const [lastScan, setLastScan] = useState('');
@@ -113,6 +115,7 @@ export default function QuickReceive({ suppliers, products, racks }: any) {
             route('cycles.quick-receive.store'),
             {
                 supplier_id: supplierId,
+                carrier_id: carrierId || null,
                 items: items.map((i) => ({
                     product_id: i.product_id,
                     rack_id: i.rack_id,
@@ -166,6 +169,17 @@ export default function QuickReceive({ suppliers, products, racks }: any) {
                                     value={supplierId}
                                     onChange={(v) => setSupplierId(v as string)}
                                 />
+                            </div>
+
+                            <div>
+                                <Label>PIC yang membawa part</Label>
+                                <SearchableSelect
+                                    options={users.map((u: any) => ({ value: u.id, label: u.name }))}
+                                    value={carrierId}
+                                    onChange={(v) => setCarrierId(v as string)}
+                                    placeholder="Pilih PIC..."
+                                />
+                                <p className="mt-1 text-xs text-gray-400">Orang yang membawa part (default: Anda).</p>
                             </div>
 
                             <Button

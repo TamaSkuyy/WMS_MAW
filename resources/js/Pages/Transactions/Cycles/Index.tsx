@@ -108,6 +108,8 @@ export default function Index({ cycles, suppliers, filters }: any) {
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Cycle #</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Status</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Item</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">PIC Input</th>
+                                <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">PIC Bawa</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Diterima</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider w-24">Aksi</th>
                             </tr>
@@ -123,6 +125,8 @@ export default function Index({ cycles, suppliers, filters }: any) {
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 whitespace-nowrap text-sm text-[#1A1D23]">{cycle.items_count || '-'}</td>
+                                    <td className="px-4 py-3 whitespace-nowrap text-sm text-[#1A1D23]">{cycle.creator?.name || '-'}</td>
+                                    <td className="px-4 py-3 whitespace-nowrap text-sm text-[#1A1D23]">{cycle.carrier?.name || '-'}</td>
                                     <td className="px-4 py-3 whitespace-nowrap text-[13px] text-[#6C757D]">
                                         {cycle.received_at ? new Date(cycle.received_at).toLocaleString('id-ID', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '-'}
                                     </td>

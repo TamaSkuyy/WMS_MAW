@@ -601,4 +601,58 @@ class CycleControllerTest extends TestCase
         // Stock dibuat dengan rack_id null (relay/overflow)
         $this->assertDatabaseHas('stocks', ['product_id' => $product->id, 'rack_id' => null, 'quantity' => 3]);
     }
+
+    public function test_store_saves_pic_carrier_id(): void
+    {
+        $supplier = \App\Models\Supplier::factory()->create();
+        $product = Product::factory()->create();
+        $pic = User::factory()->create(['name' => 'PIC Bawa Test']);
+
+        $this->actingAs($this->user)->post(route('cycles.store'), [
+            'supplier_id' => $supplier->id,
+            'carrier_id' => $pic->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 2],
+            ],
+        ]);
+
+        $this->assertDatabaseHas('cycles', ['supplier_id' => $supplier->id, 'carrier_id' => $pic->id]);
+    }
+
+    public function test_quick_receive_saves_pic_carrier_id(): void
+    {
+        $supplier = \App\Models\Supplier::factory()->create();
+        $product = Product::factory()->create();
+        $pic = User::factory()->create(['name' => 'PIC Cepat Test']);
+
+        $this->actingAs($this->user)->post(route('cycles.quick-receive.store'), [
+            'supplier_id' => $supplier->id,
+            'carrier_id' => $pic->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 3],
+            ],
+        ]);
+
+        $this->assertDatabaseHas('cycles', ['supplier_id' => $supplier->id, 'carrier_id' => $pic->id]);
+    }
+
+    public function test_update_saves_pic_carrier_id(): void
+    {
+        $supplier = \App\Models\Supplier::factory()->create();
+        $product = Product::factory()->create();
+        $pic = User::factory()->create(['name' => 'PIC Edit Test']);
+
+        $cycle = Cycle::factory()->create(['status' => 'draft', 'supplier_id' => $supplier->id]);
+        $cycle->items()->create(['product_id' => $product->id, 'quantity' => 1]);
+
+        $this->actingAs($this->user)->put(route('cycles.update', $cycle), [
+            'supplier_id' => $supplier->id,
+            'carrier_id' => $pic->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1],
+            ],
+        ]);
+
+        $this->assertDatabaseHas('cycles', ['id' => $cycle->id, 'carrier_id' => $pic->id]);
+    }
 }

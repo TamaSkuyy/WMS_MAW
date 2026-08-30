@@ -16,7 +16,7 @@ class Cycle extends Model
     use HasFactory;
     use LogsActivity;
 
-    protected $fillable = ['supplier_id', 'created_by', 'updated_by', 'cycle_number', 'status', 'received_at', 'notes', 'delivery_date', 'delivery_slot_id'];
+    protected $fillable = ['supplier_id', 'carrier_id', 'created_by', 'updated_by', 'cycle_number', 'status', 'received_at', 'notes', 'delivery_date', 'delivery_slot_id'];
 
     protected function casts(): array
     {
@@ -29,7 +29,7 @@ class Cycle extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['cycle_number', 'supplier_id', 'status', 'received_at', 'delivery_date', 'notes'])
+            ->logOnly(['cycle_number', 'supplier_id', 'carrier_id', 'status', 'received_at', 'delivery_date', 'notes'])
             ->logOnlyDirty()
             ->dontLogEmptyChanges();
     }
@@ -37,6 +37,14 @@ class Cycle extends Model
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
+    }
+
+    /**
+     * PIC yang membawa part / menangani cycle ini (kolom carrier_id).
+     */
+    public function carrier(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'carrier_id');
     }
 
     public function items(): HasMany

@@ -11,9 +11,10 @@ import SearchableSelect from '../../../Tailadmin/components/form/select/Searchab
 import QtyStepper from '../../../Components/QtyStepper';
 import { Link } from '@inertiajs/react';
 
-export default function Edit({ cycle, suppliers, products }: any) {
+export default function Edit({ cycle, suppliers, products, users }: any) {
     const { data, setData, put, errors, processing } = useForm({
         supplier_id: cycle.supplier_id || '',
+        carrier_id: cycle.carrier_id ? String(cycle.carrier_id) : '',
         notes: cycle.notes || '',
         items: cycle.items.map((i: any) => ({ product_id: String(i.product_id), quantity: i.quantity })),
     });
@@ -70,6 +71,15 @@ export default function Edit({ cycle, suppliers, products }: any) {
                             <div>
                                 <Label>Supplier *</Label>
                                 <SearchableSelect options={suppliers.map((s: any) => ({ value: s.id, label: s.name }))} value={data.supplier_id} onChange={handleSupplierChange} />
+                            </div>
+                            <div>
+                                <Label>PIC yang membawa part</Label>
+                                <SearchableSelect
+                                    options={users.map((u: any) => ({ value: u.id, label: u.name }))}
+                                    value={data.carrier_id}
+                                    onChange={(v) => setData('carrier_id', v as string)}
+                                    placeholder="Pilih PIC..."
+                                />
                             </div>
                             <div>
                                 <Label>Cycle Number</Label>
