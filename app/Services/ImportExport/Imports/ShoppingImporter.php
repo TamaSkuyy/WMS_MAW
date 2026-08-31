@@ -110,16 +110,43 @@ class ShoppingImporter extends BaseImporter implements Importable
         $mapped['product_id'] = $productId;
 
         // Modify Date → shopping_date; kosong/gagal → hari ini
-        // (Excel dapat memparse sel tanggal jadi objek Carbon)
+        // Nilai bisa berupa: objek Carbon, angka serial Excel (mis. 46265.31),
+        // atau string dengan berbagai format tanggal. Parsing harus TAHAN
+        // terhadap format tak terduga — Carbon::createFromFormat() melempar
+        // InvalidFormatException (tidak return false), jangan sampai crash job.
         $mapped['shopping_date'] = now();
         $rawDate = $mapped['modify_date'] ?? null;
-        if ($rawDate instanceof \Carbon\CarbonInterface) {
-            $mapped['shopping_date'] = $rawDate;
-        } elseif (is_string($rawDate) && trim($rawDate) !== '') {
-            $parsed = Carbon::createFromFormat('d/m/Y H:i:s', trim($rawDate));
-            if ($parsed !== false) {
-                $mapped['shopping_date'] = $parsed;
+
+        try {
+            $parsedDate = null;
+
+            if ($rawDate instanceof \Carbon\CarbonInterface) {
+                $parsedDate = $rawDate;
+            } elseif (is_numeric($rawDate) && (float) $rawDate > 0) {
+                // Excel serial date number (hari sejak 1900-01-01)
+                $parsedDate = Carbon::instance(
+                    \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject((float) $rawDate)
+                );
+            } elseif (is_string($rawDate) && trim($rawDate) !== '') {
+                $text = trim($rawDate);
+                foreach (['d/m/Y H:i:s', 'd/m/Y H:i', 'Y-m-d H:i:s', 'Y-m-d H:i', 'd-m-Y H:i:s', 'd/m/Y', 'Y-m-d'] as $format) {
+                    try {
+                        $candidate = Carbon::createFromFormat($format, $text);
+                        if ($candidate !== false) {
+                            $parsedDate = $candidate;
+                            break;
+                        }
+                    } catch (\Throwable) {
+                        // coba format berikutnya
+                    }
+                }
             }
+
+            if ($parsedDate !== null) {
+                $mapped['shopping_date'] = $parsedDate;
+            }
+        } catch (\Throwable) {
+            // Tanggal tak bisa diparsing → biarkan shopping_date = hari ini
         }
 
         return $mapped;

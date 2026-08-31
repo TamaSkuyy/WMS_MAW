@@ -41,11 +41,19 @@ export default function ImportProgress({ importLogId, onComplete }: ImportProgre
     ? Math.round((status.processed_rows / status.total_rows) * 100)
     : 0;
 
+  const statusLabels: Record<string, string> = {
+    pending: 'Menunggu antrian (pending)...',
+    processing: 'Importing...',
+    completed: 'Completed',
+    failed: 'Failed',
+  };
+  const statusLabel = statusLabels[status.status] ?? status.status;
+
   return (
     <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
       <div className="flex justify-between items-center mb-2">
         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          {status.status === 'processing' ? 'Importing...' : status.status === 'completed' ? 'Completed' : 'Failed'}
+          {statusLabel}
         </span>
         <span className="text-xs text-gray-500">
           {status.processed_rows} / {status.total_rows} rows
@@ -59,6 +67,11 @@ export default function ImportProgress({ importLogId, onComplete }: ImportProgre
           style={{ width: `${status.status === 'completed' ? 100 : pct}%` }}
         />
       </div>
+      {status.status === 'pending' && (
+        <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+          Import belum diproses — pastikan queue worker berjalan (php artisan queue:work).
+        </p>
+      )}
       {(status.skipped_rows > 0 || (status.errors && status.errors.length > 0)) && (
         <div className="mt-2 text-xs text-gray-500">
           {status.skipped_rows > 0 && <span>{status.skipped_rows} duplicates skipped</span>}

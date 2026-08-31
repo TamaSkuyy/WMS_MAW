@@ -32,7 +32,13 @@ return [
     */
 
     'deprecations' => [
-        'channel' => env('LOG_DEPRECATIONS_CHANNEL', 'null'),
+        // Catatan: nilai env literal "null" di-parse Laravel menjadi PHP null,
+        // sehingga `env('LOG_DEPRECATIONS_CHANNEL', 'null')` mengembalikan null
+        // dan channel 'deprecations' gagal di-resolve (Log [deprecations] is not
+        // defined) → setiap deprecation warning (mis. dari PhpSpreadsheet saat
+        // baca XLSX) membuat proses crash. Fallback `?: 'null'` memastikan
+        // channel selalu valid (NullHandler = warning dibuang).
+        'channel' => env('LOG_DEPRECATIONS_CHANNEL') ?: 'null',
         'trace' => env('LOG_DEPRECATIONS_TRACE', false),
     ],
 
