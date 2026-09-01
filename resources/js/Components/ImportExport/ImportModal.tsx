@@ -59,6 +59,7 @@ export default function ImportModal({ isOpen, onClose, onComplete, importUrl, pr
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
   const [importLogId, setImportLogId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+  const [importFinished, setImportFinished] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
@@ -166,6 +167,7 @@ export default function ImportModal({ isOpen, onClose, onComplete, importUrl, pr
     setStep('upload');
     setFile(null);
     setImportLogId(null);
+    setImportFinished(false);
   };
 
   return (
@@ -176,7 +178,7 @@ export default function ImportModal({ isOpen, onClose, onComplete, importUrl, pr
             <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">
               {step === 'upload' && `Import ${title}`}
               {step === 'mapping' && 'Map Columns'}
-              {step === 'importing' && 'Importing...'}
+              {step === 'importing' && (importFinished ? 'Hasil Import' : 'Importing...')}
             </h2>
             <button
               onClick={onClose}
@@ -280,9 +282,11 @@ export default function ImportModal({ isOpen, onClose, onComplete, importUrl, pr
 
           {step === 'importing' && importLogId && (
             <div>
-              <ImportProgress importLogId={importLogId} onComplete={handleComplete} />
+              <ImportProgress importLogId={importLogId} onFinished={() => setImportFinished(true)} />
               <div className="flex justify-end mt-6">
-                <Button variant="outline" onClick={handleComplete}>Close</Button>
+                <Button variant="outline" onClick={handleComplete}>
+                  {importFinished ? 'Close & Refresh' : 'Close'}
+                </Button>
               </div>
             </div>
           )}
