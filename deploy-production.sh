@@ -89,6 +89,7 @@ for arg in "$@"; do
         --down)         ACTION="down" ;;
         --seed-storage)   ACTION="seed-storage" ;;
         --check-storage)  ACTION="check-storage" ;;
+        --check-queue)    ACTION="check-queue" ;;
         --backup-storage) ACTION="backup-storage" ;;
         --help|-h)
             echo ""
@@ -107,6 +108,7 @@ for arg in "$@"; do
             echo -e "  --down            Stop production stack"
             echo -e "  --seed-storage    Copy ./storage dari host ke Docker volume (one-time)"
             echo -e "  --check-storage   Cek isi & status storage volume"
+            echo -e "  --check-queue     Cek status & kesehatan queue worker (jalankan jika queue error)"
             echo -e "  --backup-storage  Backup storage volume ke ./backups/"
             echo ""
             echo -e "${CYAN}Kapan pakai apa:${NC}"
@@ -141,6 +143,54 @@ clear_laravel_caches() {
     log "Clear cache aplikasi (optimize + Redis cache store)..."
     dc exec -T app php artisan optimize:clear
     dc exec -T app php artisan cache:clear
+}
+
+# ── Cek & pastikan queue worker benar-benar berjalan ─────────────────────────
+# Dipanggil setelah deploy. Cek: container ada, state running, tidak crash-loop,
+# dan proses php (queue:work) benar-benar hidup di dalam container.
+queue_check() {
+    local QID QSTATE QRESTARTS attempt
+    QID=$(dc ps -q queue 2>/dev/null | head -1 || true)
+    if [ -z "$QID" ]; then
+        err "Queue container TIDAK ditemukan / tidak berjalan!"
+        return 1
+    fi
+    QSTATE=$(${RUNTIME} inspect -f '{{.State.Status}}' "$QID" 2>/dev/null || echo "unknown")
+    QRESTARTS=$(${RUNTIME} inspect -f '{{.RestartCount}}' "$QID" 2>/dev/null || echo "0")
+    log "Queue worker: state=${QSTATE}, restart_count=${QRESTARTS}"
+    if [ "$QSTATE" != "running" ]; then
+        err "Queue worker TIDAK running (state=${QSTATE})!"
+        return 1
+    fi
+    if [ "${QRESTARTS:-0}" -gt 10 ]; then
+        warn "Queue worker sering restart (${QRESTARTS}x) — indikasi crash loop!"
+        ${RUNTIME} logs --tail=20 "$QID" 2>&1 || true
+    fi
+    # Pastikan proses php (queue:work) benar-benar hidup (pidof ada di image)
+    for attempt in $(seq 1 10); do
+        if dc exec -T queue pidof php >/dev/null 2>&1; then
+            success "Proses queue:work terdeteksi di container queue ✓"
+            return 0
+        fi
+        sleep 2
+    done
+    err "Proses queue:work TIDAK terdeteksi di dalam container queue!"
+    ${RUNTIME} logs --tail=20 "$QID" 2>&1 || true
+    return 1
+}
+
+# ── Restart queue worker & verifikasi ────────────────────────────────────────
+# `php artisan queue:restart` (signal via cache) baru diproses worker SETELAH
+# job selesai (bisa sampai --timeout=600 detik) dan gagal diam-diam kalau cache
+# tidak shared antar container. Restart container lebih pasti & langsung efektif
+# (file hasil docker cp tetap ada karena container tidak di-recreate).
+restart_queue_worker() {
+    log "Restart container queue (worker reload code baru)..."
+    if ! dc restart queue >/dev/null 2>&1; then
+        warn "dc restart queue gagal — coba dc up -d --no-deps queue..."
+        dc up -d --no-deps queue 2>/dev/null || true
+    fi
+    queue_check
 }
 
 # ── Seed storage: copy host ./storage into named Docker volume ────────────────
@@ -281,9 +331,16 @@ quick_update() {
             ${RUNTIME} cp config/. "${cnt}:/var/www/html/config/"
             ${RUNTIME} cp routes/. "${cnt}:/var/www/html/routes/"
             ${RUNTIME} cp database/. "${cnt}:/var/www/html/database/"
-            # Ensure resources dir exist
-            ${RUNTIME} exec "$cnt" mkdir -p /var/www/html/resources 2>/dev/null || true
+            # Copy bootstrap/*.php TAPI JANGAN bootstrap/cache (environment-specific).
+            # Tanpa ini, provider/middleware baru tidak ter-load di worker queue.
+            ${RUNTIME} exec "$cnt" mkdir -p /var/www/html/bootstrap 2>/dev/null || true
+            for f in bootstrap/*.php; do
+                [ -f "$f" ] && ${RUNTIME} cp "$f" "${cnt}:/var/www/html/bootstrap/"
+            done
+            # Ensure resources & lang dir exist
+            ${RUNTIME} exec "$cnt" mkdir -p /var/www/html/resources /var/www/html/lang 2>/dev/null || true
             ${RUNTIME} cp resources/. "${cnt}:/var/www/html/resources/" 2>/dev/null || true
+            ${RUNTIME} cp lang/. "${cnt}:/var/www/html/lang/" 2>/dev/null || true
         done
     else
         log "4/7 Skip (queue/scheduler tidak berjalan)"
@@ -316,7 +373,7 @@ quick_update() {
     dc exec -T app php artisan optimize
 
     # Restart queue workers (pick up new code)
-    dc exec -T app php artisan queue:restart 2>/dev/null || true
+    restart_queue_worker || warn "Queue worker gagal restart — cek manual: dc logs queue"
 
     # 7. Reload Octane workers — restart container agar code baru PASTI ter-load
     # (octane:reload via admin endpoint tidak selalu mempan; worker bisa
@@ -375,19 +432,13 @@ smart_rebuild() {
     log "  Layer cache dipakai → hanya stage yang berubah yang direbuild"
     dc build
 
-    # Rolling restart: service non-critical dulu, app terakhir
-    log "Rolling restart services..."
-
-    # Restart scheduler & queue dulu (tidak ada healthcheck ketat)
-    dc up -d --no-deps scheduler queue reverb 2>/dev/null || dc up -d --no-deps queue 2>/dev/null || true
-
-    # Maintenance mode
+    # Maintenance mode SEBELUM restart apa pun
     APP_CONTAINER=$(dc ps -q app 2>/dev/null | head -1 || true)
     if [ -n "$APP_CONTAINER" ]; then
         dc exec -T app php artisan down --retry=5 --render="errors::503" 2>/dev/null || true
     fi
 
-    # Restart app
+    # Restart app dengan image baru
     dc up -d --no-deps app
 
     # Tunggu app healthy
@@ -419,7 +470,16 @@ smart_rebuild() {
     dc exec -T app php artisan view:cache
     dc exec -T app php artisan event:cache
     dc exec -T app php artisan optimize
-    dc exec -T app php artisan queue:restart 2>/dev/null || true
+
+    # Restart queue/scheduler/reverb dengan image BARU — SETELAH migrasi,
+    # supaya worker tidak memproses job dengan code baru terhadap schema lama.
+    log "Restart queue/scheduler/reverb dengan image baru (setelah migrasi)..."
+    if ! dc up -d --no-deps scheduler queue reverb 2>/dev/null; then
+        warn "Restart scheduler+queue+reverb gagal — coba queue saja..."
+        dc up -d --no-deps queue 2>/dev/null || true
+    fi
+    sleep 3
+    queue_check || warn "Queue worker bermasalah setelah rebuild — cek: dc logs queue"
 
     # App back online
     dc exec -T app php artisan up
@@ -496,6 +556,27 @@ fi
 if [ "${ACTION}" = "backup-storage" ]; then
     backup_storage
     exit 0
+fi
+
+# ── Queue check action ───────────────────────────────────────────────────────
+if [ "${ACTION}" = "check-queue" ]; then
+    log "=== Queue Worker Check ==="
+    echo
+    if queue_check; then
+        echo
+        log "📋 Job backlog:"
+        dc exec -T app php artisan tinker --execute="echo 'pending jobs: '.\Illuminate\Support\Facades\DB::table('jobs')->count();" 2>/dev/null \
+            || warn "Gagal hitung pending jobs (app tidak jalan / tabel belum ada?)"
+        dc exec -T app php artisan tinker --execute="echo 'failed jobs: '.\Illuminate\Support\Facades\DB::table('failed_jobs')->count();" 2>/dev/null \
+            || warn "Gagal hitung failed jobs"
+        echo
+        log "📜 Log queue (15 baris terakhir):"
+        dc logs queue --tail=15 2>&1 || true
+        echo
+        exit 0
+    fi
+    echo
+    exit 1
 fi
 
 # ── Quick Update action ───────────────────────────────────────────────────────
@@ -605,7 +686,12 @@ dc exec -T app php artisan route:cache
 dc exec -T app php artisan view:cache
 dc exec -T app php artisan event:cache
 dc exec -T app php artisan optimize
-dc exec -T app php artisan queue:restart 2>/dev/null || true
+
+# Restart queue worker supaya PASTI berjalan dengan code & schema terbaru
+# (container queue start bersamaan `dc up -d` — bisa memproses job sebelum
+#  migrasi selesai; restart sekali lagi setelah migrate)
+restart_queue_worker || warn "Queue worker gagal restart — cek manual: dc logs queue"
+
 # ── Readiness check (verify DB + Redis from inside app) ──────────────────
 log "Verifikasi readiness (DB + Redis)..."
 READY_RESPONSE=$(dc exec -T app curl -s http://localhost:8080/health/ready 2>/dev/null || true)
@@ -633,6 +719,7 @@ echo "    Backup    : ls -lah ./backups/"
 echo -e "  ${YELLOW}Perintah berguna:${NC}"
 echo "    Logs      : ${COMPOSE_CMD} -p ${PROJECT_NAME} -f ${COMPOSE_FILE} logs -f"
 echo "    Status    : ${COMPOSE_CMD} -p ${PROJECT_NAME} -f ${COMPOSE_FILE} ps"
+echo "    Cek queue : ./deploy-production.sh --check-queue"
 echo "    Stop      : ./deploy-production.sh --down"
 echo "    Rebuild   : ./deploy-production.sh --build"
 echo "    Seed data : ./deploy-production.sh --seed-storage    (copy ./storage → volume)"
@@ -643,3 +730,7 @@ echo
 
 # ── Show running containers ───────────────────────────────────────────────────
 dc ps
+
+# ── Verifikasi akhir: queue worker harus jalan ────────────────────────────────
+echo
+queue_check || err "Queue worker bermasalah! Periksa: ./deploy-production.sh --check-queue"

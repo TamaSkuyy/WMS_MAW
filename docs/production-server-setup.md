@@ -365,7 +365,7 @@ docker exec $(docker compose -p wms-wma-prod -f docker-compose.prod.yml --env-fi
 | Storage symlink error | `docker compose ... exec app php artisan storage:link --force` |
 | Assets 404 (CSS/JS) | Run deploy dengan `--with-assets` |
 | Permission denied on logs | `docker compose ... exec app chmod -R 775 /var/www/html/storage` |
-| Worker stuck / queue not processing | `docker compose ... exec app php artisan queue:restart` |
+| Worker stuck / queue not processing | `./deploy-production.sh --check-queue` untuk diagnosa; restart worker: `docker compose ... restart queue` (atau `docker compose ... exec app php artisan queue:restart` untuk restart graceful setelah job selesai) |
 | Reverb WebSocket not connecting | Cek `REVERB_*` vars di `.env.prod`; pastikan port nginx proxy `/app` ke reverb |
 | Maintenance mode stuck | `docker compose ... exec app php artisan up` |
 
@@ -382,6 +382,9 @@ git pull && ./deploy-production.sh --update --with-assets
 
 # Check status
 docker compose -p wms-wma-prod -f docker-compose.prod.yml --env-file .env.prod ps
+
+# Diagnosa queue worker (status, restart count, job backlog, log)
+./deploy-production.sh --check-queue
 
 # View logs
 docker compose -p wms-wma-prod -f docker-compose.prod.yml --env-file .env.prod logs -f app
