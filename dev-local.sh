@@ -348,7 +348,7 @@ fi
 
 if [ "$WITH_QUEUE" = true ]; then
   log "Starting queue worker..."
-  "${PHP_CMD}" artisan queue:work --tries=1 &
+  "${PHP_CMD}" artisan queue:work --tries=1 --timeout=600 &
   QUEUE_PID=$!
 fi
 

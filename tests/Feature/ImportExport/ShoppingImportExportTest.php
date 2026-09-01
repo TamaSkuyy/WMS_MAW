@@ -308,4 +308,49 @@ class ShoppingImportExportTest extends TestCase
         $this->assertFalse($shopping->is_cripple);
         $this->assertCount(2, $shopping->items); // part baru tetap ditambahkan
     }
+
+    public function test_import_creates_new_shopping_for_shipped_frame_with_lookup_location(): void
+    {
+        $product = Product::factory()->create(['part_number' => 'P5022-BYA03']);
+
+        // Frame sudah pernah diinput manual & DIKIRIM, lengkap dengan lokasi tujuan.
+        $oldLocation = ShoppingLocation::create(['name' => 'Line TAM Lama']);
+        $shipped = Shopping::create([
+            'shopping_location_id' => $oldLocation->id,
+            'shopping_date' => now()->subMonth(),
+            'frame_number' => 'MHKAA1BY4TJ021240',
+            'status' => 'shipped',
+        ]);
+        $shipped->items()->create(['product_id' => $product->id, 'quantity' => 1]);
+
+        $this->actingAs($this->user);
+
+        // Import TAM ulang untuk frame yang sama — tanpa lokasi tujuan
+        $file = UploadedFile::fake()->createWithContent(
+            'shopping.csv',
+            "Frame Number,Part Number,Quantity,Confirmed,Cripple,Modify Date\n"
+            . "MHKAA1BY4TJ021240,P5022-BYA03,1,TRUE,,10/08/2026 21:18:09"
+        );
+
+        $this->post(route('shoppings.import'), [
+            'file' => $file,
+            'column_mapping' => [
+                'frame_number' => 'Frame Number',
+                'part_number' => 'Part Number',
+                'quantity' => 'Quantity',
+                'confirmed' => 'Confirmed',
+                'cripple' => 'Cripple',
+                'modify_date' => 'Modify Date',
+            ],
+        ])->assertOk();
+
+        // Harus ada shopping BARU (draft) untuk frame yang sama, dengan lokasi di-lookup otomatis
+        $newShopping = Shopping::where('frame_number', 'MHKAA1BY4TJ021240')
+            ->where('status', 'draft')
+            ->first();
+
+        $this->assertNotNull($newShopping, 'Shopping baru untuk frame yang sudah dikirim harus dibuat.');
+        $this->assertSame($oldLocation->id, $newShopping->shopping_location_id);
+        $this->assertSame(2, Shopping::where('frame_number', 'MHKAA1BY4TJ021240')->count());
+    }
 }

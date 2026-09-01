@@ -97,12 +97,14 @@ class ShoppingImporter extends BaseImporter implements Importable
         $frame = (string) ($mapped['frame_number'] ?? '');
         if ($frame !== '') {
             $existing = Shopping::where('frame_number', $frame)->first();
-            if ($existing && $existing->status !== 'draft') {
-                throw new RowTransformException("Frame {$frame} sudah dikirim — tidak bisa digabung.");
+
+            // Draft yang sudah ada → merge, butuh izin edit.
+            if ($existing && $existing->status === 'draft' && ! $this->canMerge) {
+                throw new RowTransformException("Frame {$frame} sudah ada (draft) — tidak punya izin edit untuk menggabung.");
             }
-            if ($existing && ! $this->canMerge) {
-                throw new RowTransformException("Frame {$frame} sudah ada — tidak punya izin edit untuk menggabung.");
-            }
+
+            // Frame non-draft (shipped/cripple) dianggap pesanan baru:
+            // dibuatkan shopping BARU (lokasi di-lookup otomatis dari data lama).
         }
 
         // Part number → product
@@ -177,11 +179,23 @@ class ShoppingImporter extends BaseImporter implements Importable
 
         if ($frame !== $this->currentFrameNumber) {
             $existing = Shopping::where('frame_number', $frame)->first();
-            if ($existing) {
+            if ($existing && $existing->status === 'draft') {
                 $this->currentShopping = $existing; // merge ke draft yang sudah ada
             } else {
+                // Frame baru ATAU frame yang sudah dikirim (pesanan baru):
+                // lookup otomatis Lokasi Tujuan dari frame yang pernah diinput
+                // manual (data TAM tidak punya lokasi) — pakai lokasi shopping
+                // terbaru dengan frame yang sama.
+                $locationId = $this->shoppingLocationId;
+                if (! $locationId) {
+                    $locationId = Shopping::where('frame_number', $frame)
+                        ->whereNotNull('shopping_location_id')
+                        ->orderByDesc('id')
+                        ->value('shopping_location_id');
+                }
+
                 $this->currentShopping = Shopping::create([
-                    'shopping_location_id' => $this->shoppingLocationId,
+                    'shopping_location_id' => $locationId,
                     'shopping_date' => $data['shopping_date'],
                     'frame_number' => $frame,
                     'status' => 'draft',

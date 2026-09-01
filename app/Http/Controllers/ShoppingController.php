@@ -31,6 +31,12 @@ class ShoppingController extends Controller
             'shoppings' => $shoppings,
             'filters' => $request->only(['status', 'search']),
             'shoppingLocations' => ShoppingLocation::orderBy('name')->get(),
+            // Daftar shopping draft (untuk modal Kirim Massal — multi pilih frame)
+            'draftShoppings' => Shopping::where('status', 'draft')
+                ->whereNotNull('frame_number')
+                ->with('shoppingLocation:id,name')
+                ->orderBy('frame_number')
+                ->get(['id', 'frame_number', 'shopping_location_id', 'is_cripple']),
         ]);
     }
 
@@ -237,17 +243,50 @@ class ShoppingController extends Controller
             return back()->with('error', 'Tidak dapat memproses shopping ini.');
         }
 
-        $result = DB::transaction(function () use ($shopping) {
+        $result = $this->shipSingle($shopping);
+
+        if (! $result['ok']) {
+            return back()->with('error', $result['error']);
+        }
+
+        try {
+            event(new StockChanged());
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        $message = $shopping->fresh()->is_cripple
+            ? 'Shopping diproses sebagai CRIPPLE (part tidak lengkap). Stok dikurangi.'
+            : 'Shopping diproses. Stok dikurangi.';
+
+        return redirect()->route('shoppings.show', $shopping)->with('success', $message);
+    }
+
+    /**
+     * Proses ship SATU shopping (dipakai ship() dan bulkShip()).
+     * - Opsional mengisi shopping_location_id yang masih kosong (bulk action).
+     * - Kurangi stok, set status shipped/cripple sesuai is_cripple.
+     *
+     * @return array{ok: bool, error?: string}
+     */
+    private function shipSingle(Shopping $shopping, ?int $fillLocationId = null): array
+    {
+        return DB::transaction(function () use ($shopping, $fillLocationId) {
             $lockedShopping = Shopping::where('id', $shopping->id)->lockForUpdate()->firstOrFail();
 
             if ($lockedShopping->status !== 'draft') {
-                return ['ok' => false, 'error' => 'Tidak dapat memproses shopping ini.'];
+                return ['ok' => false, 'error' => 'Status bukan draft.'];
+            }
+
+            // Bulk action: isi lokasi yang masih kosong (data import TAM)
+            if ($fillLocationId && $lockedShopping->shopping_location_id === null) {
+                $lockedShopping->update(['shopping_location_id' => $fillLocationId]);
             }
 
             $items = $lockedShopping->items()->with('product', 'rack')->get();
 
             if ($items->isEmpty()) {
-                return ['ok' => false, 'error' => 'Tidak dapat memproses: part tidak lengkap — shopping ini tidak memiliki item.'];
+                return ['ok' => false, 'error' => 'Part tidak lengkap — tidak ada item.'];
             }
 
             $lockedStocks = [];
@@ -289,21 +328,67 @@ class ShoppingController extends Controller
 
             return ['ok' => true];
         });
+    }
 
-        if (! $result['ok']) {
-            return back()->with('error', $result['error']);
+    /**
+     * Bulk ship — proses banyak shopping draft sekaligus.
+     * Body: { ids: int[], shopping_location_id?: int|null }
+     * Lokasi yang dipilih otomatis mengisi shopping yang lokasinya masih kosong
+     * (data import dari TAM), lalu semua diproses.
+     */
+    public function bulkShip(Request $request)
+    {
+        abort_unless(auth()->user()->can('ship shoppings'), 403);
+
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'required|exists:shoppings,id',
+            'shopping_location_id' => 'nullable|exists:shopping_locations,id',
+        ]);
+
+        $locationId = $validated['shopping_location_id'] ?? null;
+        $success = 0;
+        $failures = [];
+
+        foreach ($validated['ids'] as $id) {
+            $shopping = Shopping::find($id);
+
+            if (! $shopping) {
+                $failures[] = ['id' => $id, 'reason' => 'Shopping tidak ditemukan.'];
+
+                continue;
+            }
+
+            $result = $this->shipSingle($shopping, $locationId);
+
+            if ($result['ok']) {
+                $success++;
+            } else {
+                $failures[] = [
+                    'id' => $id,
+                    'frame' => $shopping->frame_number,
+                    'reason' => $result['error'],
+                ];
+            }
         }
 
-        try {
-            event(new StockChanged());
-        } catch (\Throwable $e) {
-            report($e);
+        if ($success > 0) {
+            try {
+                event(new StockChanged());
+            } catch (\Throwable $e) {
+                report($e);
+            }
         }
 
-        $message = $shopping->fresh()->is_cripple
-            ? 'Shopping diproses sebagai CRIPPLE (part tidak lengkap). Stok dikurangi.'
-            : 'Shopping diproses. Stok dikurangi.';
+        $msg = "{$success} shopping berhasil dikirim.";
 
-        return redirect()->route('shoppings.show', $shopping)->with('success', $message);
+        if (! empty($failures)) {
+            $detail = collect($failures)
+                ->map(fn ($f) => ($f['frame'] ?? '#' . $f['id']) . ' — ' . $f['reason'])
+                ->implode('; ');
+            $msg .= ' Gagal (' . count($failures) . '): ' . $detail;
+        }
+
+        return redirect()->route('shoppings.index')->with('success', $msg);
     }
 }

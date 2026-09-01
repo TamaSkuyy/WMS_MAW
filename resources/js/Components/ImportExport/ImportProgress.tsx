@@ -72,6 +72,11 @@ export default function ImportProgress({ importLogId, onComplete }: ImportProgre
           Import belum diproses — pastikan queue worker berjalan (php artisan queue:work).
         </p>
       )}
+      {status.status === 'completed' && status.processed_rows === 0 && status.skipped_rows > 0 && (
+        <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+          Semua baris sudah pernah diimport sebelumnya (duplikat) — data sudah ada di sistem. Gunakan file/frame baru jika ingin menambah data.
+        </p>
+      )}
       {(status.skipped_rows > 0 || (status.errors && status.errors.length > 0)) && (
         <div className="mt-2 text-xs text-gray-500">
           {status.skipped_rows > 0 && <span>{status.skipped_rows} duplicates skipped</span>}

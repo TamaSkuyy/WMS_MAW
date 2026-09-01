@@ -370,4 +370,80 @@ class ShoppingControllerTest extends TestCase
 
         $this->assertDatabaseHas('shoppings', ['id' => $shopping->id, 'status' => 'shipped']);
     }
+
+    public function test_bulk_ship_ships_multiple_drafts_and_deducts_stock(): void
+    {
+        $this->user->givePermissionTo(Permission::findOrCreate('ship shoppings'));
+
+        $rack = Rack::factory()->create();
+        $product = Product::factory()->create();
+        Stock::create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 50]);
+
+        $s1 = Shopping::factory()->create(['status' => 'draft', 'frame_number' => 'FRM-001']);
+        $s1->items()->create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 5]);
+        $s2 = Shopping::factory()->create(['status' => 'draft', 'frame_number' => 'FRM-002']);
+        $s2->items()->create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 7]);
+
+        $response = $this->actingAs($this->user)->post(route('shoppings.bulk-ship'), [
+            'ids' => [$s1->id, $s2->id],
+        ]);
+
+        $response->assertRedirect(route('shoppings.index'));
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('shoppings', ['id' => $s1->id, 'status' => 'shipped']);
+        $this->assertDatabaseHas('shoppings', ['id' => $s2->id, 'status' => 'shipped']);
+        // 50 - 5 - 7 = 38
+        $this->assertDatabaseHas('stocks', ['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 38]);
+    }
+
+    public function test_bulk_ship_fills_empty_location_then_ships(): void
+    {
+        $this->user->givePermissionTo(Permission::findOrCreate('ship shoppings'));
+
+        $location = \App\Models\ShoppingLocation::create(['name' => 'Line A']);
+        $rack = Rack::factory()->create();
+        $product = Product::factory()->create();
+        Stock::create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 20]);
+
+        // Shopping dari import TAM: tanpa lokasi
+        $shopping = Shopping::factory()->create(['status' => 'draft', 'frame_number' => 'FRM-TAM-1', 'shopping_location_id' => null]);
+        $shopping->items()->create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 3]);
+
+        $this->actingAs($this->user)->post(route('shoppings.bulk-ship'), [
+            'ids' => [$shopping->id],
+            'shopping_location_id' => $location->id,
+        ]);
+
+        $this->assertDatabaseHas('shoppings', [
+            'id' => $shopping->id,
+            'status' => 'shipped',
+            'shopping_location_id' => $location->id,
+        ]);
+    }
+
+    public function test_bulk_ship_reports_failures_and_keeps_others_draft(): void
+    {
+        $this->user->givePermissionTo(Permission::findOrCreate('ship shoppings'));
+
+        $rack = Rack::factory()->create();
+        $product = Product::factory()->create();
+        Stock::create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 2]);
+
+        $ok = Shopping::factory()->create(['status' => 'draft', 'frame_number' => 'FRM-OK']);
+        $ok->items()->create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 1]);
+
+        $fail = Shopping::factory()->create(['status' => 'draft', 'frame_number' => 'FRM-FAIL']);
+        $fail->items()->create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 99]);
+
+        $response = $this->actingAs($this->user)->post(route('shoppings.bulk-ship'), [
+            'ids' => [$ok->id, $fail->id],
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('shoppings', ['id' => $ok->id, 'status' => 'shipped']);
+        $this->assertDatabaseHas('shoppings', ['id' => $fail->id, 'status' => 'draft']);
+    }
 }

@@ -405,6 +405,11 @@ Route::middleware('auth')->group(function () {
         Route::get('shoppings/import-template', [ShoppingController::class, 'importTemplate'])->name('shoppings.import-template');
     });
 
+    // Bulk ship (static path — wajib sebelum shoppings/{shopping})
+    Route::middleware(PermissionMiddleware::using('ship shoppings'))->group(function () {
+        Route::post('shoppings/bulk-ship', [ShoppingController::class, 'bulkShip'])->name('shoppings.bulk-ship');
+    });
+
     // View (parameterized — must come AFTER static routes)
     Route::middleware(PermissionMiddleware::using('view shoppings'))->group(function () {
         Route::get('shoppings', [ShoppingController::class, 'index'])->name('shoppings.index');

@@ -69,6 +69,7 @@ class ProcessImport implements ShouldQueue
 
         $chunks = $dataRows->chunk($this->config->chunkSize);
 
+        $rowsSinceProgress = 0;
         foreach ($chunks as $chunkIndex => $chunk) {
             foreach ($chunk as $rowIndex => $row) {
                 $rowNumber = ($chunkIndex * $this->config->chunkSize) + $rowIndex + 1;
@@ -83,6 +84,11 @@ class ProcessImport implements ShouldQueue
                         'field' => 'system',
                         'message' => $e->getMessage(),
                     ];
+                    $rowsSinceProgress++;
+                    if ($rowsSinceProgress >= 100) {
+                        $this->reportProgress($importLog, $processed, $skipped);
+                        $rowsSinceProgress = 0;
+                    }
                     continue;
                 }
 
@@ -98,17 +104,33 @@ class ProcessImport implements ShouldQueue
                             ];
                         }
                     }
+                    $rowsSinceProgress++;
+                    if ($rowsSinceProgress >= 100) {
+                        $this->reportProgress($importLog, $processed, $skipped);
+                        $rowsSinceProgress = 0;
+                    }
                     continue;
                 }
 
                 if ($importer->isDuplicate($transformed)) {
                     $skipped++;
-                    continue;
+                } else {
+                    $importer->insertRow($transformed);
+                    $processed++;
                 }
 
-                $importer->insertRow($transformed);
-                $processed++;
+                // Lapor progress rutin — UI polling (ImportProgress) membaca
+                // processed_rows sehingga progress bar tidak terlihat beku
+                // di "0/N rows" untuk file besar (mis. 3000+ baris).
+                $rowsSinceProgress++;
+                if ($rowsSinceProgress >= 100) {
+                    $this->reportProgress($importLog, $processed, $skipped);
+                    $rowsSinceProgress = 0;
+                }
             }
+
+            // Jaring pengaman: pastikan progress tersimpan di akhir tiap chunk
+            $this->reportProgress($importLog, $processed, $skipped);
         }
 
         $importLog->update([
@@ -133,6 +155,19 @@ class ProcessImport implements ShouldQueue
                 ImportLog::find($this->importLogId)?->errors ?? [],
                 [['row' => 0, 'field' => 'system', 'message' => $e->getMessage()]]
             ),
+        ]);
+    }
+
+    /**
+     * Simpan progress saat ini agar UI polling dapat menampilkan kemajuan
+     * (processed/skipped bertambah) selama job masih berjalan — bukan hanya
+     * di akhir proses.
+     */
+    private function reportProgress(ImportLog $importLog, int $processed, int $skipped): void
+    {
+        $importLog->update([
+            'processed_rows' => $processed,
+            'skipped_rows' => $skipped,
         ]);
     }
 
