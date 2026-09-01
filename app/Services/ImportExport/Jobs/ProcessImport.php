@@ -19,6 +19,13 @@ class ProcessImport implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    /**
+     * Import Excel besar (ribuan baris, grouping frame, validasi per-baris)
+     * bisa berjalan >10 menit. Nilai ini menang atas flag --timeout worker
+     * (lihat Worker::timeoutForJob), jadi job tidak di-kill di tengah jalan.
+     */
+    public $timeout = 1800;
+
     public function __construct(
         private readonly ImportConfig $config,
         private readonly int $importLogId,

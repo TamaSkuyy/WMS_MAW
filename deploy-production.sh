@@ -570,6 +570,10 @@ if [ "${ACTION}" = "check-queue" ]; then
         dc exec -T app php artisan tinker --execute="echo 'failed jobs: '.\Illuminate\Support\Facades\DB::table('failed_jobs')->count();" 2>/dev/null \
             || warn "Gagal hitung failed jobs"
         echo
+        log "❌ Alasan kegagalan 5 job terakhir (baris pertama exception):"
+        dc exec -T app php artisan tinker --execute='Illuminate\Support\Facades\DB::table("failed_jobs")->orderByDesc("failed_at")->take(5)->get()->each(fn($f) => print($f->failed_at." | ".strtok($f->exception, "\n")."\n"));' 2>/dev/null \
+            || warn "Gagal membaca failed_jobs"
+        echo
         log "📜 Log queue (15 baris terakhir):"
         dc logs queue --tail=15 2>&1 || true
         echo
