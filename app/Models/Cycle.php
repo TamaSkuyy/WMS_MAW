@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
@@ -50,6 +51,11 @@ class Cycle extends Model
     public function items(): HasMany
     {
         return $this->hasMany(CycleItem::class);
+    }
+
+    public function corrections(): MorphMany
+    {
+        return $this->morphMany(StockCorrection::class, 'correctable');
     }
 
     public function deliverySlot(): BelongsTo

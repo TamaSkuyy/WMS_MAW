@@ -5,9 +5,11 @@ import { PencilIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
+import Alert from '../../../Tailadmin/components/ui/alert/Alert';
 
-export default function Show({ shopping }: any) {
+export default function Show({ shopping, corrections = [], canCorrect = false }: any) {
     const permissions = (usePage().props.auth as any)?.user?.permissions || [];
+    const { flash = {} } = usePage().props as any;
     const canEdit = permissions.includes('edit shoppings');
     const canShip = permissions.includes('ship shoppings');
     const [submitting, setSubmitting] = useState(false);
@@ -37,6 +39,13 @@ export default function Show({ shopping }: any) {
             <Head title={`Shopping ke ${shopping.shopping_location?.name || '-'}`} />
             <PageBreadcrumb pageTitle={`Detail: ${shopping.shopping_location?.name || '-'}`} />
 
+            {flash?.success && (
+                <div className="mb-4"><Alert variant="success" title="Berhasil" message={flash.success} /></div>
+            )}
+            {flash?.error && (
+                <div className="mb-4"><Alert variant="error" title="Gagal" message={flash.error} /></div>
+            )}
+
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
                 <div className="xl:col-span-1">
                     <ComponentCard title="Info Shopping" desc="Detail pengiriman barang">
@@ -58,6 +67,11 @@ export default function Show({ shopping }: any) {
                                 {canShip && shopping.items.length === 0 && (
                                     <span className="inline-flex items-center text-xs text-amber-600 font-medium">⚠ Part tidak lengkap — tambah item dulu sebelum kirim</span>
                                 )}</>
+                            )}
+                            {canCorrect && (shopping.status === 'shipped' || shopping.status === 'cripple') && (
+                                <Link href={route('shoppings.edit', shopping.id)}>
+                                    <Button variant="outline" size="sm">✏️ Koreksi</Button>
+                                </Link>
                             )}
                             <Link href={route('shoppings.index')}><Button variant="outline" size="sm">Kembali</Button></Link>
                         </div>
@@ -92,6 +106,36 @@ export default function Show({ shopping }: any) {
                     </ComponentCard>
                 </div>
             </div>
+
+            {corrections.length > 0 && (
+                <div className="mt-6">
+                    <ComponentCard title={`Riwayat Koreksi (${corrections.length})`} desc="Perubahan data final oleh user berpermission — stok disesuaikan otomatis">
+                        <div className="space-y-4">
+                            {corrections.map((c: any) => (
+                                <div key={c.id} className="rounded-lg border border-amber-200 dark:border-amber-900/40 p-3">
+                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400 mb-1.5">
+                                        <span>✏️ {new Date(c.created_at).toLocaleString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                                        <span className="font-medium text-gray-700 dark:text-gray-300">oleh {c.user?.name || '-'}</span>
+                                    </div>
+                                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">📝 {c.reason}</p>
+                                    {c.deltas && c.deltas.length > 0 && (
+                                        <ul className="space-y-0.5 text-xs text-gray-500 dark:text-gray-400">
+                                            {c.deltas.filter((d: any) => d.delta !== 0).map((d: any, i: number) => (
+                                                <li key={i}>
+                                                    {d.part_number} · rak {d.rack_code} · stok {d.current} → {d.result}{' '}
+                                                    <span className={d.delta > 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>
+                                                        ({d.delta > 0 ? `+${d.delta}` : d.delta})
+                                                    </span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </ComponentCard>
+                </div>
+            )}
         </>
     );
 }

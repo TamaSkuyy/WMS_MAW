@@ -13,6 +13,7 @@ use App\Models\ShoppingLocation;
 use App\Models\Stock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class ShoppingController extends Controller
@@ -160,6 +161,8 @@ class ShoppingController extends Controller
     {
         return Inertia::render('Transactions/Shopping/Show', [
             'shopping' => $shopping->load('items.product.vehicleModel', 'items.rack', 'shoppingLocation', 'shippedBy'),
+            'corrections' => $shopping->corrections()->with('user:id,name')->orderByDesc('id')->get(),
+            'canCorrect' => auth()->user()->can('correct shoppings'),
         ]);
     }
 
@@ -167,8 +170,11 @@ class ShoppingController extends Controller
     {
         abort_unless(auth()->user()->can('edit shoppings'), 403);
 
-        if ($shopping->status !== 'draft') {
-            return back()->with('error', 'Only draft shopping records can be edited.');
+        // Shopping sudah dikirim (shipped/cripple): hanya user dengan permission
+        // "correct shoppings" (superadmin) yang boleh membuka dalam MODE KOREKSI.
+        $correction = $shopping->status !== 'draft';
+        if ($correction) {
+            abort_unless(auth()->user()->can('correct shoppings'), 403);
         }
 
         return Inertia::render('Transactions/Shopping/Edit', [
@@ -176,6 +182,7 @@ class ShoppingController extends Controller
             'products'           => Product::with(['vehicleModel', 'stocks', 'supplier'])->where('is_active', true)->orderBy('name')->get(),
             'racks'              => Rack::orderBy('zone')->orderBy('code')->get(),
             'shoppingLocations'  => ShoppingLocation::orderBy('name')->get(),
+            'correction'         => $correction,
         ]);
     }
 
@@ -390,5 +397,236 @@ class ShoppingController extends Controller
         }
 
         return redirect()->route('shoppings.index')->with('success', $msg);
+    }
+
+    // ── KOREKSI shopping yang SUDAH dikirim (khusus permission correct shoppings) ──
+    // Prinsip anti-abuse: alasan wajib, delta stok dihitung otomatis dari
+    // perbandingan item lama vs baru, atomic + lock, ditolak bila stok kurang,
+    // dan setiap koreksi tercatat (stock_corrections + activity log).
+
+    private function validateCorrectionData(Request $request): array
+    {
+        $validated = $request->validate([
+            'reason' => 'required|string|min:5|max:500',
+            'shopping_location_id' => 'required|exists:shopping_locations,id',
+            'shopping_date' => 'required|date',
+            'notes' => 'nullable|string|max:500',
+            'frame_number' => 'nullable|string|max:100',
+            'is_cripple' => 'nullable|boolean',
+            'items' => 'nullable|array',
+            'items.*.product_id' => 'required_with:items|exists:products,id',
+            'items.*.rack_id' => 'nullable|exists:racks,id',
+            'items.*.quantity' => 'required_with:items|integer|min:1',
+        ]);
+
+        $validated['items'] = ! empty($validated['items'])
+            ? $this->mergeDuplicateItems($validated['items'])
+            : [];
+
+        return $validated;
+    }
+
+    /** Snapshot item shopping untuk log & perhitungan delta. */
+    private function shoppingItemSnapshot($items): array
+    {
+        return $items->map(fn ($i) => [
+            'product_id' => $i->product_id,
+            'part_number' => $i->product?->part_number ?? '#'.$i->product_id,
+            'product_name' => $i->product?->name ?? '',
+            'rack_id' => $i->rack_id,
+            'rack_code' => $i->rack?->code ?? 'RELAY',
+            'quantity' => (int) $i->quantity,
+        ])->values()->all();
+    }
+
+    /** Rencana delta stok per (produk, rak): positif = stok kembali (refund). */
+    private function shoppingDeltaPlan(array $oldSnap, array $newMerged): array
+    {
+        $delta = [];
+
+        foreach ($oldSnap as $it) {
+            $key = $it['product_id'].'|'.($it['rack_id'] ?? 'null');
+            $delta[$key] = [
+                'product_id' => $it['product_id'],
+                'part_number' => $it['part_number'],
+                'product_name' => $it['product_name'],
+                'rack_id' => $it['rack_id'],
+                'rack_code' => $it['rack_code'],
+                'delta' => ($delta[$key]['delta'] ?? 0) + $it['quantity'],
+            ];
+        }
+
+        foreach ($newMerged as $it) {
+            $key = $it['product_id'].'|'.($it['rack_id'] ?? 'null');
+            if (! isset($delta[$key])) {
+                $delta[$key] = [
+                    'product_id' => $it['product_id'],
+                    'part_number' => '',
+                    'product_name' => '',
+                    'rack_id' => $it['rack_id'],
+                    'rack_code' => '',
+                    'delta' => 0,
+                ];
+            }
+            $delta[$key]['delta'] -= (int) $it['quantity'];
+        }
+
+        return array_values($delta);
+    }
+
+    /** Baris delta siap tampil + daftar error ketersediaan stok. */
+    private function shoppingDeltaLines(array $plan): array
+    {
+        $lines = [];
+        $errors = [];
+
+        $products = Product::whereIn('id', collect($plan)->pluck('product_id'))
+            ->get(['id', 'part_number', 'name'])->keyBy('id');
+        $racks = Rack::whereIn('id', collect($plan)->pluck('rack_id')->filter())
+            ->get(['id', 'code'])->keyBy('id');
+
+        foreach ($plan as $row) {
+            $product = $products->get($row['product_id']);
+            $rack = $row['rack_id'] ? $racks->get($row['rack_id']) : null;
+            $rackCode = $rack?->code ?? ($row['rack_id'] === null ? 'RELAY' : '?');
+            $stock = Stock::where('product_id', $row['product_id'])
+                ->where('rack_id', $row['rack_id'])
+                ->first();
+            $current = $stock?->quantity ?? 0;
+            $result = $current + $row['delta'];
+
+            $lines[] = [
+                'part_number' => $product->part_number ?? $row['part_number'],
+                'product_name' => $product->name ?? $row['product_name'],
+                'rack_code' => $rackCode,
+                'current' => (int) $current,
+                'delta' => (int) $row['delta'],
+                'result' => $result,
+            ];
+
+            if ($result < 0) {
+                $errors[] = "Stok tidak cukup: {$product?->name} ({$product?->part_number}) di rak {$rackCode} — tersedia {$current}, dibutuhkan ".abs($row['delta']);
+            }
+        }
+
+        return [$lines, $errors];
+    }
+
+    /** Preview koreksi — hitung dampak stok tanpa mengubah apa pun. */
+    public function correctPreview(Request $request, Shopping $shopping)
+    {
+        abort_unless(auth()->user()->can('correct shoppings'), 403);
+
+        if ($shopping->status === 'draft') {
+            throw ValidationException::withMessages(['reason' => 'Shopping draft gunakan Edit biasa, bukan koreksi.']);
+        }
+
+        $validated = $this->validateCorrectionData($request);
+        $oldSnap = $this->shoppingItemSnapshot($shopping->items()->with(['product:id,part_number,name', 'rack:id,code'])->get());
+        $plan = $this->shoppingDeltaPlan($oldSnap, $validated['items']);
+        [$lines, $errors] = $this->shoppingDeltaLines($plan);
+
+        return response()->json([
+            'lines' => $lines,
+            'errors' => $errors,
+            'ok' => empty($errors),
+        ]);
+    }
+
+    /** Terapkan koreksi shopping final secara atomik. */
+    public function correct(Request $request, Shopping $shopping)
+    {
+        abort_unless(auth()->user()->can('correct shoppings'), 403);
+
+        if ($shopping->status === 'draft') {
+            return back()->with('error', 'Shopping draft gunakan Edit biasa.');
+        }
+
+        $validated = $this->validateCorrectionData($request);
+
+        try {
+            DB::transaction(function () use ($validated, $shopping) {
+                $locked = Shopping::where('id', $shopping->id)->lockForUpdate()->firstOrFail();
+
+                $oldSnap = $this->shoppingItemSnapshot(
+                    $locked->items()->with(['product:id,part_number,name', 'rack:id,code'])->get()
+                );
+                $newMerged = $validated['items'];
+                $plan = $this->shoppingDeltaPlan($oldSnap, $newMerged);
+
+                foreach ($plan as $row) {
+                    $stock = Stock::where('product_id', $row['product_id'])
+                        ->where('rack_id', $row['rack_id'])
+                        ->lockForUpdate()
+                        ->first();
+
+                    $current = $stock?->quantity ?? 0;
+                    $result = $current + $row['delta'];
+
+                    if ($result < 0) {
+                        throw new \RuntimeException(
+                            "Stok tidak cukup: {$row['part_number']} di rak {$row['rack_code']} — tersedia {$current}, butuh ".abs($row['delta'])
+                        );
+                    }
+
+                    if ($row['delta'] !== 0) {
+                        if (! $stock) {
+                            $stock = Stock::create([
+                                'product_id' => $row['product_id'],
+                                'rack_id' => $row['rack_id'],
+                                'quantity' => 0,
+                            ]);
+                        }
+                        $stock->quantity = $result;
+                        $stock->save();
+                    }
+                }
+
+                $locked->update([
+                    'shopping_location_id' => $validated['shopping_location_id'],
+                    'shopping_date' => $validated['shopping_date'],
+                    'notes' => $validated['notes'] ?? null,
+                    'frame_number' => $validated['frame_number'] ?? null,
+                    'is_cripple' => (bool) ($validated['is_cripple'] ?? false),
+                    // Status tetap final; label cripple mengikuti flag terbaru
+                    'status' => (bool) ($validated['is_cripple'] ?? false) ? 'cripple' : 'shipped',
+                ]);
+
+                $locked->items()->delete();
+                foreach ($newMerged as $item) {
+                    $locked->items()->create([
+                        'product_id' => $item['product_id'],
+                        'rack_id' => $item['rack_id'],
+                        'quantity' => $item['quantity'],
+                    ]);
+                }
+
+                $afterSnap = $this->shoppingItemSnapshot(
+                    $locked->items()->with(['product:id,part_number,name', 'rack:id,code'])->get()
+                );
+                [$lines, ] = $this->shoppingDeltaLines($plan);
+
+                \App\Models\StockCorrection::create([
+                    'correctable_type' => Shopping::class,
+                    'correctable_id' => $locked->id,
+                    'user_id' => auth()->id(),
+                    'reason' => $validated['reason'],
+                    'before' => $oldSnap,
+                    'after' => $afterSnap,
+                    'deltas' => $lines,
+                ]);
+            });
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Koreksi gagal: '.$e->getMessage());
+        }
+
+        try {
+            event(new StockChanged());
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        return redirect()->route('shoppings.show', $shopping)
+            ->with('success', 'Koreksi shopping diterapkan — stok disesuaikan & tercatat di riwayat.');
     }
 }

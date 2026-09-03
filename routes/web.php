@@ -397,6 +397,12 @@ Route::middleware('auth')->group(function () {
         Route::post('cycles/{cycle}/receive', [CycleController::class, 'receive'])->name('cycles.receive');
     });
 
+    // Correct (parameterized — koreksi data final, khusus superadmin)
+    Route::middleware(PermissionMiddleware::using('correct cycles'))->group(function () {
+        Route::post('cycles/{cycle}/correct-preview', [CycleController::class, 'correctPreview'])->name('cycles.correct-preview');
+        Route::post('cycles/{cycle}/correct', [CycleController::class, 'correct'])->name('cycles.correct');
+    });
+
     // ── Transactions: Shopping ──────────────────────────────
     // ⚠️ Static routes MUST be registered BEFORE parameterized
     //    routes (shoppings/{shopping}) to prevent "create" from
@@ -437,6 +443,12 @@ Route::middleware('auth')->group(function () {
     // Ship (parameterized)
     Route::middleware(PermissionMiddleware::using('ship shoppings'))->group(function () {
         Route::post('shoppings/{shopping}/ship', [ShoppingController::class, 'ship'])->name('shoppings.ship');
+    });
+
+    // Correct (parameterized — koreksi shopping yang sudah dikirim, khusus superadmin)
+    Route::middleware(PermissionMiddleware::using('correct shoppings'))->group(function () {
+        Route::post('shoppings/{shopping}/correct-preview', [ShoppingController::class, 'correctPreview'])->name('shoppings.correct-preview');
+        Route::post('shoppings/{shopping}/correct', [ShoppingController::class, 'correct'])->name('shoppings.correct');
     });
 
     // ── Transactions: Stocks ────────────────────────────────

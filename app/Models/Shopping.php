@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Spatie\Activitylog\Support\LogOptions;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 
@@ -48,5 +49,10 @@ class Shopping extends Model
     public function items(): HasMany
     {
         return $this->hasMany(ShoppingItem::class);
+    }
+
+    public function corrections(): MorphMany
+    {
+        return $this->morphMany(StockCorrection::class, 'correctable');
     }
 }

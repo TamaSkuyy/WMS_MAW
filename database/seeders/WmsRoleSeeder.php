@@ -33,9 +33,9 @@ class WmsRoleSeeder extends Seeder
             'view shopping locations', 'create shopping locations', 'edit shopping locations', 'delete shopping locations',
 
             // Transactions
-            'view cycles', 'create cycles', 'edit cycles', 'delete cycles', 'receive cycles',
+            'view cycles', 'create cycles', 'edit cycles', 'delete cycles', 'receive cycles', 'correct cycles',
             'view stocks', 'stock opname',
-            'view shoppings', 'create shoppings', 'edit shoppings', 'delete shoppings', 'ship shoppings',
+            'view shoppings', 'create shoppings', 'edit shoppings', 'delete shoppings', 'ship shoppings', 'correct shoppings',
 
             // Import / Export
             'import cycles', 'export cycles',

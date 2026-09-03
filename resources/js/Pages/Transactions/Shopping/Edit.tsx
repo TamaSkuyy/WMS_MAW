@@ -25,6 +25,7 @@ interface TableItem {
     rack_zone: string;
     is_relay: boolean;
     quantity: number;
+    initial_qty?: number;
 }
 
 function beep() {
@@ -38,8 +39,11 @@ function beep() {
     } catch (_) {}
 }
 
-export default function Edit({ shopping, products, racks, shoppingLocations }: any) {
-    const { errors = {} } = usePage().props as any;
+export default function Edit({ shopping, products, racks, shoppingLocations, correction = false }: any) {
+    const { errors = {}, flash = {} } = usePage().props as any;
+    const [reason, setReason] = useState('');
+    const [preview, setPreview] = useState<{ lines: any[]; errors: string[]; ok: boolean } | null>(null);
+    const [previewing, setPreviewing] = useState(false);
 
     const [locationId, setLocationId] = useState(String(shopping.shopping_location_id || ''));
     const [shoppingDate, setShoppingDate] = useState(() => {
@@ -127,20 +131,22 @@ export default function Edit({ shopping, products, racks, shoppingLocations }: a
             (p.stocks || []).forEach((s: any) => {
                 const rid = s.rack_id ? String(s.rack_id) : '';
                 const prefill = useMap[p.id];
+                const preQty = prefill && String(prefill.rack_id) === rid ? prefill.qty : 0;
                 rows.push({
                     product_id: p.id, part_number: p.part_number, name: p.name,
                     stock: s.quantity, rack_id: rid,
                     rack_label: rid ? (rackMap.get(rid)?.code ?? rid) : '⚠ Relay',
                     rack_zone: rid ? (rackMap.get(rid)?.zone ?? '-') : '—',
                     is_relay: !rid,
-                    quantity: prefill && String(prefill.rack_id) === rid ? prefill.qty : 0,
+                    quantity: preQty,
+                    initial_qty: preQty, // qty terkirim saat halaman dibuka (untuk koreksi)
                 });
             });
             if ((p.stocks || []).length === 0) {
                 rows.push({
                     product_id: p.id, part_number: p.part_number, name: p.name,
                     stock: 0, rack_id: '', rack_label: '—', rack_zone: '—',
-                    is_relay: false, quantity: 0,
+                    is_relay: false, quantity: 0, initial_qty: 0,
                 });
             }
         });
@@ -224,13 +230,65 @@ export default function Edit({ shopping, products, racks, shoppingLocations }: a
     }, [tableItems, searchQuery, filterSupplierId, scopedModelIds, products]);
 
     const activeItems = tableItems.filter(i => i.quantity > 0);
-    const overStockItems = activeItems.filter(i => i.quantity > i.stock);
+    // Mode koreksi: qty baru boleh hingga stok + qty terkirim (refund diperbolehkan)
+    const stepperMax = (i: TableItem) => i.stock + (correction ? (i.initial_qty ?? 0) : 0);
+    const overStockItems = activeItems.filter(i => i.quantity > stepperMax(i));
     const hasOverStock = overStockItems.length > 0;
-    const canSubmit = !submitting && locationId !== '' && !hasOverStock;
+    const canSubmit = !submitting && locationId !== ''
+        && (correction ? reason.trim().length >= 5 && preview?.ok === true : !hasOverStock);
+
+    const buildPayload = () => ({
+        shopping_location_id: locationId,
+        shopping_date: shoppingDate,
+        notes,
+        frame_number: frameNumber || null,
+        is_cripple: isCripple,
+        items: activeItems.map(i => ({ product_id: i.product_id, rack_id: i.rack_id || null, quantity: i.quantity })),
+    });
+
+    const getCsrf = () =>
+        (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '';
+
+    // Pra-tinjau dampak stok (koreksi) — hitung delta tanpa mengubah data
+    const handlePreview = async () => {
+        if (!correction) return;
+        if (reason.trim().length < 5) { alert('Isi alasan koreksi minimal 5 karakter terlebih dahulu.'); return; }
+        setPreviewing(true);
+        try {
+            const res = await fetch(route('shoppings.correct-preview', shopping.id), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrf(), 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ ...buildPayload(), reason }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                const msg = data?.errors ? Object.values(data.errors).flat()[0] : (data?.message || `HTTP ${res.status}`);
+                setPreview({ lines: [], errors: [String(msg)], ok: false });
+            } else {
+                setPreview(data);
+            }
+        } catch (err: any) {
+            setPreview({ lines: [], errors: [err.message || 'Gagal pra-tinjau.'], ok: false });
+        } finally {
+            setPreviewing(false);
+        }
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!canSubmit) return;
+
+        if (correction) {
+            const diffLines = (preview?.lines || []).filter((l: any) => l.delta !== 0);
+            const confirmMsg = `Terapkan KOREKSI shopping ini?\n\nAlasan: ${reason}\n${diffLines.length} baris berdampak stok. Stok akan disesuaikan otomatis & tercatat di riwayat.\n\nLanjutkan?`;
+            if (!confirm(confirmMsg)) return;
+            setSubmitting(true);
+            router.post(route('shoppings.correct', shopping.id), { ...buildPayload(), reason }, {
+                onFinish: () => setSubmitting(false),
+            });
+            return;
+        }
+
         const loc = shoppingLocations.find((l: any) => String(l.id) === String(locationId));
         const itemCount = activeItems.length;
         const crippleNote = isCripple ? ' (barang ditandai CRIPPLE — part tidak lengkap)' : '';
@@ -239,20 +297,24 @@ export default function Edit({ shopping, products, racks, shoppingLocations }: a
             : `Konfirmasi perubahan Shopping ke "${loc?.name}" tanpa item?`;
         if (!confirm(msg)) return;
         setSubmitting(true);
-        router.put(route('shoppings.update', shopping.id), {
-            shopping_location_id: locationId,
-            shopping_date: shoppingDate,
-            notes,
-            frame_number: frameNumber || null,
-            is_cripple: isCripple,
-            items: activeItems.map(i => ({ product_id: i.product_id, rack_id: i.rack_id || null, quantity: i.quantity })),
-        }, { onFinish: () => setSubmitting(false) });
+        router.put(route('shoppings.update', shopping.id), buildPayload(), { onFinish: () => setSubmitting(false) });
     };
 
     return (
         <>
             <Head title={`Edit Shopping - ${shopping.shopping_location?.name || ''}`} />
             <PageBreadcrumb pageTitle="Edit Shopping" />
+
+            {correction && (
+                <div className="mb-4">
+                    <Alert variant="warning" title="Mode Koreksi" message="Shopping ini sudah dikirim — stok akan disesuaikan otomatis mengikuti perubahan. Alasan wajib diisi, perubahan tercatat di riwayat koreksi." />
+                    {flash?.success && <div className="mt-2"><Alert variant="success" title="Berhasil" message={flash.success} /></div>}
+                    {flash?.error && <div className="mt-2"><Alert variant="error" title="Gagal" message={flash.error} /></div>}
+                    {Object.keys(errors).length > 0 && (
+                        <div className="mt-2"><Alert variant="error" title="Periksa input" message={Object.values(errors).flat().join('; ')} /></div>
+                    )}
+                </div>
+            )}
 
             <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
@@ -318,6 +380,20 @@ export default function Edit({ shopping, products, racks, shoppingLocations }: a
                                 </p>
                             </div>
 
+                            {correction && (
+                                <div>
+                                    <Label>Alasan Koreksi *</Label>
+                                    <textarea
+                                        value={reason}
+                                        onChange={(e) => setReason(e.target.value)}
+                                        rows={2}
+                                        className="w-full rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-gray-800 px-3 py-2 text-sm"
+                                        placeholder="Wajib diisi — contoh: salah ketik qty, part salah, retur sebagian"
+                                    />
+                                    {errors.reason && <p className="mt-1 text-sm text-red-500">{errors.reason}</p>}
+                                </div>
+                            )}
+
                             <Button onClick={() => { setScanTarget('part'); setScannerOpen(true); }} className="w-full" type="button">
                                 📷 Scan Part / QR Code
                             </Button>
@@ -369,7 +445,7 @@ export default function Edit({ shopping, products, racks, shoppingLocations }: a
                                                     <QtyStepper
                                                         value={item.quantity}
                                                         onChange={(n) => updateItem(item.product_id, item.rack_id, 'quantity', n)}
-                                                        max={item.stock}
+                                                        max={stepperMax(item)}
                                                     />
                                                 </td>
                                                 <td className="px-2 py-2.5">
@@ -411,7 +487,7 @@ export default function Edit({ shopping, products, racks, shoppingLocations }: a
                                                 <QtyStepper
                                                     value={item.quantity}
                                                     onChange={(n) => updateItem(item.product_id, item.rack_id, 'quantity', n)}
-                                                    max={item.stock}
+                                                    max={stepperMax(item)}
                                                 />
                                             </div>
                                         </div>
@@ -496,7 +572,7 @@ export default function Edit({ shopping, products, racks, shoppingLocations }: a
                                                     <QtyStepper
                                                         value={item.quantity}
                                                         onChange={(n) => updateItem(item.product_id, item.rack_id, 'quantity', n)}
-                                                        max={item.stock}
+                                                        max={stepperMax(item)}
                                                     />
                                                 </td>
                                             </tr>
@@ -525,7 +601,7 @@ export default function Edit({ shopping, products, racks, shoppingLocations }: a
                                             <QtyStepper
                                                 value={item.quantity}
                                                 onChange={(n) => updateItem(item.product_id, item.rack_id, 'quantity', n)}
-                                                max={item.stock}
+                                                max={stepperMax(item)}
                                             />
                                         </div>
                                     </div>
@@ -537,6 +613,54 @@ export default function Edit({ shopping, products, racks, shoppingLocations }: a
                     </ComponentCard>
                     </div>
                 </div>
+
+                {/* Pra-tinjau dampak stok (koreksi) */}
+                {correction && preview && (
+                    <div className="mt-4 rounded-xl border border-[#E9ECEF] dark:border-gray-700 p-4">
+                        <div className="flex items-center justify-between mb-3">
+                            <h4 className="text-sm font-semibold text-gray-800 dark:text-white/90">Pra-tinjau Dampak Stok</h4>
+                            {preview.ok ? (
+                                <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">✓ Stok mencukupi</span>
+                            ) : (
+                                <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">✗ Tidak bisa diterapkan</span>
+                            )}
+                        </div>
+                        {preview.errors.length > 0 && (
+                            <ul className="mb-3 space-y-1 text-xs text-red-600 dark:text-red-400">
+                                {preview.errors.map((er, i) => <li key={i}>⚠️ {er}</li>)}
+                            </ul>
+                        )}
+                        {preview.lines.length > 0 && (
+                            <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+                                <table className="min-w-full">
+                                    <thead className="bg-[#F8F9FC] dark:bg-gray-800 border-b border-[#E9ECEF] dark:border-gray-700">
+                                        <tr>
+                                            <th className="px-3 py-2 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Part</th>
+                                            <th className="px-3 py-2 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Rak</th>
+                                            <th className="px-3 py-2 text-center text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Stok Skrg</th>
+                                            <th className="px-3 py-2 text-center text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Dampak</th>
+                                            <th className="px-3 py-2 text-center text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">Menjadi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {preview.lines.map((l: any, i: number) => (
+                                            <tr key={i} className="border-b border-[#F1F3F5] dark:border-gray-700">
+                                                <td className="px-3 py-2 text-xs font-mono text-[#1A1D23] dark:text-gray-200">{l.part_number}</td>
+                                                <td className="px-3 py-2 text-xs font-mono text-[#1A1D23] dark:text-gray-200">{l.rack_code}</td>
+                                                <td className="px-3 py-2 text-xs text-center tabular-nums text-[#6C757D]">{l.current}</td>
+                                                <td className={`px-3 py-2 text-xs text-center font-semibold tabular-nums ${l.delta > 0 ? 'text-green-600' : l.delta < 0 ? 'text-red-600' : 'text-gray-400'}`}>
+                                                    {l.delta > 0 ? `+${l.delta}` : l.delta}
+                                                </td>
+                                                <td className="px-3 py-2 text-xs text-center tabular-nums text-[#1A1D23] dark:text-gray-200">{l.result}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                        <p className="mt-2 text-[11px] text-gray-400">Dampak positif = stok kembali ke rak (refund), negatif = stok berkurang.</p>
+                    </div>
+                )}
 
                 {/* Sticky action footer — di luar grid, tetap di dalam <form> */}
                 <div className="sticky bottom-4 z-10 mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E9ECEF] bg-white px-5 py-4 shadow-lg dark:border-gray-700 dark:bg-gray-900">
@@ -550,9 +674,20 @@ export default function Edit({ shopping, products, racks, shoppingLocations }: a
                             </Badge>
                         )}
                     </div>
-                    <Button type="button" onClick={handleSubmit} disabled={!canSubmit || submitting} icon={<CheckIcon className="w-4 h-4" />}>
-                        {submitting ? 'Menyimpan...' : hasOverStock ? 'Tidak Bisa Diproses' : 'Simpan Perubahan'}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        {correction && (
+                            <Button type="button" variant="outline" onClick={handlePreview} disabled={previewing || submitting || reason.trim().length < 5}>
+                                {previewing ? 'Menghitung...' : preview ? '🔄 Ulangi Pra-tinjau' : '🔍 Pra-tinjau Dampak Stok'}
+                            </Button>
+                        )}
+                        <Button type="button" onClick={handleSubmit} disabled={!canSubmit || submitting} icon={<CheckIcon className="w-4 h-4" />}>
+                            {submitting
+                                ? 'Menyimpan...'
+                                : correction
+                                    ? (preview?.ok ? 'Terapkan Koreksi' : 'Jalankan Pra-tinjau dulu')
+                                    : hasOverStock ? 'Tidak Bisa Diproses' : 'Simpan Perubahan'}
+                        </Button>
+                    </div>
                 </div>
             </form>
 

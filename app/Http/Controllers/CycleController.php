@@ -18,6 +18,7 @@ use App\Services\ImportExport\Exports\CycleExporter;
 use App\Services\ImportExport\Imports\CycleImporter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class CycleController extends Controller
@@ -188,6 +189,9 @@ class CycleController extends Controller
             'lastUsedRacks' => $lastUsedRacks,
             // Dari modal pemilih "Terima Barang" (?receive=1) → langsung buka form receive
             'autoReceive' => (bool) $request->query('receive'),
+            // Riwayat koreksi + izin (tombol Koreksi hanya utk user yg boleh correct)
+            'corrections' => $cycle->corrections()->with('user:id,name')->orderByDesc('id')->get(),
+            'canCorrect' => auth()->user()->can('correct cycles'),
         ]);
     }
 
@@ -429,5 +433,243 @@ class CycleController extends Controller
         }
 
         return redirect()->route('cycles.show', $cycle)->with('success', 'Barang diterima. Stock diperbarui.');
+    }
+
+    // ── KOREKSI cycle yang SUDAH diterima (khusus permission correct cycles) ──
+    // Prinsip anti-abuse: alasan wajib, delta stok otomatis (received/rak),
+    // atomic + lock, ditolak bila stok tidak cukup, tercatat di riwayat.
+
+    private function validateCycleCorrection(Request $request): array
+    {
+        $validated = $request->validate([
+            'reason' => 'required|string|min:5|max:500',
+            'items' => 'required|array|min:1',
+            'items.*.id' => 'required|exists:cycle_items,id',
+            'items.*.quantity' => 'required|integer|min:0',
+            'items.*.received_quantity' => 'required|integer|min:0|max:1000000',
+            'items.*.rack_id' => 'nullable|exists:racks,id',
+            'items.*.notes' => 'nullable|string|max:200',
+        ]);
+
+        return $validated;
+    }
+
+    /** Snapshot item cycle (doc/received/rak) untuk log & delta. */
+    private function cycleItemSnapshot($items): array
+    {
+        return $items->map(fn ($i) => [
+            'id' => $i->id,
+            'product_id' => $i->product_id,
+            'part_number' => $i->product?->part_number ?? '#'.$i->product_id,
+            'product_name' => $i->product?->name ?? '',
+            'rack_id' => $i->rack_id,
+            'rack_code' => $i->rack?->code ?? 'RELAY',
+            'quantity' => (int) $i->quantity,
+            'received_quantity' => (int) $i->received_quantity,
+        ])->values()->all();
+    }
+
+    /**
+     * Rencana delta stok dari perubahan received/rak per item (produk tetap).
+     * Key: product_id|rack_id → delta (positif = stok bertambah).
+     */
+    private function cycleDeltaPlan(array $oldSnap, array $newItems, $cycleItems): array
+    {
+        $byId = collect($cycleItems)->keyBy('id');
+        $delta = [];
+
+        foreach ($newItems as $row) {
+            $item = $byId->get($row['id']);
+            if (! $item) {
+                continue;
+            }
+            $productId = $item->product_id;
+            $oldRecv = (int) $item->received_quantity;
+            $newRecv = (int) $row['received_quantity'];
+            $oldRack = $item->rack_id;
+            $newRack = $row['rack_id'] ?? null;
+
+            // Kembalikan ke rak lama (-) lalu tambah ke rak baru (+)
+            $oldKey = $productId.'|'.($oldRack ?? 'null');
+            $delta[$oldKey] ??= ['product_id' => $productId, 'rack_id' => $oldRack, 'delta' => 0];
+            $delta[$oldKey]['delta'] -= $oldRecv;
+
+            $newKey = $productId.'|'.($newRack ?? 'null');
+            $delta[$newKey] ??= ['product_id' => $productId, 'rack_id' => $newRack, 'delta' => 0];
+            $delta[$newKey]['delta'] += $newRecv;
+        }
+
+        return array_values($delta);
+    }
+
+    /** Preview koreksi cycle — hitung dampak stok tanpa mengubah apa pun. */
+    public function correctPreview(Request $request, Cycle $cycle)
+    {
+        abort_unless(auth()->user()->can('correct cycles'), 403);
+
+        if ($cycle->status === 'draft') {
+            throw ValidationException::withMessages(['reason' => 'Cycle draft gunakan Edit biasa, bukan koreksi.']);
+        }
+
+        $validated = $this->validateCycleCorrection($request);
+
+        $items = $cycle->items()->with(['product:id,part_number,name', 'rack:id,code'])->get();
+        $oldSnap = $this->cycleItemSnapshot($items);
+        $plan = $this->cycleDeltaPlan($oldSnap, $validated['items'], $items);
+
+        [$lines, $errors] = $this->cycleDeltaLines($plan);
+
+        return response()->json([
+            'lines' => $lines,
+            'errors' => $errors,
+            'ok' => empty($errors),
+        ]);
+    }
+
+    private function cycleDeltaLines(array $plan): array
+    {
+        $lines = [];
+        $errors = [];
+
+        $products = Product::whereIn('id', collect($plan)->pluck('product_id'))
+            ->get(['id', 'part_number', 'name'])->keyBy('id');
+        $racks = Rack::whereIn('id', collect($plan)->pluck('rack_id')->filter())
+            ->get(['id', 'code'])->keyBy('id');
+
+        foreach ($plan as $row) {
+            $product = $products->get($row['product_id']);
+            $rack = $row['rack_id'] ? $racks->get($row['rack_id']) : null;
+            $rackCode = $rack?->code ?? ($row['rack_id'] === null ? 'RELAY' : '?');
+            $stock = Stock::where('product_id', $row['product_id'])
+                ->where('rack_id', $row['rack_id'])
+                ->first();
+            $current = $stock?->quantity ?? 0;
+            $result = $current + $row['delta'];
+
+            $lines[] = [
+                'part_number' => $product->part_number ?? '',
+                'product_name' => $product->name ?? '',
+                'rack_code' => $rackCode,
+                'current' => (int) $current,
+                'delta' => (int) $row['delta'],
+                'result' => $result,
+            ];
+
+            if ($result < 0) {
+                $errors[] = "Stok tidak cukup untuk dikembalikan: {$product?->name} ({$product?->part_number}) di rak {$rackCode} — tersedia {$current}, perlu dikurangi ".abs($row['delta']);
+            }
+        }
+
+        return [$lines, $errors];
+    }
+
+    /** Terapkan koreksi cycle final secara atomik. */
+    public function correct(Request $request, Cycle $cycle)
+    {
+        abort_unless(auth()->user()->can('correct cycles'), 403);
+
+        if ($cycle->status === 'draft') {
+            return back()->with('error', 'Cycle draft gunakan Edit biasa.');
+        }
+
+        $validated = $this->validateCycleCorrection($request);
+
+        // Qty dokumen tidak boleh kurang dari qty yang sudah diterima
+        $itemIds = collect($validated['items'])->pluck('id');
+        $cycleItems = $cycle->items()->whereIn('id', $itemIds)->get()->keyBy('id');
+        foreach ($validated['items'] as $row) {
+            $item = $cycleItems->get($row['id']);
+            if (! $item) {
+                return back()->with('error', 'Ada item yang bukan milik cycle ini.');
+            }
+            if ((int) $row['quantity'] < (int) $row['received_quantity']) {
+                return back()->with('error', "Qty dokumen tidak boleh kurang dari qty diterima untuk item #{$item->product?->part_number}.");
+            }
+        }
+
+        try {
+            DB::transaction(function () use ($validated, $cycle, $itemIds) {
+                $locked = Cycle::where('id', $cycle->id)->lockForUpdate()->firstOrFail();
+
+                $items = $locked->items()->with(['product:id,part_number,name', 'rack:id,code'])->get();
+                $oldSnap = $this->cycleItemSnapshot($items);
+                $plan = $this->cycleDeltaPlan($oldSnap, $validated['items'], $items);
+
+                foreach ($plan as $row) {
+                    $stock = Stock::where('product_id', $row['product_id'])
+                        ->where('rack_id', $row['rack_id'])
+                        ->lockForUpdate()
+                        ->first();
+
+                    $current = $stock?->quantity ?? 0;
+                    $result = $current + $row['delta'];
+
+                    if ($result < 0) {
+                        $rackLabel = $row['rack_id'] !== null ? 'rak #'.$row['rack_id'] : 'RELAY';
+                        throw new \RuntimeException(
+                            "Stok tidak cukup untuk dikembalikan: stok {$rackLabel} hanya {$current}, perlu dikurangi ".abs($row['delta'])
+                        );
+                    }
+
+                    if ($row['delta'] !== 0) {
+                        if (! $stock) {
+                            $stock = Stock::create([
+                                'product_id' => $row['product_id'],
+                                'rack_id' => $row['rack_id'],
+                                'quantity' => 0,
+                            ]);
+                        }
+                        $stock->quantity = $result;
+                        $stock->save();
+                    }
+                }
+
+                foreach ($validated['items'] as $row) {
+                    $item = $items->firstWhere('id', (int) $row['id']);
+                    if (! $item) {
+                        continue;
+                    }
+                    $item->update([
+                        'quantity' => (int) $row['quantity'],
+                        'received_quantity' => (int) $row['received_quantity'],
+                        'rack_id' => $row['rack_id'] ?? null,
+                        'notes' => $row['notes'] ?? null,
+                    ]);
+                }
+
+                // Status cycle mengikuti kelengkapan (seperti receive)
+                $remaining = $locked->items()->whereRaw('received_quantity < quantity')->count();
+                $locked->update([
+                    'status' => $remaining === 0 ? 'completed' : 'receiving',
+                    'received_at' => $remaining === 0 ? now() : null,
+                ]);
+
+                $afterSnap = $this->cycleItemSnapshot(
+                    $locked->items()->with(['product:id,part_number,name', 'rack:id,code'])->get()
+                );
+                [$lines, ] = $this->cycleDeltaLines($plan);
+
+                \App\Models\StockCorrection::create([
+                    'correctable_type' => Cycle::class,
+                    'correctable_id' => $locked->id,
+                    'user_id' => auth()->id(),
+                    'reason' => $validated['reason'],
+                    'before' => $oldSnap,
+                    'after' => $afterSnap,
+                    'deltas' => $lines,
+                ]);
+            });
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Koreksi gagal: '.$e->getMessage());
+        }
+
+        try {
+            event(new StockChanged(supplierId: $cycle->supplier_id));
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        return redirect()->route('cycles.show', $cycle)
+            ->with('success', 'Koreksi cycle diterapkan — stok disesuaikan & tercatat di riwayat.');
     }
 }
