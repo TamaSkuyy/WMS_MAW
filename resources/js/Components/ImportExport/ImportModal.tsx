@@ -19,6 +19,10 @@ interface ImportModalProps {
   title: string;
   extraNode?: React.ReactNode;
   extraParams?: () => Record<string, string>;
+  /** Label tombol aksi tambahan yang muncul SETELAH import selesai (mis. "Terima Barang"). */
+  finishedActionLabel?: string;
+  /** Dipanggil saat tombol aksi diklik — modal import ditutup TANPA reload (onComplete dilewati). */
+  onFinishedAction?: () => void;
 }
 
 function getCsrfToken(): string {
@@ -51,7 +55,7 @@ function extractError(text: string, status: number): string {
   return `Server error (HTTP ${status})`;
 }
 
-export default function ImportModal({ isOpen, onClose, onComplete, importUrl, previewUrl, templateUrl, fields, title, extraNode, extraParams }: ImportModalProps) {
+export default function ImportModal({ isOpen, onClose, onComplete, importUrl, previewUrl, templateUrl, fields, title, extraNode, extraParams, finishedActionLabel, onFinishedAction }: ImportModalProps) {
   const [step, setStep] = useState<'upload' | 'mapping' | 'importing'>('upload');
   const [file, setFile] = useState<File | null>(null);
   const [headers, setHeaders] = useState<string[]>([]);
@@ -170,6 +174,17 @@ export default function ImportModal({ isOpen, onClose, onComplete, importUrl, pr
     setImportFinished(false);
   };
 
+  // Tombol aksi tambahan (mis. "Terima Barang"): tutup modal import TANPA reload
+  // data (onComplete dilewati), lalu jalankan aksi lanjutan dari halaman.
+  const handleFinishedAction = () => {
+    onClose();
+    setStep('upload');
+    setFile(null);
+    setImportLogId(null);
+    setImportFinished(false);
+    onFinishedAction?.();
+  };
+
   return (
     <div className="fixed inset-0 z-99999 flex items-center justify-center bg-black/50">
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
@@ -283,7 +298,12 @@ export default function ImportModal({ isOpen, onClose, onComplete, importUrl, pr
           {step === 'importing' && importLogId && (
             <div>
               <ImportProgress importLogId={importLogId} onFinished={() => setImportFinished(true)} />
-              <div className="flex justify-end mt-6">
+              <div className="flex justify-end gap-2 mt-6">
+                {importFinished && finishedActionLabel && (
+                  <Button variant="outline" onClick={handleFinishedAction}>
+                    {finishedActionLabel}
+                  </Button>
+                )}
                 <Button variant="outline" onClick={handleComplete}>
                   {importFinished ? 'Close & Refresh' : 'Close'}
                 </Button>

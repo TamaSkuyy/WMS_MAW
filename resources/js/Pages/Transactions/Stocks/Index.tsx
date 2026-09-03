@@ -1,17 +1,28 @@
 import React from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import EmptyState from '../../../Tailadmin/components/common/EmptyState';
 import Pagination from '../../../Tailadmin/components/common/Pagination';
+import Button from '../../../Tailadmin/components/ui/button/Button';
 
 export default function Index({ stocks }: any) {
+    const permissions = (usePage().props.auth as any)?.user?.permissions || [];
+    const canOpname = permissions.includes('stock opname');
+
     return (
         <>
             <Head title="Inventori Stok" />
             <PageBreadcrumb pageTitle="Inventori Stok" />
             <ComponentCard title="Stok Saat Ini">
+                {canOpname && (
+                    <div className="mb-4 flex justify-end">
+                        <Link href={route('stock-opname.index')}>
+                            <Button variant="outline">📋 Stock Opname</Button>
+                        </Link>
+                    </div>
+                )}
                 {stocks.data.length === 0 ? (
                     <EmptyState
                         icon="📊"

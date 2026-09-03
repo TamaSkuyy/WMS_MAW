@@ -57,24 +57,49 @@ export default function Create({ products, racks, shoppingLocations }: any) {
     // Filters
     const [searchQuery, setSearchQuery] = useState('');
     const [filterSupplierId, setFilterSupplierId] = useState('');
-    const [filterVehicleModelId, setFilterVehicleModelId] = useState('');
+    // Fitur lama dikembalikan: pilih Tipe Mobil (unit) + Suffix → part otomatis difilter untuk mobil tsb
+    const [unitFilter, setUnitFilter] = useState('');
+    const [suffixFilter, setSuffixFilter] = useState('');
 
-    const { suppliers, vehicleModels } = useMemo(() => {
+    const { suppliers, units } = useMemo(() => {
         const sMap = new Map<number, { id: number; name: string }>();
-        const vMap = new Map<number, { id: number; label: string }>();
+        const uMap = new Map<string, string>();
         products.forEach((p: any) => {
             if (p.supplier && !sMap.has(p.supplier.id)) sMap.set(p.supplier.id, p.supplier);
             if (p.vehicle_model) {
                 const vm = p.vehicle_model;
-                const label = `${vm.brand} ${vm.name}${vm.suffix ? ' ' + vm.suffix : ''}`;
-                if (!vMap.has(vm.id)) vMap.set(vm.id, { id: vm.id, label });
+                uMap.set(`${vm.brand} ${vm.name}`, `${vm.brand} ${vm.name}`);
             }
         });
         return {
             suppliers: Array.from(sMap.values()).sort((a, b) => a.name.localeCompare(b.name)),
-            vehicleModels: Array.from(vMap.values()).sort((a, b) => a.label.localeCompare(b.label)),
+            units: Array.from(uMap.values()).sort((a, b) => a.localeCompare(b)),
         };
     }, [products]);
+
+    // Suffix yang tersedia untuk tipe mobil terpilih (kosong = "Standar")
+    const unitSuffixes = useMemo(() => {
+        if (!unitFilter) return [];
+        const set = new Set<string>();
+        products.forEach((p: any) => {
+            const vm = p.vehicle_model;
+            if (vm && `${vm.brand} ${vm.name}` === unitFilter) set.add(vm.suffix || '');
+        });
+        return Array.from(set).sort((a, b) => a.localeCompare(b));
+    }, [products, unitFilter]);
+
+    // Scope filter: hanya part milik tipe mobil (unit) terpilih (+ suffix bila dipilih)
+    const scopedModelIds = useMemo<Set<number> | null>(() => {
+        if (!unitFilter) return null;
+        const ids = new Set<number>();
+        products.forEach((p: any) => {
+            const vm = p.vehicle_model;
+            if (vm && `${vm.brand} ${vm.name}` === unitFilter && (!suffixFilter || (vm.suffix || '') === suffixFilter)) {
+                ids.add(vm.id);
+            }
+        });
+        return ids;
+    }, [products, unitFilter, suffixFilter]);
 
     const rackMap = useMemo(() => {
         const map = new Map<string, { code: string; zone: string }>();
@@ -180,14 +205,13 @@ export default function Create({ products, racks, shoppingLocations }: any) {
             );
             items = items.filter(i => prodIds.has(i.product_id));
         }
-        if (filterVehicleModelId) {
-            const prodIds = new Set(
-                products.filter((p: any) => String(p.vehicle_model_id) === String(filterVehicleModelId)).map((p: any) => p.id)
-            );
-            items = items.filter(i => prodIds.has(i.product_id));
+        if (scopedModelIds) {
+            const vmByProd = new Map<number, number>();
+            products.forEach((p: any) => { if (p.vehicle_model_id) vmByProd.set(p.id, p.vehicle_model_id); });
+            items = items.filter(i => { const vid = vmByProd.get(i.product_id); return vid !== undefined && scopedModelIds.has(vid); });
         }
         return items;
-    }, [tableItems, searchQuery, filterSupplierId, filterVehicleModelId, products]);
+    }, [tableItems, searchQuery, filterSupplierId, scopedModelIds, products]);
 
     const activeItems = tableItems.filter(i => i.quantity > 0);
     const overStockItems = activeItems.filter(i => i.quantity > i.stock);
@@ -404,18 +428,34 @@ export default function Create({ products, racks, shoppingLocations }: any) {
                                         options={suppliers.map((s: any) => ({ value: s.id, label: s.name }))}
                                         value={filterSupplierId} onChange={(v) => setFilterSupplierId(v as string)} placeholder="Semua supplier" />
                                 </div>
-                                <div className="w-full sm:w-56">
-                                    <Label>Model</Label>
+                                <div className="w-full sm:w-52">
+                                    <Label>Tipe Mobil</Label>
                                     <SearchableSelect
-                                        options={vehicleModels.map((v: any) => ({ value: v.id, label: v.label }))}
-                                        value={filterVehicleModelId} onChange={(v) => setFilterVehicleModelId(v as string)} placeholder="Semua model" />
+                                        options={units.map((u: string) => ({ value: u, label: u }))}
+                                        value={unitFilter}
+                                        onChange={(v) => { setUnitFilter(v as string); setSuffixFilter(''); }}
+                                        placeholder="Semua tipe mobil" />
                                 </div>
-                                {(searchQuery || filterSupplierId || filterVehicleModelId) && (
-                                    <button type="button" onClick={() => { setSearchQuery(''); setFilterSupplierId(''); setFilterVehicleModelId(''); }} className="mb-1 text-sm text-red-500 hover:text-red-700">✕ Reset</button>
+                                <div className="w-full sm:w-40">
+                                    <Label>Suffix</Label>
+                                    <SearchableSelect
+                                        options={unitSuffixes.map((s: string) => ({ value: s, label: s || 'Standar' }))}
+                                        value={suffixFilter}
+                                        onChange={(v) => setSuffixFilter(v as string)}
+                                        placeholder={unitFilter ? 'Semua suffix' : 'Pilih tipe dulu'}
+                                    />
+                                </div>
+                                {(searchQuery || filterSupplierId || unitFilter || suffixFilter) && (
+                                    <button type="button" onClick={() => { setSearchQuery(''); setFilterSupplierId(''); setUnitFilter(''); setSuffixFilter(''); }} className="mb-1 text-sm text-red-500 hover:text-red-700">✕ Reset</button>
                                 )}
                             </div>
+                            {scopedModelIds && unitFilter && (
+                                <p className="text-xs font-medium text-brand-600">
+                                    🚗 Menampilkan part khusus {unitFilter}{suffixFilter ? ` ${suffixFilter}` : ''}
+                                </p>
+                            )}
                         </div>
-                        {(!searchQuery && !filterSupplierId && !filterVehicleModelId) ? (
+                        {(!searchQuery && !filterSupplierId && !unitFilter && !suffixFilter) ? (
                             <p className="text-sm text-gray-400 py-4 text-center">🔍 Gunakan filter di atas untuk mencari produk</p>
                         ) : filteredItems.length === 0 ? (
                             <p className="text-sm text-gray-400 py-4 text-center">Tidak ada produk ditemukan</p>

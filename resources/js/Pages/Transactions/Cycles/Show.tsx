@@ -23,11 +23,12 @@ function beep() {
     } catch (_) {}
 }
 
-export default function Show({ cycle, racks, lastUsedRacks }: any) {
+export default function Show({ cycle, racks, lastUsedRacks, autoReceive = false }: any) {
     const { errors = {}, flash = {} } = usePage().props as any;
     const permissions = (usePage().props.auth as any)?.user?.permissions || [];
     const canEdit = permissions.includes('edit cycles');
-    const [isReceiving, setIsReceiving] = useState(false);
+    // autoReceive=true saat datang dari modal pemilih "Terima Barang" (?receive=1)
+    const [isReceiving, setIsReceiving] = useState(autoReceive === true && cycle.status !== 'completed');
     const [submitting, setSubmitting] = useState(false);
     const [items, setItems] = useState<any[]>(
         cycle.items.map((item: any) => {

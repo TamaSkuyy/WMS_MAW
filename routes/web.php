@@ -21,6 +21,7 @@ use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\ShoppingController;
 use App\Http\Controllers\ShoppingLocationController;
 use App\Http\Controllers\StockController;
+use App\Http\Controllers\StockOpnameController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplierPerformanceController;
 use App\Http\Controllers\TvDashboardController;
@@ -368,6 +369,11 @@ Route::middleware('auth')->group(function () {
         Route::get('cycles/export', [CycleController::class, 'export'])->name('cycles.export');
     });
 
+    // Receive picker (static path — MUST be before cycles/{cycle})
+    Route::middleware(PermissionMiddleware::using('receive cycles'))->group(function () {
+        Route::get('cycles/receive-picker', [CycleController::class, 'receivePicker'])->name('cycles.receive-picker');
+    });
+
     // View (parameterized — must come AFTER static routes)
     Route::middleware(PermissionMiddleware::using('view cycles'))->group(function () {
         Route::get('cycles', [CycleController::class, 'index'])->name('cycles.index');
@@ -436,6 +442,17 @@ Route::middleware('auth')->group(function () {
     // ── Transactions: Stocks ────────────────────────────────
     Route::middleware(PermissionMiddleware::using('view stocks'))->group(function () {
         Route::resource('stocks', StockController::class)->only(['index']);
+    });
+
+    // ── Transactions: Stock Opname ───────────────────────────
+    Route::middleware(PermissionMiddleware::using('stock opname'))->group(function () {
+        Route::get('stock-opname', [StockOpnameController::class, 'index'])->name('stock-opname.index');
+        // Static paths sebelum parameterized
+        Route::get('stock-opname/template', [StockOpnameController::class, 'template'])->name('stock-opname.template');
+        Route::post('stock-opname/preview', [StockOpnameController::class, 'preview'])->name('stock-opname.preview');
+        Route::post('stock-opname/apply', [StockOpnameController::class, 'apply'])->name('stock-opname.apply');
+        // Parameterized — last
+        Route::get('stock-opname/{stockOpname}/items', [StockOpnameController::class, 'items'])->name('stock-opname.items');
     });
 
     // ── Reports ─────────────────────────────────────────────

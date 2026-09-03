@@ -118,7 +118,58 @@ class CycleController extends Controller
         return redirect()->route('cycles.show', $cycle)->with('success', 'Cycle created.');
     }
 
-    public function show(Cycle $cycle)
+    /**
+     * Data untuk modal pemilih "Terima Barang": daftar cycle yang siap
+     * diterima — status draft (hasil import/manual, belum diterima) dan
+     * receiving yang masih punya sisa terima (received_quantity < quantity).
+     *
+     * Filter: supplier_id (mitra) + rentang delivery_date (tanggal dokumen).
+     * Kolom "actual/plan" = total received_quantity / total quantity per cycle.
+     */
+    public function receivePicker(Request $request)
+    {
+        abort_unless(auth()->user()->can('receive cycles'), 403);
+
+        $validated = $request->validate([
+            'supplier_id' => 'nullable|exists:suppliers,id',
+            'date_from'   => 'nullable|date',
+            'date_to'     => 'nullable|date',
+        ]);
+
+        $cycles = Cycle::query()
+            ->with('supplier:id,name')
+            ->withCount('items')
+            ->withSum('items', 'quantity')
+            ->withSum('items', 'received_quantity')
+            ->where(function ($q) {
+                $q->where('status', 'draft')
+                  ->orWhere(function ($q2) {
+                      $q2->where('status', 'receiving')
+                         ->whereHas('items', fn ($qi) => $qi->whereColumn('received_quantity', '<', 'quantity'));
+                  });
+            })
+            ->when($validated['supplier_id'] ?? null, fn ($q, $id) => $q->where('supplier_id', $id))
+            ->when($validated['date_from'] ?? null, fn ($q, $d) => $q->whereDate('delivery_date', '>=', $d))
+            ->when($validated['date_to'] ?? null, fn ($q, $d) => $q->whereDate('delivery_date', '<=', $d))
+            ->orderBy('delivery_date')
+            ->orderBy('id')
+            ->get();
+
+        return response()->json([
+            'cycles' => $cycles->map(fn (Cycle $c) => [
+                'id'            => $c->id,
+                'cycle_number'  => $c->cycle_number,
+                'supplier'      => $c->supplier?->name ?? '-',
+                'delivery_date' => optional($c->delivery_date)->format('Y-m-d'),
+                'status'        => $c->status,
+                'items_count'   => $c->items_count,
+                'plan_qty'      => (int) $c->items_sum_quantity,
+                'received_qty'  => (int) $c->items_sum_received_quantity,
+            ]),
+        ]);
+    }
+
+    public function show(Request $request, Cycle $cycle)
     {
         $cycle->load(['supplier', 'creator', 'carrier', 'items.product.vehicleModel', 'items.product.category', 'items.product.defaultRack', 'items.receiveLogs.user']);
 
@@ -135,6 +186,8 @@ class CycleController extends Controller
             'cycle' => $cycle,
             'racks' => Rack::orderBy('zone')->orderBy('code')->get(),
             'lastUsedRacks' => $lastUsedRacks,
+            // Dari modal pemilih "Terima Barang" (?receive=1) → langsung buka form receive
+            'autoReceive' => (bool) $request->query('receive'),
         ]);
     }
 

@@ -9,13 +9,16 @@ import EmptyState from '../../../Tailadmin/components/common/EmptyState';
 import Pagination from '../../../Tailadmin/components/common/Pagination';
 import ImportExportToolbar from '../../../Components/ImportExport/ImportExportToolbar';
 import ImportModal from '../../../Components/ImportExport/ImportModal';
+import ReceivePickerModal from '../../../Components/Cycles/ReceivePickerModal';
 
 export default function Index({ cycles, suppliers, filters }: any) {
     const permissions = (usePage().props.auth as any)?.user?.permissions || [];
     const canCreate = permissions.includes('create cycles');
     const canEdit = permissions.includes('edit cycles');
     const canDelete = permissions.includes('delete cycles');
+    const canReceive = permissions.includes('receive cycles');
     const [importModalOpen, setImportModalOpen] = useState(false);
+    const [pickerOpen, setPickerOpen] = useState(false);
     const handleDelete = (id: number) => {
         if (confirm('Hapus cycle ini?')) {
             router.delete(route('cycles.destroy', id));
@@ -65,6 +68,9 @@ export default function Index({ cycles, suppliers, filters }: any) {
                         <Button variant="outline">📷 Terima Cepat</Button>
                     </Link>
                     )}
+                    {canReceive && (
+                        <Button variant="outline" onClick={() => setPickerOpen(true)}>🚚 Terima Barang</Button>
+                    )}
                     {canCreate && (<ImportExportToolbar
                         importUrl={route('cycles.import')}
                         previewUrl={route('cycles.import.preview')}
@@ -77,6 +83,8 @@ export default function Index({ cycles, suppliers, filters }: any) {
                     isOpen={importModalOpen}
                     onClose={() => setImportModalOpen(false)}
                     onComplete={() => window.location.reload()}
+                    finishedActionLabel={canReceive ? '🚚 Terima Barang Sekarang' : undefined}
+                    onFinishedAction={() => setPickerOpen(true)}
                     importUrl={route('cycles.import')}
                     previewUrl={route('cycles.import.preview')}
                     templateUrl={route('cycles.import-template')}
@@ -91,6 +99,11 @@ export default function Index({ cycles, suppliers, filters }: any) {
                     ]}
                 />
                 )}
+                <ReceivePickerModal
+                    isOpen={pickerOpen}
+                    onClose={() => setPickerOpen(false)}
+                    suppliers={suppliers}
+                />
                 {cycles.data.length === 0 ? (
                     <EmptyState
                         icon="📥"
