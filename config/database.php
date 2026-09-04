@@ -63,10 +63,12 @@ return [
                 (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
             // Opsi dump utk spatie/laravel-backup (backup:run).
-            // skip_ssl: server MySQL memakai sertifikat self-signed → mysqldump
-            // gagal dgn error 2026 TLS; koneksi dump dibuat non-SSL.
+            // Klien di image (MariaDB client, Debian) tidak mengenal flag
+            // "ssl-mode=DISABLED" yang dikirim setSkipSsl() → pakai --skip-ssl
+            // (dipahami klien MariaDB maupun MySQL) utk hindari error TLS 2026
+            // akibat sertifikat self-signed server MySQL.
             'dump' => [
-                'skip_ssl' => true,
+                'add_extra_option' => '--skip-ssl',
             ],
         ],
 
