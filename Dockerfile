@@ -13,6 +13,12 @@ RUN install-php-extensions \
     intl \
     zip
 
+# mysql client (mysqldump) — dibutuhkan spatie/laravel-backup (backup:run)
+# dan langkah "backup wajib" pada fitur Pemutihan Data.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends default-mysql-client \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
