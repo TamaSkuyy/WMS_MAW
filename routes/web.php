@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CycleController;
+use App\Http\Controllers\DataResetController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeliveryMonitorController;
 use App\Http\Controllers\DeliverySlotController;
@@ -534,6 +535,15 @@ Route::middleware('auth')->group(function () {
             Route::put('permissions/{permission}', [PermissionController::class, 'update'])->name('permissions.update');
             Route::patch('permissions/{permission}', [PermissionController::class, 'update']);
             Route::delete('permissions/{permission}', [PermissionController::class, 'destroy'])->name('permissions.destroy');
+        });
+
+        // Pemutihan Data — superadmin + permission 'reset data' + throttle
+        Route::middleware(PermissionMiddleware::using('reset data'))->group(function () {
+            Route::get('data-reset', [DataResetController::class, 'index'])->name('data-reset.index');
+            Route::post('data-reset/preview', [DataResetController::class, 'preview'])->name('data-reset.preview');
+            Route::post('data-reset/execute', [DataResetController::class, 'execute'])
+                ->middleware('throttle:3,1')
+                ->name('data-reset.execute');
         });
 
         Route::get('/test-broadcast', function () {

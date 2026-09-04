@@ -2,85 +2,85 @@
 
 namespace App\Console\Commands;
 
+use App\Services\DataReset\DataResetService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 /**
- * Pemutihan data transaksi — hanya bisa dijalankan oleh yang punya akses VPS
- * (tanpa UI/permission tambahan). Menghapus SEMUA data gerak/transaksi dan
- * me-reset stok ke 0, tetapi MASTER data (produk, supplier, rak, lokasi,
- * user, role/menu) & jejak audit (activity_log) TETAP.
+ * Pemutihan data transaksi — hanya bisa dijalankan oleh yang punya akses VPS.
+ * Tiga mode (sama dengan halaman web "Pemutihan Data"):
+ *  - tanpa tanggal          : reset TOTAL (transaksi + antrian/cache, stok → 0)
+ *  - --until                : purge riwayat s/d tanggal (stok TETAP)
+ *  - --from / --from+--until: purge riwayat rentang tanggal (stok TETAP)
+ * Master data, user, activity_log & file import selalu TETAP.
  */
 class ResetTransactions extends Command
 {
     protected $signature = 'db:reset-transactions
                             {--force : Skip konfirmasi}
-                            {--keep-stock : Jangan reset quantity stok ke 0}
+                            {--keep-stock : Jangan reset quantity stok ke 0 (hanya utk mode total)}
+                            {--from= : Purge riwayat DARI tanggal YYYY-MM-DD — stok & antrian TETAP}
+                            {--until= : Purge riwayat SAMPAI tanggal YYYY-MM-DD — stok & antrian TETAP}
                             {--dry-run : Tampilkan yang akan dihapus tanpa menghapus apa pun}';
 
-    protected $description = 'Pemutihan data transaksi — hapus semua transaksi & set stok 0 (master data tetap, activity_log tetap)';
-
-    /**
-     * Tabel transaksi/gerak — di-truncate (urut: child dulu, parent belakangan).
-     */
-    private const TRANSACTION_TABLES = [
-        // Log koreksi & opname (baru)
-        'stock_corrections',
-        'stock_opname_items',
-        'stock_opnames',
-
-        // Cycle / penerimaan
-        'receive_logs',
-        'cycle_items',
-        'cycles',
-
-        // Shopping / pengiriman
-        'shopping_items',
-        'shoppings',
-
-        // Riwayat import & notifikasi
-        'import_logs',
-        'notifications',
-    ];
-
-    /**
-     * Antrian & cache — ikut dikosongkan (bukan bagian audit).
-     */
-    private const QUEUE_CACHE_TABLES = [
-        'jobs',
-        'job_batches',
-        'failed_jobs',
-        'cache',
-        'cache_locks',
-        'sessions',
-    ];
+    protected $description = 'Pemutihan data transaksi — reset total (stok 0) atau purge riwayat rentang tanggal (stok tetap)';
 
     public function handle(): int
     {
+        $service = new DataResetService();
+        $from = $this->option('from') ?: null;
+        $until = $this->option('until') ?: null;
+
+        foreach (['from' => $from, 'until' => $until] as $name => $value) {
+            if ($value !== null && ! preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+                $this->error("Format --{$name} salah. Contoh: --{$name}=2026-08-31");
+                return self::FAILURE;
+            }
+        }
+
+        $rangeMode = $from !== null || $until !== null;
+
         $this->warn('╔════════════════════════════════════════════════════════════╗');
-        $this->warn('║  PEMUTIHAN DATA TRANSAKSI                                  ║');
-        $this->warn('║  • Hapus semua transaksi & riwayat gerak                   ║');
-        $this->warn('║  • Set stok = 0 (master data & user TETAP)                 ║');
-        $this->warn('║  • activity_log & file import TETAP (audit)                ║');
+        if ($rangeMode) {
+            $range = trim(($from ?? '').' — '.($until ?? ''), ' —');
+            $this->warn('║  PEMUTIHAN RIWAYAT '.str_pad($range, 44, ' ', STR_PAD_RIGHT).'║');
+            $this->warn('║  • Hapus transaksi tuntas dalam rentang (stok TETAP)    ║');
+        } else {
+            $this->warn('║  PEMUTIHAN DATA TRANSAKSI (TOTAL)                       ║');
+            $this->warn('║  • Hapus semua transaksi & riwayat gerak                ║');
+            $this->warn('║  • Set stok = 0                                         ║');
+        }
+        $this->warn('║  • master data, user, activity_log & file TETAP        ║');
         $this->warn('╚════════════════════════════════════════════════════════════╝');
 
-        $plan = $this->buildPlan();
-
+        // ── Dry run ──────────────────────────────────────────────
         if ($this->option('dry-run')) {
-            $this->info("\n🔍 DRY-RUN — tidak ada yang dihapus. Yang akan dikerjakan:");
-            $this->printPlan($plan, '  akan di-TRUNCATE');
-            if ($plan['reset_stock']) {
-                $this->line('  • stocks.quantity  → di-set 0 (baris tetap ada)');
+            $this->info("\n🔍 DRY-RUN — tidak ada yang dihapus.");
+
+            if ($rangeMode) {
+                foreach ($service->purgeCounts($from, $until) as $label => $n) {
+                    $this->line("  • {$label}: {$n} baris");
+                }
+                $this->line('  • stok TIDAK diubah; antrian/cache TIDAK disentuh');
+            } else {
+                foreach (array_merge($service->transactionTables(), $service->queueCacheTables()) as $table) {
+                    $this->line("  • {$table}  akan di-TRUNCATE");
+                }
+                if (! $this->option('keep-stock')) {
+                    $this->line('  • stocks.quantity → di-set 0 (baris tetap ada)');
+                }
             }
             $this->newLine();
 
             return self::SUCCESS;
         }
 
-        // ── Konfirmasi ────────────────────────────────────────
+        // ── Konfirmasi ───────────────────────────────────────────
         if (! $this->option('force')) {
             $env = app()->environment();
+            $range = trim(($from ?? '').' — '.($until ?? ''), ' —');
+            $question = $rangeMode
+                ? "Hapus riwayat transaksi {$range}? (stok tetap)"
+                : 'Lanjutkan pemutihan data transaksi (reset total)?';
 
             if ($env === 'production') {
                 $confirm = $this->ask('⚠️  Environment PRODUCTION! Ketik "YA" untuk melanjutkan');
@@ -88,73 +88,34 @@ class ResetTransactions extends Command
                     $this->info('Dibatalkan.');
                     return self::SUCCESS;
                 }
-            } elseif (! $this->confirm('Lanjutkan pemutihan data transaksi?', false)) {
+            } elseif (! $this->confirm($question, false)) {
                 $this->info('Dibatalkan.');
                 return self::SUCCESS;
             }
         }
 
-        // ── Truncate transaksi ────────────────────────────────
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
-        try {
-            foreach ($plan['truncate'] as $table) {
-                DB::table($table)->truncate();
+        // ── Eksekusi ─────────────────────────────────────────────
+        if ($rangeMode) {
+            $stats = $service->purge($from, $until);
+            foreach ($stats as $label => $n) {
+                $this->line("  ✓ {$label}: {$n} baris dihapus");
+            }
+            $range = trim(($from ?? '').' — '.($until ?? ''), ' —');
+            $this->newLine();
+            $this->info("✅ Selesai — riwayat {$range} dibersihkan, stok TIDAK diubah.");
+        } else {
+            $result = $service->execute(includeSessions: true, zeroStock: ! $this->option('keep-stock'));
+            foreach ($result['tables'] as $table) {
                 $this->line("  ✓ truncate {$table}");
             }
-
-            // ── Antrian & cache ──────────────────────────────
-            foreach ($plan['queue_cache'] as $table) {
-                DB::table($table)->truncate();
-                $this->line("  ✓ truncate {$table}");
+            if (! $this->option('keep-stock')) {
+                $this->line("  ✓ stocks.quantity di-set 0 ({$result['stock_rows']} baris)");
             }
-        } finally {
-            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            $this->newLine();
+            $this->info('✅ Pemutihan selesai!');
+            $this->line('   Master data, user, role/menu, activity_log, dan file import TETAP.');
         }
-
-        // ── Reset stok ke 0 ───────────────────────────────────
-        if ($plan['reset_stock']) {
-            $updated = DB::table('stocks')->update(['quantity' => 0]);
-            $this->line("  ✓ stocks.quantity di-set 0 ({$updated} baris)");
-        }
-
-        $this->newLine();
-        $this->info('✅ Pemutihan selesai!');
-        $this->line('   Master data, user, role/menu, activity_log, dan file import TETAP.');
-        $this->line('   Jalankan `php artisan optimize:clear` bila perlu, dan restart');
-        $this->line('   queue worker bila ada antrean lama: docker compose ... restart queue');
 
         return self::SUCCESS;
-    }
-
-    private function buildPlan(): array
-    {
-        $truncate = [];
-        foreach (self::TRANSACTION_TABLES as $table) {
-            if (Schema::hasTable($table)) {
-                $truncate[] = $table;
-            }
-        }
-
-        $queueCache = [];
-        foreach (self::QUEUE_CACHE_TABLES as $table) {
-            if (Schema::hasTable($table)) {
-                $queueCache[] = $table;
-            }
-        }
-
-        return [
-            'truncate' => $truncate,
-            'queue_cache' => $queueCache,
-            'reset_stock' => ! $this->option('keep-stock') && Schema::hasTable('stocks'),
-        ];
-    }
-
-    private function printPlan(array $plan, string $action): void
-    {
-        foreach ([$plan['truncate'], $plan['queue_cache']] as $group) {
-            foreach ($group as $table) {
-                $this->line("  • {$table} {$action}");
-            }
-        }
     }
 }
