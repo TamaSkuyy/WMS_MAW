@@ -54,6 +54,7 @@ class WmsRoleSeeder extends Seeder
             'view permissions', 'manage permissions',
             'view menus', 'manage menus',
             'reset data',
+            'view logs',
         ];
 
         foreach ($permissions as $name) {
