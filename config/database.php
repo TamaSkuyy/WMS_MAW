@@ -62,6 +62,12 @@ return [
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
+            // Opsi dump utk spatie/laravel-backup (backup:run).
+            // skip_ssl: server MySQL memakai sertifikat self-signed → mysqldump
+            // gagal dgn error 2026 TLS; koneksi dump dibuat non-SSL.
+            'dump' => [
+                'skip_ssl' => true,
+            ],
         ],
 
         'mariadb' => [
