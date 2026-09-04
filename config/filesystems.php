@@ -38,6 +38,15 @@ return [
             'report' => false,
         ],
 
+        // Backup DB (spatie/laravel-backup) — root = folder host terpisah
+        // yang di-bind-mount ke /backups di container (lihat docker-compose.prod.yml).
+        'backup-db' => [
+            'driver' => 'local',
+            'root' => '/backups',
+            'throw' => false,
+            'report' => false,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

@@ -15,6 +15,9 @@ services:
       - .env.prod
     volumes:
       - storage-vol:/var/www/html/storage
+      # Backup DB (spatie/laravel-backup) → folder host TERPISAH dari storage-vol,
+      # supaya backup tetap aman kalau volume utama bermasalah & mudah diakses dari VPS.
+      - ./backups/db:/backups:rw
     depends_on:
       - redis
       - mysql

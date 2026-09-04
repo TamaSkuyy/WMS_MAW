@@ -157,7 +157,7 @@ return [
              * The disk names on which the backups will be stored.
              */
             'disks' => [
-                'local',
+                'backup-db',
             ],
 
             /*
