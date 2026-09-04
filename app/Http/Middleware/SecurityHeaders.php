@@ -33,22 +33,31 @@ class SecurityHeaders
             );
         }
 
-        // CSP — strict nonce-based, 'strict-dynamic' allows scripts loaded by trusted scripts
-        $response->headers->set(
-            'Content-Security-Policy',
-            implode('; ', [
-                "default-src 'self'",
-                "script-src 'self' 'nonce-{$nonce}' 'strict-dynamic'",
-                "style-src 'self' 'unsafe-inline' fonts.bunny.net fonts.googleapis.com",
-                "img-src 'self' data: blob:",
-                "font-src 'self' fonts.bunny.net fonts.gstatic.com",
-                "connect-src 'self' ws: wss:",
-                "frame-src 'self'",
-                "object-src 'none'",
-                "base-uri 'self'",
-                "form-action 'self'",
-            ])
-        );
+        // Log Viewer (Livewire 3) memakai layout sendiri di luar app.blade.php,
+        // sehingga inline script Livewire tidak bisa membawa nonce CSP aplikasi
+        // (error: blocked inline script script-src-elem). Tool ini internal
+        // superadmin-only → cukup kecualikan CSP di path /log-viewer; header
+        // keamanan lain (X-Frame, nosniff, dll.) tetap dipasang.
+        $isLogViewer = str_starts_with(ltrim($request->path(), '/'), 'log-viewer');
+
+        if (! $isLogViewer) {
+            // CSP — strict nonce-based, 'strict-dynamic' allows scripts loaded by trusted scripts
+            $response->headers->set(
+                'Content-Security-Policy',
+                implode('; ', [
+                    "default-src 'self'",
+                    "script-src 'self' 'nonce-{$nonce}' 'strict-dynamic'",
+                    "style-src 'self' 'unsafe-inline' fonts.bunny.net fonts.googleapis.com",
+                    "img-src 'self' data: blob:",
+                    "font-src 'self' fonts.bunny.net fonts.gstatic.com",
+                    "connect-src 'self' ws: wss:",
+                    "frame-src 'self'",
+                    "object-src 'none'",
+                    "base-uri 'self'",
+                    "form-action 'self'",
+                ])
+            );
+        }
 
         return $response;
     }
