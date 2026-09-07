@@ -250,7 +250,9 @@ class StockOpnameController extends Controller
             throw ValidationException::withMessages(['file' => 'File kosong.']);
         }
 
-        $header = array_map(fn ($c) => strtolower(preg_replace('/[^a-z0-9]/', '', (string) $c)), $rows[0]);
+        // lowercase dulu, baru buang karakter non-alphanumerik — urutan ini penting:
+        // kalau preg_replace jalan lebih dulu, huruf kapital ("P", "N", "RAK") ikut terbuang.
+        $header = array_map(fn ($c) => preg_replace('/[^a-z0-9]/', '', strtolower((string) $c)), $rows[0]);
         $colPart = array_search('partno', $header, true);
         $colRak = array_search('rak', $header, true);
         $colActual = array_search('qtyopname', $header, true);
