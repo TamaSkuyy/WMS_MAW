@@ -16,6 +16,7 @@ use App\Services\ImportExport\Base\BaseExporter;
 use App\Services\ImportExport\Base\BaseImporter;
 use App\Services\ImportExport\Exports\CycleExporter;
 use App\Services\ImportExport\Imports\CycleImporter;
+use App\Services\DataOrder\DataOrderImportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -117,6 +118,56 @@ class CycleController extends Controller
         }
 
         return redirect()->route('cycles.show', $cycle)->with('success', 'Cycle created.');
+    }
+
+    /**
+     * Preview file "Data Order" supplier (lihat DataOrderImportService) →
+     * ringkasan cycle draft yang akan dibuat. Belum menyentuh database.
+     */
+    public function dataOrderPreview(Request $request)
+    {
+        abort_unless(auth()->user()->can('create cycles'), 403);
+
+        $validated = $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+            'delivery_date' => 'required|date',
+        ]);
+
+        return response()->json(
+            app(DataOrderImportService::class)->preview($request->file('file'), $validated['delivery_date'])
+        );
+    }
+
+    /**
+     * Terapkan hasil preview file Data Order: buat satu cycle draft per
+     * (supplier × gelombang/CYCLE yang berisi qty). Baris di-resolve ulang
+     * dari master di sisi server.
+     *
+     * File supplier sering di-update (data lama tetap ada). Karena itu mode
+     * "replace" menghapus cycle DRAFT hasil import Data Order tanggal tsb
+     * lalu membuat ulang versi terbaru; "append" hanya menambah.
+     */
+    public function dataOrderApply(Request $request)
+    {
+        abort_unless(auth()->user()->can('create cycles'), 403);
+
+        $validated = $request->validate([
+            'delivery_date' => 'required|date',
+            'mode' => 'required|in:append,replace',
+            'rows' => 'required|array|min:1|max:20000',
+            'rows.*.supplier_code' => 'required|string|max:20',
+            'rows.*.cycle' => 'required|integer|min:1|max:99',
+            'rows.*.part_number' => 'required|string|max:100',
+            'rows.*.quantity' => 'required|integer|min:1|max:1000000',
+        ]);
+
+        return response()->json(
+            app(DataOrderImportService::class)->apply(
+                $validated['rows'],
+                $validated['delivery_date'],
+                $validated['mode'],
+            )
+        );
     }
 
     /**

@@ -62,7 +62,14 @@ class ProcessImport implements ShouldQueue
         }
 
         $headers = $rows->first()->toArray();
-        $dataRows = $rows->slice(1)->values();
+
+        // Buang baris yang benar-benar kosong (sering ada di akhir sheet hasil
+        // "save as" user) supaya tidak dihitung / tidak memicu error validasi.
+        $dataRows = $rows->slice(1)->values()
+            ->filter(function ($row) {
+                return $row->filter(fn ($v) => $v !== null && trim((string) $v) !== '')->isNotEmpty();
+            })
+            ->values();
 
         if ($dataRows->isEmpty()) {
             $importLog->update([
@@ -81,7 +88,23 @@ class ProcessImport implements ShouldQueue
             foreach ($chunk as $rowIndex => $row) {
                 $rowNumber = ($chunkIndex * $this->config->chunkSize) + $rowIndex + 1;
                 $rowArray = $row->toArray();
-                $mapped = array_merge($this->mapRow($rowArray, $headers), $fixedFields);
+                $mapped = $this->mapRow($rowArray, $headers);
+
+                // Normalisasi nilai (mis. serial tanggal Excel → Y-m-d).
+                $mapped = $importer->normalizeRowValues($mapped);
+                $mapped = array_merge($mapped, $fixedFields);
+
+                // Baris yang sengaja "0"/kosong bermakna dilewati (mis. qty 0) —
+                // dihitung sebagai skipped, bukan error.
+                if ($importer->shouldSkipRow($mapped)) {
+                    $skipped++;
+                    $rowsSinceProgress++;
+                    if ($rowsSinceProgress >= 100) {
+                        $this->reportProgress($importLog, $processed, $skipped);
+                        $rowsSinceProgress = 0;
+                    }
+                    continue;
+                }
 
                 try {
                     $transformed = $importer->transformRow($mapped);

@@ -10,6 +10,7 @@ import Pagination from '../../../Tailadmin/components/common/Pagination';
 import ImportExportToolbar from '../../../Components/ImportExport/ImportExportToolbar';
 import ImportModal from '../../../Components/ImportExport/ImportModal';
 import ReceivePickerModal from '../../../Components/Cycles/ReceivePickerModal';
+import DataOrderImportModal from '../../../Components/Cycles/DataOrderImportModal';
 
 export default function Index({ cycles, suppliers, filters }: any) {
     const permissions = (usePage().props.auth as any)?.user?.permissions || [];
@@ -19,6 +20,7 @@ export default function Index({ cycles, suppliers, filters }: any) {
     const canReceive = permissions.includes('receive cycles');
     const [importModalOpen, setImportModalOpen] = useState(false);
     const [pickerOpen, setPickerOpen] = useState(false);
+    const [dataOrderOpen, setDataOrderOpen] = useState(false);
     const handleDelete = (id: number) => {
         if (confirm('Hapus cycle ini?')) {
             router.delete(route('cycles.destroy', id));
@@ -71,6 +73,9 @@ export default function Index({ cycles, suppliers, filters }: any) {
                     {canReceive && (
                         <Button variant="outline" onClick={() => setPickerOpen(true)}>🚚 Terima Barang</Button>
                     )}
+                    {canCreate && (
+                        <Button variant="outline" onClick={() => setDataOrderOpen(true)}>📄 Import Data Order</Button>
+                    )}
                     {canCreate && (<ImportExportToolbar
                         importUrl={route('cycles.import')}
                         previewUrl={route('cycles.import.preview')}
@@ -99,6 +104,11 @@ export default function Index({ cycles, suppliers, filters }: any) {
                     ]}
                 />
                 )}
+                <DataOrderImportModal
+                    isOpen={dataOrderOpen}
+                    onClose={() => setDataOrderOpen(false)}
+                    onComplete={() => router.reload({ only: ['cycles'] })}
+                />
                 <ReceivePickerModal
                     isOpen={pickerOpen}
                     onClose={() => setPickerOpen(false)}

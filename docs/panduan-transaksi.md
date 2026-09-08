@@ -84,6 +84,37 @@ Gunakan jika ingin merencanakan penerimaan terlebih dahulu, atau ada jadwal supp
 > - Cycle disimpan sebagai **Draft** — belum mempengaruhi stok
 > - Tanggal & slot waktu otomatis terisi sesuai jam saat ini
 
+#### B1a. Membuat Cycle dari File "Data Order" (Import Massal)
+
+Untuk supplier dengan file rencana harian (mis. lampiran email berisi kolom
+`Part Number`, `Supplier`, dan `CYCLE 1..16` — contoh sheet "EMAIL"):
+
+```
+1. Buka menu: Transactions > Cycle > tombol "📄 Import Data Order"
+2. Pilih Tanggal Pengiriman (file biasanya tidak memuat tanggal)
+3. Pilih file (.xlsx / .xls / .csv), klik "Tinjau Hasil"
+4. Cek preview:
+   - Ringkasan: jumlah supplier, gelombang/cycle, item, dan total pcs
+   - Per supplier terlihat gelombang mana yang akan dibuat (CYCLE 1, 2, ...)
+   - Part/supplier yang tidak dikenal akan dilaporkan & dilewati
+5. Klik "Buat N Cycle Draft"
+```
+
+Hasilnya: satu cycle **draft** per (supplier × gelombang berisi qty) —
+nomor cycle melanjutkan urutan terakhir supplier tsb (bukan nomor 1..16
+dari file, supaya tidak bentrok antar-hari). Selanjutnya terima seperti
+biasa lewat alur Cycle/Receive.
+
+> **File sering di-update supplier (data lama tetap ada) — sudah diantisipasi:**
+> - Preview mendeteksi apakah tanggal tsb sudah pernah di-import (ada cycle
+>   draft/aktif hasil import Data Order).
+> - Isi file **sama persis** → import dilewati otomatis, tidak bikin duplikat.
+> - Isi file **berubah** → pilih **"Ganti"** (cycle DRAFT lama tanggal tsb
+>   dihapus lalu dibuat ulang versi terbaru; cycle yang sudah diterima
+>   `receiving/completed` tidak pernah dihapus) atau **"Tambah"** (buat di
+>   samping yang lama, nomor lanjut).
+> - Part lama yang qty-nya 0 di file baru otomatis dilewati (tidak ikut dibuat).
+
 #### B2. Menerima Barang (Receive)
 
 Saat barang benar-benar datang:

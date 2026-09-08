@@ -356,6 +356,10 @@ Route::middleware('auth')->group(function () {
         Route::post('cycles', [CycleController::class, 'store'])->name('cycles.store');
         Route::get('cycles/quick-receive', [CycleController::class, 'quickReceiveForm'])->name('cycles.quick-receive.form');
         Route::post('cycles/quick-receive', [CycleController::class, 'quickReceiveStore'])->name('cycles.quick-receive.store');
+
+        // Import file "Data Order" supplier → cycle draft (static paths — sebelum cycles/{cycle})
+        Route::post('cycles/data-order/preview', [CycleController::class, 'dataOrderPreview'])->name('cycles.data-order.preview');
+        Route::post('cycles/data-order/apply', [CycleController::class, 'dataOrderApply'])->name('cycles.data-order.apply');
     });
 
     // Import (static paths)

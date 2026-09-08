@@ -34,6 +34,95 @@ abstract class BaseImporter
         return $mapped;
     }
 
+    /**
+     * Baris yang harus dilewati secara diam-diam (dihitung sebagai "skipped"),
+     * DIPERIKSA SEBELUM transformRow()/validasi — mis. quantity = 0 pada importer
+     * tertentu yang bermakna "tidak ada pesanan". Return false = proses normal.
+     */
+    public function shouldSkipRow(array $mapped): bool
+    {
+        return false;
+    }
+
+    /**
+     * Normalisasi nilai per baris hasil mapping sebelum transformRow/validasi.
+     * Saat ini dipakai untuk kolom bertipe "date": mengubah serial tanggal Excel
+     * (mis. 46273) dan format tanggal teks umum menjadi Y-m-d.
+     */
+    public function normalizeRowValues(array $mapped): array
+    {
+        foreach ($this->rules() as $key => $rule) {
+            if (! $this->ruleUsesDate($rule)) {
+                continue;
+            }
+
+            $value = $mapped[$key] ?? null;
+            if ($value === null || $value === '') {
+                continue;
+            }
+
+            $mapped[$key] = $this->normalizeDateValue($value);
+        }
+
+        return $mapped;
+    }
+
+    private function ruleUsesDate(array|string $rule): bool
+    {
+        $flat = is_array($rule) ? implode('|', $rule) : $rule;
+
+        return str_contains($flat, 'date');
+    }
+
+    private function normalizeDateValue(mixed $value): mixed
+    {
+        // Serial tanggal Excel dibaca sebagai angka (mis. 46273 = 2026-09-08)
+        // karena pembacaan memakai raw values, bukan format tampilan.
+        if (is_numeric($value)) {
+            $n = (float) $value;
+            if ($n >= 20000 && $n <= 80000) {
+                return \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject((int) round($n))->format('Y-m-d');
+            }
+        }
+
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format('Y-m-d');
+        }
+
+        if (! is_string($value)) {
+            return $value;
+        }
+
+        $raw = trim($value);
+        if ($raw === '') {
+            return $value;
+        }
+
+        if (is_numeric($raw)) {
+            $n = (float) $raw;
+            if ($n >= 20000 && $n <= 80000) {
+                return \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject((int) round($n))->format('Y-m-d');
+            }
+        }
+
+        // Format tanggal teks umum (Excel/CSV lintas locale): d/m/Y, m/d/Y, Y-m-d, ...
+        if (preg_match('/^\d{1,4}[\/\-.]\d{1,2}[\/\-.]\d{1,4}$/', $raw)) {
+            foreach (['d/m/Y', 'd-m-Y', 'd.m.Y', 'm/d/Y', 'Y-m-d', 'Y/m/d', 'Y-m-d H:i:s', 'd/m/Y H:i:s'] as $format) {
+                $dt = \DateTimeImmutable::createFromFormat($format, $raw);
+                if ($dt && $dt->format($format) === $raw) {
+                    return $dt->format('Y-m-d');
+                }
+            }
+        }
+
+        $ts = strtotime($raw);
+        if ($ts !== false && preg_match('/\d{4}/', $raw)) {
+            return date('Y-m-d', $ts);
+        }
+
+        return $value;
+    }
+
     /** Fixed field values merged into every row before transformRow() runs (e.g. audit columns). */
     public function fixedFields(int $userId): array
     {
