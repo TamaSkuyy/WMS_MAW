@@ -147,10 +147,10 @@ class CycleImportSupportTest extends TestCase
         $this->makeProduct('P-001', $dwa);
         $this->makeProduct('P-003', $mmm);
 
-        // DWA sudah punya cycle #1..3 (mis. dari hari-hari sebelumnya)
-        Cycle::factory()->create(['supplier_id' => $dwa->id, 'cycle_number' => 1, 'delivery_date' => '2026-09-05']);
-        Cycle::factory()->create(['supplier_id' => $dwa->id, 'cycle_number' => 2, 'delivery_date' => '2026-09-06']);
-        Cycle::factory()->create(['supplier_id' => $dwa->id, 'cycle_number' => 3, 'delivery_date' => '2026-09-07']);
+        // DWA sudah punya cycle #1..#3 MANUAL di tanggal yang sama (09-08)
+        Cycle::factory()->create(['supplier_id' => $dwa->id, 'cycle_number' => 1, 'delivery_date' => '2026-09-08']);
+        Cycle::factory()->create(['supplier_id' => $dwa->id, 'cycle_number' => 2, 'delivery_date' => '2026-09-08']);
+        Cycle::factory()->create(['supplier_id' => $dwa->id, 'cycle_number' => 3, 'delivery_date' => '2026-09-08']);
 
         // File user tetap berisi "Cycle Number 1" (dipakai ulang tiap hari)
         $log = $this->runImport('cycle-template.csv', $this->templateStyleCsv(), $this->cycleMapping(), $user);
@@ -160,9 +160,8 @@ class CycleImportSupportTest extends TestCase
         $this->assertSame(2, $log->skipped_rows);   // dua qty 0
         $this->assertSame([], $log->errors);
 
-        // Auto-renumber: DWA dapat #4 (max 3 + 1), MMM dapat #1 — tidak ada yang di-skip diam-diam
-        $dwaNew = Cycle::where('supplier_id', $dwa->id)->where('delivery_date', '2026-09-08')->sole();
-        $this->assertSame(4, $dwaNew->cycle_number);
+        // Nomor per (supplier × tanggal): #1..#3 sudah terpakai DWA 09-08 → import pakai #4; MMM dapat #1
+        $dwaNew = Cycle::where('supplier_id', $dwa->id)->where('delivery_date', '2026-09-08')->where('cycle_number', 4)->sole();
         $this->assertSame(5, $dwaNew->items()->where('product_id', $this->productId('P-001'))->value('quantity'));
 
         $mmmCycle = Cycle::where('supplier_id', $mmm->id)->sole();

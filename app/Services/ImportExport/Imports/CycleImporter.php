@@ -20,25 +20,20 @@ use App\Services\ImportExport\Exceptions\RowTransformException;
  *   oleh BaseImporter::normalizeRowValues() sebelum validasi.
  * - Quantity = 0 dilewati (bermakna "tidak ada pesanan" pada file data order),
  *   dihitung sebagai skipped bukan error.
- * - Pengelompokan cycle per (supplier × cycle_number di file), bukan hanya
- *   cycle_number — mencegah item supplier lain nyasar ke cycle supplier
- *   pertama saat satu file memuat banyak supplier.
- * - AUTO-RENUMBER: angka Cycle Number di file hanya dipakai sebagai urutan
- *   kelompok. Nomor cycle yang disimpan = max(cycle_number supplier) + 1
- *   terus bertambah (sama seperti alur buat cycle manual / Import Data
- *   Order). Ini memungkinkan file harian berisi "1" dipakai berulang tanpa
- *   tabrakan dengan nomor cycle yang sudah ada.
+ * - Pengelompokan cycle per (supplier × tanggal × cycle_number di file).
+ * - AUTO-NUMBER per hari: nomor cycle yang disimpan = nomor gelombang HARI ITU
+ *   per supplier (mulai 1 tiap tanggal, unik per supplier+tanggal). Nomor di
+ *   file dipakai bila masih bebas; bila sudah terpakai dipakai nomor bebas
+ *   berikutnya. File harian berisi "1" bisa dipakai berulang tiap hari tanpa
+ *   tabrakan.
  */
 class CycleImporter extends BaseImporter implements Importable
 {
-    /** supplierId => cycle_number (di file) yang sedang dibangun. */
-    private array $currentFileCycleBySupplier = [];
+    /** "supplierId|tanggal|cycle-file" => Cycle yang sedang dibangun. */
+    private array $currentCycle = [];
 
-    /** supplierId => nomor cycle DB berikutnya yang akan dipakai. */
-    private array $nextNumberBySupplier = [];
-
-    /** supplierId => Cycle yang sedang dibangun. */
-    private array $currentCycleBySupplier = [];
+    /** "supplierId|tanggal" => set nomor cycle yg sudah terpakai/telah dialokasikan. */
+    private array $usedNumbers = [];
 
     public function modelType(): string
     {
@@ -123,8 +118,9 @@ class CycleImporter extends BaseImporter implements Importable
     }
 
     /**
-     * Nomor cycle dikelola otomatis (max+1 per supplier), jadi tidak ada
-     * baris yang di-skip karena nomor di file sudah pernah dipakai.
+     * Nomor cycle dikelola otomatis per (supplier × delivery_date) — reset ke 1
+     * setiap tanggal baru — jadi tidak ada baris yang di-skip karena nomor di
+     * file sudah pernah dipakai.
      */
     public function isDuplicate(array $data): bool
     {
@@ -135,33 +131,63 @@ class CycleImporter extends BaseImporter implements Importable
     {
         $supplierId = (int) $data['supplier_id'];
         $fileCycle = (string) $data['cycle_number'];
+        $date = $data['delivery_date'] ?? null;
+        $dateKey = $date ?: '(tanpa-tanggal)';
+        $groupKey = $supplierId . '|' . $dateKey . '|' . $fileCycle;
 
-        // Kelompok baru (supplier × nomor cycle di file) → cycle baru bernomor otomatis.
-        if (($this->currentFileCycleBySupplier[$supplierId] ?? null) !== $fileCycle) {
-            if (! isset($this->nextNumberBySupplier[$supplierId])) {
-                $this->nextNumberBySupplier[$supplierId] = (int) Cycle::where('supplier_id', $supplierId)->max('cycle_number') + 1;
+        // Kelompok baru (supplier × tanggal × nomor file) → cycle baru.
+        if (! isset($this->currentCycle[$groupKey])) {
+            $usedKey = $supplierId . '|' . $dateKey;
+            if (! isset($this->usedNumbers[$usedKey])) {
+                $this->usedNumbers[$usedKey] = Cycle::where('supplier_id', $supplierId)
+                    ->when($date, fn ($q) => $q->whereDate('delivery_date', $date), fn ($q) => $q->whereNull('delivery_date'))
+                    ->pluck('cycle_number')
+                    ->flip()
+                    ->all();
             }
 
-            $this->currentCycleBySupplier[$supplierId] = Cycle::create([
+            $this->currentCycle[$groupKey] = Cycle::create([
                 'supplier_id' => $supplierId,
-                'cycle_number' => $this->nextNumberBySupplier[$supplierId]++,
-                'delivery_date' => $data['delivery_date'] ?? null,
+                'cycle_number' => $this->allocateNumber($this->usedNumbers[$usedKey], (int) $fileCycle),
+                'delivery_date' => $date,
                 'notes' => $data['notes'] ?? null,
                 'status' => 'draft',
                 'created_by' => $data['created_by'] ?? null,
                 'updated_by' => $data['updated_by'] ?? null,
             ]);
-            $this->currentFileCycleBySupplier[$supplierId] = $fileCycle;
         }
 
-        // Tambah item ke cycle supplier tsb.
+        // Tambah item ke cycle tsb.
         CycleItem::create([
-            'cycle_id' => $this->currentCycleBySupplier[$supplierId]->id,
+            'cycle_id' => $this->currentCycle[$groupKey]->id,
             'product_id' => $data['product_id'],
             'quantity' => $data['quantity'],
             'received_quantity' => 0,
             'created_by' => $data['created_by'] ?? null,
             'updated_by' => $data['updated_by'] ?? null,
         ]);
+    }
+
+    /**
+     * Nomor cycle utk hari itu: pakai nomor file bila bebas, kalau tidak ambil
+     * nomor bebas terkecil (≥1).
+     *
+     * @param  array<int, true>  $used  (by-ref) set nomor yg terpakai tanggal tsb
+     */
+    private function allocateNumber(array &$used, int $prefer): int
+    {
+        if ($prefer >= 1 && ! isset($used[$prefer])) {
+            $used[$prefer] = true;
+
+            return $prefer;
+        }
+
+        $n = 1;
+        while (isset($used[$n])) {
+            $n++;
+        }
+        $used[$n] = true;
+
+        return $n;
     }
 }

@@ -12,7 +12,7 @@ Ada 3 lapisan data yang dipisah dengan sengaja:
 | Jadwal supplier | `supplier_delivery_schedules` | Template berulang: supplier X dijadwalkan di slot mana saja, berlaku tiap hari otomatis |
 | Data aktual | `cycles` + `cycle_items` | Data receiving asli yang sudah ada di sistem, hanya ditambah `delivery_date` & `delivery_slot_id` |
 
-Kenapa dipisah begini: `cycle_number` (nomor urut penerimaan per supplier) itu **bukan** hal yang sama dengan slot C1-C6 (jendela waktu). `cycle_number` cuma penomoran urut yang bertambah terus (1, 2, 3, ...) setiap kali ada cycle baru untuk supplier tsb — tidak reset harian dan tidak dijamin cuma 6x sehari. Karena itu, "slot mana yang sedang berjalan" tidak bisa diturunkan dari `cycle_number` — perlu konsep slot yang berdiri sendiri.
+Kenapa dipisah begini: `cycle_number` (nomor gelombang penerimaan **per hari** per supplier, mulai 1 lagi tiap tanggal) itu **bukan** hal yang sama dengan slot C1-C6 (jendela waktu). `cycle_number` hanya penomoran urut gelombang pada hari tsb (1, 2, 3, ...) — jumlahnya tidak dijamin cuma 6x sehari dan tidak menggambarkan jam kedatangan. Karena itu, "slot mana yang sedang berjalan" tidak bisa diturunkan dari `cycle_number` — perlu konsep slot yang berdiri sendiri.
 
 ## Alur Data (Input → Tampil di Layar)
 

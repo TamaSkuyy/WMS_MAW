@@ -33,7 +33,11 @@ use Maatwebsite\Excel\Facades\Excel;
  *   - isi file berubah (update)          → mode "replace" menghapus cycle
  *     DRAFT import lama tanggal tsb lalu membuat ulang versi terbaru;
  *     cycle yang sudah diterima (receiving/completed) tidak pernah dihapus.
- *   - mode "append"                      → selalu tambah cycle baru (nomor lanjut).
+ *   - mode "append"                      → selalu tambah cycle baru.
+ *
+ * Nomor cycle = nomor gelombang HARI ITU per supplier (reset tiap tanggal,
+ * unik per supplier+tanggal): mengikuti CYCLE di file (1..N) saat hari itu
+ * masih kosong; bila nomor tsb sudah terpakai dipakai nomor bebas berikutnya.
  */
 class DataOrderImportService
 {
@@ -100,7 +104,6 @@ class DataOrderImportService
         }
 
         // Susun ringkasan per supplier; baris payload untuk apply urut deterministik.
-        $nextNumbers = $this->nextCycleNumbers(array_keys($group));
         $supplierView = [];
         $applyRows = [];
 
@@ -137,7 +140,6 @@ class DataOrderImportService
             $supplierView[] = [
                 'supplier_code' => $code,
                 'supplier_name' => $supplier->name,
-                'next_cycle_number' => $nextNumbers[$code] ?? null,
                 'cycles' => $cycles,
             ];
         }
@@ -252,17 +254,32 @@ class DataOrderImportService
 
             $notes = self::IMPORT_NOTE_PREFIX . $fingerprint;
 
+            // Nomor cycle = nomor gelombang HARI ITU per supplier (reset tiap
+            // tanggal). Kosong hari itu → nomor mengikuti CYCLE file (1..N);
+            // kalau nomor tsb sudah terpakai (mis. cycle manual), dipakai nomor
+            // bebas berikutnya agar tidak tabrakan.
+            $usedByDate = []; // supplier_id => set nomor cycle yg terpakai tanggal tsb
+
             foreach ($group as $code => $cyclesByNo) {
                 $supplier = $suppliers[$code];
                 ksort($cyclesByNo); // urut sesuai gelombang file (CYCLE 1 sebelum CYCLE 2, dst)
-                $seq = (int) Cycle::where('supplier_id', $supplier->id)->max('cycle_number');
+
+                if (! isset($usedByDate[$supplier->id])) {
+                    $usedByDate[$supplier->id] = Cycle::where('supplier_id', $supplier->id)
+                        ->whereDate('delivery_date', $date)
+                        ->pluck('cycle_number')
+                        ->flip()
+                        ->all();
+                }
 
                 foreach ($cyclesByNo as $cycleNo => $parts) {
                     ksort($parts);
 
+                    $cycleNumber = $this->allocateCycleNumber($usedByDate[$supplier->id], (int) $cycleNo);
+
                     $cycle = Cycle::create([
                         'supplier_id' => $supplier->id,
-                        'cycle_number' => ++$seq,
+                        'cycle_number' => $cycleNumber,
                         'delivery_date' => $date,
                         'delivery_slot_id' => null,
                         'status' => 'draft',
@@ -562,6 +579,29 @@ class DataOrderImportService
         return $out;
     }
 
+    /**
+     * Ambil nomor cycle utk (supplier × tanggal): pakai nomor gelombang file
+     * bila masih bebas, kalau tidak ambil nomor positif bebas terkecil.
+     *
+     * @param  array<int, true>  $used  (by-ref) set nomor yang sudah terpakai tanggal tsb
+     */
+    private function allocateCycleNumber(array &$used, int $prefer): int
+    {
+        if ($prefer >= 1 && ! isset($used[$prefer])) {
+            $used[$prefer] = true;
+
+            return $prefer;
+        }
+
+        $n = 1;
+        while (isset($used[$n])) {
+            $n++;
+        }
+        $used[$n] = true;
+
+        return $n;
+    }
+
     private function rowTotal(array $row): int
     {
         return array_sum($row['cycles']);
@@ -578,27 +618,6 @@ class DataOrderImportService
             'reason' => $reason,
             'message' => $message,
         ];
-    }
-
-    /** Nomor cycle berikutnya (max+1) per supplier, untuk info di preview. */
-    private function nextCycleNumbers(array $codes): array
-    {
-        if (! $codes) {
-            return [];
-        }
-
-        $rows = Cycle::query()
-            ->selectRaw('supplier_id, MAX(cycle_number) AS mx')
-            ->whereIn('supplier_id', Supplier::whereIn('code', $codes)->pluck('id'))
-            ->groupBy('supplier_id')
-            ->pluck('mx', 'supplier_id');
-
-        $result = [];
-        foreach (Supplier::whereIn('code', $codes)->get(['id', 'code']) as $s) {
-            $result[strtoupper(trim($s->code))] = (int) ($rows[$s->id] ?? 0) + 1;
-        }
-
-        return $result;
     }
 
     private function shiftLabel(array $letters): ?string

@@ -96,9 +96,10 @@ class CycleController extends Controller
         $validated['items'] = $this->mergeDuplicateItems($validated['items']);
 
         $slot = DeliverySlot::currentForTime(now());
-        // Auto-assigned, never client-supplied — avoids duplicate-key errors
-        // from users guessing/reusing a cycle_number for the same supplier.
-        $cycleNumber = (Cycle::where('supplier_id', $validated['supplier_id'])->max('cycle_number') ?? 0) + 1;
+        // Nomor cycle = nomor gelombang HARI ITU per supplier (mulai 1 tiap
+        // tanggal), bukan nomor global yang terus bertambah.
+        $deliveryDate = now()->toDateString();
+        $cycleNumber = $this->nextCycleNumberFor($validated['supplier_id'], $deliveryDate);
 
         $cycle = Cycle::create([
             'supplier_id' => $validated['supplier_id'],
@@ -106,7 +107,7 @@ class CycleController extends Controller
             'cycle_number' => $cycleNumber,
             'status' => 'draft',
             'notes' => $validated['notes'] ?? null,
-            'delivery_date' => now()->toDateString(),
+            'delivery_date' => $deliveryDate,
             'delivery_slot_id' => $slot?->id,
         ]);
 
@@ -168,6 +169,17 @@ class CycleController extends Controller
                 $validated['mode'],
             )
         );
+    }
+
+    /**
+     * Nomor cycle berikutnya utk (supplier × delivery_date):
+     * max(cycle_number) hari itu + 1 — reset ke 1 setiap tanggal baru.
+     */
+    private function nextCycleNumberFor(int $supplierId, string $deliveryDate): int
+    {
+        return (int) Cycle::where('supplier_id', $supplierId)
+            ->whereDate('delivery_date', $deliveryDate)
+            ->max('cycle_number') + 1;
     }
 
     /**
@@ -436,7 +448,8 @@ class CycleController extends Controller
 
         $cycle = DB::transaction(function () use ($validated) {
             $supplierId  = $validated['supplier_id'];
-            $cycleNumber = (Cycle::where('supplier_id', $supplierId)->max('cycle_number') ?? 0) + 1;
+            $deliveryDate = now()->toDateString();
+            $cycleNumber = $this->nextCycleNumberFor($supplierId, $deliveryDate);
             $slot = DeliverySlot::currentForTime(now());
 
             $cycle = Cycle::create([
@@ -445,7 +458,7 @@ class CycleController extends Controller
                 'cycle_number' => $cycleNumber,
                 'status'       => 'completed',
                 'received_at'  => now(),
-                'delivery_date' => now()->toDateString(),
+                'delivery_date' => $deliveryDate,
                 'delivery_slot_id' => $slot?->id,
             ]);
 

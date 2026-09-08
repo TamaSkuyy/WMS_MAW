@@ -11,7 +11,6 @@ interface PlannedCycle {
 interface SupplierGroup {
     supplier_code: string;
     supplier_name: string;
-    next_cycle_number: number | null;
     cycles: PlannedCycle[];
 }
 
@@ -330,7 +329,7 @@ export default function DataOrderImportModal({ isOpen, onClose, onComplete }: Da
                                             {s.supplier_code} <span className="text-xs font-normal text-gray-400">— {s.supplier_name}</span>
                                         </div>
                                         <div className="text-[11px] text-gray-400">
-                                            {s.cycles.length} gelombang · cycle berikutnya #{s.next_cycle_number ?? '-'}
+                                            {s.cycles.length} gelombang
                                         </div>
                                     </div>
                                     <div className="px-3 py-2 space-y-1.5">

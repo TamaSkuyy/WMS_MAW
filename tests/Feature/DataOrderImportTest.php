@@ -199,10 +199,10 @@ class DataOrderImportTest extends TestCase
 
         $this->actingAs($this->actingUser());
 
-        // Simulasikan sudah ada cycle #1 dari import/periode sebelumnya
-        Cycle::factory()->create(['supplier_id' => $dwa->id, 'cycle_number' => 1, 'delivery_date' => '2026-09-07']);
+        // Simulasikan sudah ada cycle #1 MANUAL di tanggal yg sama (09-08)
+        Cycle::factory()->create(['supplier_id' => $dwa->id, 'cycle_number' => 1, 'delivery_date' => '2026-09-08']);
 
-        // Baris P-001 qty 5 + P-001 qty 2 pada gelombang yang sama → digabung jadi 7
+        // Baris P-001 qty 5 + P-001 qty 2 pada gelombang (CYCLE 1) yang sama → digabung jadi 7
         $response = $this->postJson(route('cycles.data-order.apply'), [
             'delivery_date' => '2026-09-08',
             'mode' => 'append',
@@ -213,12 +213,12 @@ class DataOrderImportTest extends TestCase
         ]);
 
         $response->assertOk();
-        // Dua baris P-001 pada gelombang (cycle) yang sama → satu cycle, qty digabung
+        // Dua baris P-001 pada gelombang yang sama → satu cycle, qty digabung
         $this->assertSame(1, $response->json('cycles_created'));
         $this->assertSame(1, $response->json('items_created'));
         $this->assertSame(7, $response->json('qty_total'));
 
-        // Nomor lanjut dari max yang ada: 2
+        // Nomor #1 sudah dipakai manual tanggal tsb → import memakai #2
         $this->assertSame([1, 2], Cycle::where('supplier_id', $dwa->id)->orderBy('cycle_number')->pluck('cycle_number')->all());
         $this->assertSame(
             7,
@@ -328,18 +328,19 @@ class DataOrderImportTest extends TestCase
         $this->assertSame(2, $updated->json('cycles_created'));
 
         $cycles = Cycle::where('supplier_id', $dwa->id)->orderBy('cycle_number')->get();
-        // Draft import lama (#1) hilang; manual (#9) & completed (#10) tetap ada
-        $this->assertSame([9, 10, 11, 12], $cycles->pluck('cycle_number')->all());
+        // Draft import lama (#1) dihapus; manual (#9) & completed (#10) tetap.
+        // Nomor per hari: CYCLE 1 → #1, CYCLE 2 → #2 (nomor kecil bebas dipakai lagi)
+        $this->assertSame([1, 2, 9, 10], $cycles->pluck('cycle_number')->all());
         $this->assertSame('completed', $cycles->firstWhere('cycle_number', 10)->status);
 
-        $newCycle = $cycles->firstWhere('cycle_number', 11);
+        $newCycle = $cycles->firstWhere('cycle_number', 1);
         $this->assertSame(
             9,
             $newCycle->items()->where('product_id', $this->productId('P-001'))->value('quantity')
         );
         $this->assertSame(
             7,
-            $cycles->firstWhere('cycle_number', 12)
+            $cycles->firstWhere('cycle_number', 2)
                 ->items()->where('product_id', $this->productId('P-002'))->value('quantity')
         );
     }

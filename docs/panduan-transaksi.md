@@ -100,10 +100,11 @@ Untuk supplier dengan file rencana harian (mis. lampiran email berisi kolom
 5. Klik "Buat N Cycle Draft"
 ```
 
-Hasilnya: satu cycle **draft** per (supplier × gelombang berisi qty) —
-nomor cycle melanjutkan urutan terakhir supplier tsb (bukan nomor 1..16
-dari file, supaya tidak bentrok antar-hari). Selanjutnya terima seperti
-biasa lewat alur Cycle/Receive.
+Hasilnya: satu cycle **draft** per (supplier × gelombang berisi qty). Nomor
+cycle = nomor gelombang **hari itu** per supplier (mulai 1 tiap tanggal,
+unik per supplier + tanggal) — mengikuti `CYCLE 1..16` di file. Tanggal lain
+boleh mulai dari 1 lagi. Selanjutnya terima seperti biasa lewat alur
+Cycle/Receive.
 
 > **File sering di-update supplier (data lama tetap ada) — sudah diantisipasi:**
 > - Preview mendeteksi apakah tanggal tsb sudah pernah di-import (ada cycle
