@@ -655,4 +655,46 @@ class CycleControllerTest extends TestCase
 
         $this->assertDatabaseHas('cycles', ['id' => $cycle->id, 'carrier_id' => $pic->id]);
     }
+
+    public function test_store_numbering_resets_each_day_per_supplier(): void
+    {
+        \Carbon\Carbon::setTestNow('2026-09-08 08:00:00');
+
+        $supplier = Supplier::factory()->create();
+        $product = Product::factory()->create();
+        $rack = Rack::factory()->create();
+        $data = fn () => [
+            'supplier_id' => $supplier->id,
+            'items' => [['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 2]],
+        ];
+
+        // Hari 09-08: store manual → #1, Terima Cepat → #2
+        $this->actingAs($this->user)->post(route('cycles.store'), [
+            'supplier_id' => $supplier->id,
+            'items' => [['product_id' => $product->id, 'quantity' => 2]],
+        ]);
+        $this->actingAs($this->user)->post(route('cycles.quick-receive.store'), $data());
+
+        $today = Cycle::where('supplier_id', $supplier->id)->whereDate('delivery_date', '2026-09-08')
+            ->orderBy('cycle_number')->pluck('cycle_number')->all();
+        $this->assertSame([1, 2], $today);
+
+        // Hari sebelumnya punya cycle #1 → TIDAK memengaruhi penomoran hari ini
+        Cycle::factory()->create([
+            'supplier_id' => $supplier->id,
+            'cycle_number' => 1,
+            'delivery_date' => '2026-09-07',
+            'status' => 'completed',
+        ]);
+
+        // Hari berikutnya 09-09: Terima Cepat mulai lagi dari #1 (reset harian)
+        \Carbon\Carbon::setTestNow('2026-09-09 09:00:00');
+        $this->actingAs($this->user)->post(route('cycles.quick-receive.store'), $data());
+
+        $nextDay = Cycle::where('supplier_id', $supplier->id)->whereDate('delivery_date', '2026-09-09')
+            ->orderBy('cycle_number')->pluck('cycle_number')->all();
+        $this->assertSame([1], $nextDay);
+
+        \Carbon\Carbon::setTestNow();
+    }
 }
