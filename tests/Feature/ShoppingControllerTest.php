@@ -446,4 +446,29 @@ class ShoppingControllerTest extends TestCase
         $this->assertDatabaseHas('shoppings', ['id' => $ok->id, 'status' => 'shipped']);
         $this->assertDatabaseHas('shoppings', ['id' => $fail->id, 'status' => 'draft']);
     }
+
+    public function test_index_exposes_shipped_by_for_delivery_column(): void
+    {
+        $this->user->givePermissionTo(Permission::findOrCreate('view shoppings'));
+
+        $shipper = User::factory()->create(['name' => 'Petugas Kirim']);
+        $location = \App\Models\ShoppingLocation::create(['name' => 'Lokasi Tujuan A']);
+
+        Shopping::factory()->create([
+            'status' => 'shipped',
+            'shopping_location_id' => $location->id,
+            'shipped_by' => $shipper->id,
+            'shipped_at' => now(),
+        ]);
+
+        $response = $this->actingAs($this->user)->get(route('shoppings.index'));
+
+        $response->assertOk();
+
+        $page = json_decode(json_encode($response->viewData('page')), true);
+        $rows = $page['props']['shoppings']['data'];
+
+        $this->assertCount(1, $rows);
+        $this->assertSame('Petugas Kirim', $rows[0]['shipped_by']['name']);
+    }
 }

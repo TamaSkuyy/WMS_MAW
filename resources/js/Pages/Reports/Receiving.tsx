@@ -123,7 +123,7 @@ export default function Receiving({ items, summary, filters, suppliers }: any) {
                                         <td className="px-4 py-3 text-sm whitespace-nowrap">{item.rack?.code || '-'}</td>
                                         <td className="px-4 py-3 text-sm text-center tabular-nums whitespace-nowrap">{item.quantity}</td>
                                         <td className="px-4 py-3 text-sm tabular-nums whitespace-nowrap">{item.received_quantity}</td>
-                                        <td className="px-4 py-3 text-sm whitespace-nowrap">{item.latest_receive_log?.user?.name || '—'}</td>
+                                        <td className="px-4 py-3 text-sm whitespace-nowrap">{item.latest_receive_log?.user?.name || item.cycle?.creator?.name || item.cycle?.carrier?.name || '—'}</td>
                                         <td className="px-4 py-3 whitespace-nowrap">
                                             <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[item.cycle?.status] || ''}`}>
                                                 {item.cycle?.status}

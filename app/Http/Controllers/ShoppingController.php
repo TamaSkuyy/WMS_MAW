@@ -20,7 +20,7 @@ class ShoppingController extends Controller
 {
     public function index(Request $request)
     {
-        $shoppings = Shopping::with(['shoppingLocation', 'items'])
+        $shoppings = Shopping::with(['shoppingLocation', 'shippedBy:id,name', 'items'])
             ->withCount('items')
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->search, fn ($q, $s) => $q->whereHas('shoppingLocation', fn ($ql) => $ql->where('name', 'like', "%{$s}%")))

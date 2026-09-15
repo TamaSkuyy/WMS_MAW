@@ -170,6 +170,7 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
                             <tr>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lokasi Tujuan</th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal Kirim</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dikirim Oleh</th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-24">Aksi</th>
@@ -182,6 +183,7 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
                                     <td className="px-4 py-3 whitespace-nowrap text-sm">
                                         {s.shopping_date ? new Date(s.shopping_date).toLocaleString('id-ID', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '-'}
                                     </td>
+                                    <td className="px-4 py-3 whitespace-nowrap text-sm">{s.shipped_by?.name || '-'}</td>
                                     <td className="px-4 py-3 whitespace-nowrap">
                                         <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[s.status]}`}>{s.status}</span>
                                     </td>

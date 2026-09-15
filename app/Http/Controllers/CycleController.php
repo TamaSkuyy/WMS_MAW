@@ -9,6 +9,7 @@ use App\Models\CycleItem;
 use App\Models\DeliverySlot;
 use App\Models\Product;
 use App\Models\Rack;
+use App\Models\ReceiveLog;
 use App\Models\Stock;
 use App\Models\Supplier;
 use App\Models\User;
@@ -360,7 +361,7 @@ class CycleController extends Controller
 
                 if ($delta !== 0) {
                     // Log this receive action
-                    \App\Models\ReceiveLog::create([
+                    ReceiveLog::create([
                         'cycle_item_id' => $item->id,
                         'quantity'      => $delta,
                         'rack_id'       => $itemData['rack_id'] ?? null,
@@ -463,11 +464,22 @@ class CycleController extends Controller
             ]);
 
             foreach ($validated['items'] as $item) {
-                $cycle->items()->create([
+                $cycleItem = $cycle->items()->create([
                     'product_id'        => $item['product_id'],
                     'quantity'          => $item['quantity'],
                     'received_quantity' => $item['quantity'],
                     'rack_id'           => $item['rack_id'] ?? null,
+                ]);
+
+                // Catat siapa yang menerima + qty + rak (dipakai Report
+                // Receiving "Diterima Oleh" & Dashboard operator performance).
+                ReceiveLog::create([
+                    'cycle_item_id' => $cycleItem->id,
+                    'quantity'      => $item['quantity'],
+                    'rack_id'       => $item['rack_id'] ?? null,
+                    'user_id'       => auth()->id(),
+                    'notes'         => $item['notes'] ?? null,
+                    'created_at'    => now(),
                 ]);
 
                 $stock = Stock::where('product_id', $item['product_id'])

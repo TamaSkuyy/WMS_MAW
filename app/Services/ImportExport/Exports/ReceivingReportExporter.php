@@ -20,7 +20,7 @@ class ReceivingReportExporter extends BaseExporter
         $filters = $this->filters;
 
         return CycleItem::query()
-            ->with(['cycle.supplier', 'product', 'rack', 'latestReceiveLog.user'])
+            ->with(['cycle.supplier', 'cycle.creator', 'cycle.carrier', 'product', 'rack', 'latestReceiveLog.user'])
             ->whereHas('cycle', function ($q) use ($filters) {
                 if (! empty($filters['date_from'])) {
                     $q->whereDate('received_at', '>=', $filters['date_from']);
@@ -49,7 +49,10 @@ class ReceivingReportExporter extends BaseExporter
             $model->rack?->code ?? '-',
             $model->quantity,
             $model->received_quantity,
-            $model->latestReceiveLog?->user?->name ?? '-',
+            $model->latestReceiveLog?->user?->name
+                ?? $model->cycle->creator?->name
+                ?? $model->cycle->carrier?->name
+                ?? '-',
             $model->cycle->status,
         ];
     }

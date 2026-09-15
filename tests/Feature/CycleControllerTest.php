@@ -656,6 +656,28 @@ class CycleControllerTest extends TestCase
         $this->assertDatabaseHas('cycles', ['id' => $cycle->id, 'carrier_id' => $pic->id]);
     }
 
+    public function test_quick_receive_records_receive_log(): void
+    {
+        $supplier = Supplier::factory()->create();
+        $product = Product::factory()->create();
+        $rack = Rack::factory()->create();
+
+        $this->actingAs($this->user)->post(route('cycles.quick-receive.store'), [
+            'supplier_id' => $supplier->id,
+            'items' => [['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 4]],
+        ]);
+
+        $item = CycleItem::where('product_id', $product->id)->sole();
+
+        // Report Receiving "Diterima Oleh" membaca dari receive_logs
+        $this->assertDatabaseHas('receive_logs', [
+            'cycle_item_id' => $item->id,
+            'quantity' => 4,
+            'rack_id' => $rack->id,
+            'user_id' => $this->user->id,
+        ]);
+    }
+
     public function test_store_numbering_resets_each_day_per_supplier(): void
     {
         \Carbon\Carbon::setTestNow('2026-09-08 08:00:00');

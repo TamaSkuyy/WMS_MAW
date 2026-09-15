@@ -6,8 +6,10 @@ use App\Models\Cycle;
 use App\Models\CycleItem;
 use App\Models\Product;
 use App\Models\Rack;
+use App\Models\ReceiveLog;
 use App\Models\Shopping;
 use App\Models\ShoppingItem;
+use App\Models\ShoppingLocation;
 use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -23,6 +25,15 @@ class ReportControllerTest extends TestCase
     {
         parent::setUp();
         $this->user = User::factory()->create();
+
+        foreach ([
+            'view receiving report',
+            'export receiving report',
+            'view shopping report',
+            'export shopping report',
+        ] as $permission) {
+            $this->user->givePermissionTo(\Spatie\Permission\Models\Permission::findOrCreate($permission));
+        }
     }
 
     private function pageProps($response): array
@@ -188,10 +199,12 @@ class ReportControllerTest extends TestCase
         $product = Product::factory()->create();
         $rack = Rack::factory()->create();
 
-        $matching = Shopping::factory()->create(['status' => 'shipped', 'partner_name' => 'PT Maju Jaya']);
+        $matchingLocation = ShoppingLocation::create(['name' => 'PT Maju Jaya']);
+        $matching = Shopping::factory()->create(['status' => 'shipped', 'shopping_location_id' => $matchingLocation->id]);
         ShoppingItem::factory()->create(['shopping_id' => $matching->id, 'product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 4]);
 
-        $other = Shopping::factory()->create(['status' => 'shipped', 'partner_name' => 'CV Sentosa']);
+        $otherLocation = ShoppingLocation::create(['name' => 'CV Sentosa']);
+        $other = Shopping::factory()->create(['status' => 'shipped', 'shopping_location_id' => $otherLocation->id]);
         ShoppingItem::factory()->create(['shopping_id' => $other->id, 'product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 2]);
 
         $response = $this->actingAs($this->user)->get(route('reports.shopping', ['partner' => 'Maju']));
@@ -267,5 +280,64 @@ class ReportControllerTest extends TestCase
 
         $response->assertSuccessful();
         $response->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_receiving_report_shows_receiver_from_receive_log(): void
+    {
+        $product = Product::factory()->create();
+        $creator = User::factory()->create(['name' => 'PIC Input']);
+        $receiver = User::factory()->create(['name' => 'Petugas Terima']);
+
+        $cycle = Cycle::factory()->create([
+            'status' => 'completed',
+            'received_at' => now(),
+            'created_by' => $creator->id,
+        ]);
+        $item = CycleItem::factory()->create([
+            'cycle_id' => $cycle->id,
+            'product_id' => $product->id,
+            'quantity' => 5,
+            'received_quantity' => 5,
+        ]);
+        ReceiveLog::create([
+            'cycle_item_id' => $item->id,
+            'quantity' => 5,
+            'user_id' => $receiver->id,
+            'created_at' => now(),
+        ]);
+
+        $response = $this->actingAs($this->user)->get(route('reports.receiving'));
+
+        $rows = $this->pageProps($response)['items']['data'];
+
+        $this->assertCount(1, $rows);
+        $this->assertSame('Petugas Terima', $rows[0]['latest_receive_log']['user']['name']);
+    }
+
+    public function test_receiving_report_falls_back_to_cycle_creator_without_receive_log(): void
+    {
+        $product = Product::factory()->create();
+        $creator = User::factory()->create(['name' => 'PIC Input']);
+
+        // Cycle hasil Terima Cepat lama / tanpa receive log → tetap tampilkan pembuat cycle
+        $cycle = Cycle::factory()->create([
+            'status' => 'completed',
+            'received_at' => now(),
+            'created_by' => $creator->id,
+        ]);
+        CycleItem::factory()->create([
+            'cycle_id' => $cycle->id,
+            'product_id' => $product->id,
+            'quantity' => 3,
+            'received_quantity' => 3,
+        ]);
+
+        $response = $this->actingAs($this->user)->get(route('reports.receiving'));
+
+        $rows = $this->pageProps($response)['items']['data'];
+
+        $this->assertCount(1, $rows);
+        $this->assertNull($rows[0]['latest_receive_log']);
+        $this->assertSame('PIC Input', $rows[0]['cycle']['creator']['name']);
     }
 }
