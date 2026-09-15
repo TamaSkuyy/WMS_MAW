@@ -22,7 +22,7 @@ class Shopping extends Model
     protected function casts(): array
     {
         return [
-            'shopping_date' => 'date',
+            'shopping_date' => 'datetime',
             'is_cripple' => 'boolean',
             'shipped_at' => 'datetime',
         ];

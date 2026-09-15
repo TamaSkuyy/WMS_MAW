@@ -39,6 +39,12 @@ function beep() {
     } catch (_) {}
 }
 
+/** Format waktu lokal untuk <input type="datetime-local"> (hindari geser UTC). */
+function toLocalDateTimeInput(date: Date): string {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 export default function Edit({ shopping, products, racks, shoppingLocations, correction = false }: any) {
     const { errors = {}, flash = {} } = usePage().props as any;
     const [reason, setReason] = useState('');
@@ -50,7 +56,7 @@ export default function Edit({ shopping, products, racks, shoppingLocations, cor
         if (!shopping.shopping_date) return '';
         const d = new Date(shopping.shopping_date);
         if (isNaN(d.getTime())) return shopping.shopping_date;
-        return d.toISOString().split('T')[0];
+        return toLocalDateTimeInput(d);
     });
     const [notes, setNotes] = useState(shopping.notes || '');
     const [frameNumber, setFrameNumber] = useState(shopping.frame_number || '');
@@ -346,8 +352,8 @@ export default function Edit({ shopping, products, racks, shoppingLocations, cor
                                 {errors.shopping_location_id && <p className="mt-1 text-sm text-red-500">{errors.shopping_location_id}</p>}
                             </div>
                             <div>
-                                <Label>Tanggal Kirim</Label>
-                                <Input type="date" value={shoppingDate} onChange={(e) => setShoppingDate(e.target.value)} />
+                                <Label>Tanggal &amp; Jam Kirim</Label>
+                                <Input type="datetime-local" value={shoppingDate} onChange={(e) => setShoppingDate(e.target.value)} />
                                 {errors.shopping_date && <p className="mt-1 text-sm text-red-500">{errors.shopping_date}</p>}
                             </div>
                             <div>

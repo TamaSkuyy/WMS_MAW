@@ -41,7 +41,7 @@ class ShoppingReportExporter extends BaseExporter
     public function mapRow($model): array
     {
         return [
-            $model->shopping->shopping_date->format('Y-m-d'),
+            $model->shopping->shopping_date->format('Y-m-d H:i'),
             $model->shopping->shoppingLocation?->name ?? '-',
             $model->shopping->frame_number ?? '-',
             $model->product->part_number,

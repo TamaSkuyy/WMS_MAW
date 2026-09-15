@@ -471,4 +471,27 @@ class ShoppingControllerTest extends TestCase
         $this->assertCount(1, $rows);
         $this->assertSame('Petugas Kirim', $rows[0]['shipped_by']['name']);
     }
+
+    public function test_store_keeps_shopping_time(): void
+    {
+        $this->user->givePermissionTo(Permission::findOrCreate('create shoppings'));
+
+        $product = Product::factory()->create();
+        $rack = Rack::factory()->create();
+        $location = \App\Models\ShoppingLocation::create(['name' => 'Lokasi Jam Kirim']);
+
+        $response = $this->actingAs($this->user)->post(route('shoppings.store'), [
+            'shopping_location_id' => $location->id,
+            'shopping_date' => '2026-06-10T14:30',
+            'items' => [['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 1]],
+        ]);
+
+        $response->assertRedirect();
+
+        // Jam tidak lagi terpotong jadi 00:00
+        $this->assertDatabaseHas('shoppings', [
+            'shopping_location_id' => $location->id,
+            'shopping_date' => '2026-06-10 14:30:00',
+        ]);
+    }
 }
