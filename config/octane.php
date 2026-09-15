@@ -105,8 +105,11 @@ return [
         OperationTerminated::class => [
             FlushOnce::class,
             FlushTemporaryContainerInstances::class,
-            // DisconnectFromDatabases::class,
-            // CollectGarbage::class,
+            // Putuskan koneksi DB tiap request selesai — mencegah error
+            // "MySQL server has gone away" / 502 saat server idle lama
+            // (koneksi persistent worker ditutup MySQL karena wait_timeout).
+            DisconnectFromDatabases::class,
+            CollectGarbage::class,
         ],
 
         WorkerErrorOccurred::class => [

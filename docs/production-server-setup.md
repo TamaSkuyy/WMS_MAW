@@ -369,6 +369,48 @@ docker exec $(docker compose -p wms-wma-prod -f docker-compose.prod.yml --env-fi
 | Reverb WebSocket not connecting | Cek `REVERB_*` vars di `.env.prod`; pastikan port nginx proxy `/app` ke reverb |
 | Maintenance mode stuck | `docker compose ... exec app php artisan up` |
 
+### 9.1 502 Bad Gateway saat idle (penting)
+
+**Bukan CSRF.** Session/CSRF kedaluwarsa menghasilkan **419 Page Expired**, bukan
+502. 502 = nginx tidak bisa menghubungi app (container mati/restart/timeout).
+Kalau operator sering kena 419 setelah idle lama, naikkan `SESSION_LIFETIME`
+di `.env.prod` (mis. 480 menit) lalu restart app — itu masalah terpisah dari 502.
+
+Penyebab tersering di stack ini (FrankenPHP + Octane + MySQL):
+
+1. **Koneksi DB worker Octane basi** setelah idle lama → `MySQL server has gone away`.
+   Sudah diperbaiki: listener `DisconnectFromDatabases` di `config/octane.php`
+   aktif (putus koneksi tiap request) + `wait_timeout` MySQL diperbesar.
+2. **Container app OOM-kill / restart** (worker menumpuk memori) → nginx 502
+   selama restart. Sudah diperbaiki: queue worker didaur ulang
+   (`--max-time=3600 --max-jobs=1000`), log container dibatasi (rotasi).
+3. **Healthcheck palsu**: sebelumnya `curl -s` tanpa `-f`, jadi 404/500 pun
+   dianggap sehat dan nginx `depends_on: service_healthy` bisa keliru.
+   Sekarang `curl -fsS` ke `/health/ping` (route publik baru) + `start_period`.
+
+Diagnosa cepat di VPS (ganti `-p wms-wma-prod -f docker-compose.prod.yml --env-file .env.prod` sesuai konvensi):
+
+```bash
+# 1) Status & restart count container
+docker compose ps
+docker inspect --format '{{.Name}} health={{if .State.Health}}{{.State.Health.Status}}{{end}} restarts={{.RestartCount}}' $(docker compose ps -q)
+
+# 2) Ada OOM/kill/restart? (penyebab paling umum)
+docker events --since 24h --until 0m | grep -iE "oom|kill|die|restart" | tail -30
+dmesg -T | grep -i "killed process" | tail -10
+free -h
+
+# 3) Log app & nginx (cari "upstream", "connection refused", "gone away")
+docker compose logs app --since 2h | grep -iE "error|exception|gone away|fatal" | tail -40
+docker compose logs nginx --since 2h | grep -iE "error|502|upstream" | tail -40
+
+# 4) Log nginx host (SSL) — sumber 502 ke user
+sudo tail -100 /var/log/nginx/error.log
+```
+
+Kalau ternyata OOM: batasi worker (`--workers=2` sudah dipakai), tambah RAM/swap
+VPS, atau pisahkan MySQL keluar dari VPS yang sama.
+
 ---
 
 ## 10. Quick Reference Card

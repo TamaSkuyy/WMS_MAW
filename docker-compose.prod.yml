@@ -1,3 +1,9 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   app:
     build:
@@ -21,11 +27,17 @@ services:
     depends_on:
       - redis
       - mysql
+    stop_grace_period: 30s
     healthcheck:
-      test: ["CMD", "curl", "-s", "http://localhost:8080/health/ping"]
-      interval: 10s
+      # -f: healthcheck GAGAL kalau endpoint balas non-2xx (sebelumnya tanpa -f,
+      # 404/500 pun dianggap sehat). Endpoint: routes/web.php /health/ping
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health/ping"]
+      interval: 15s
       timeout: 5s
       retries: 5
+      # FrankenPHP/Octane butuh waktu boot setelah restart
+      start_period: 60s
+    logging: *default-logging
 
   nginx:
     image: nginx:alpine
@@ -44,11 +56,15 @@ services:
       interval: 15s
       timeout: 5s
       retries: 3
+      start_period: 10s
+    logging: *default-logging
 
   queue:
     image: wms-wma-app:prod
     restart: unless-stopped
-    command: php artisan queue:work --sleep=3 --tries=3 --timeout=1800
+    # --max-time/--max-jobs: daur ulang worker secara berkala supaya memori
+    # tidak menumpuk (penyebab container OOM-kill → 502 saat idle).
+    command: php artisan queue:work --sleep=3 --tries=3 --timeout=1800 --max-time=3600 --max-jobs=1000
     env_file:
       - .env.prod
     volumes:
@@ -61,6 +77,8 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+      start_period: 30s
+    logging: *default-logging
 
   scheduler:
     image: wms-wma-app:prod
@@ -78,6 +96,8 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+      start_period: 30s
+    logging: *default-logging
 
   reverb:
     image: wms-wma-app:prod
@@ -95,10 +115,14 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+    logging: *default-logging
 
   mysql:
     image: mysql:8.0
     restart: unless-stopped
+    # wait_timeout/interactive_timeout diperbesar: koneksi worker Octane yang
+    # menganggur lama tidak langsung diputus MySQL (mengurangi error saat idle).
+    command: --max_allowed_packet=512M --wait_timeout=28800 --interactive_timeout=28800
     ports:
       - "${FORWARD_DB_PORT:-3306}:3306"
     environment:
@@ -108,12 +132,14 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
       - mysql-vol:/var/lib/mysql
+    logging: *default-logging
 
   redis:
     image: redis:alpine
     restart: unless-stopped
     volumes:
       - redis-vol:/data
+    logging: *default-logging
 
 volumes:
   mysql-vol:

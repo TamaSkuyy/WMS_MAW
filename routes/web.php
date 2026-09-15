@@ -37,6 +37,10 @@ use Spatie\Permission\Middleware\RoleMiddleware;
 // ── Public ──────────────────────────────────────────────────
 Route::get('/', fn () => redirect()->route('login'));
 
+// Healthcheck container (Docker healthcheck) — tanpa auth, tanpa DB.
+// Dipakai `docker-compose.prod.yml` untuk memastikan FrankenPHP/Octane hidup.
+Route::get('/health/ping', fn () => response('pong', 200)->header('Content-Type', 'text/plain'));
+
 // Manual Book — static HTML docs (akses: /docs, /docs/, /docs/supplier-management.html)
 Route::get('/docs/{file?}', function (?string $file = null) {
     // /docs atau /docs/ → index.html
