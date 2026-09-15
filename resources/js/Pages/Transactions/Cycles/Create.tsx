@@ -8,6 +8,7 @@ import Button from '../../../Tailadmin/components/ui/button/Button';
 import Label from '../../../Tailadmin/components/form/Label';
 import SearchableSelect from '../../../Tailadmin/components/form/select/SearchableSelect';
 import QtyStepper from '../../../Components/QtyStepper';
+import ScanButton from '../../../Components/ScanButton';
 import { Link } from '@inertiajs/react';
 
 export default function Create({ suppliers, products, users }: any) {
@@ -97,13 +98,25 @@ export default function Create({ suppliers, products, users }: any) {
                     <ComponentCard title="Tambah Item" desc="Pilih produk yang akan diterima">
                         <div className="mb-4 space-y-3">
                             <div>
-                                <Label>Produk</Label>
-                                <SearchableSelect
-                                    options={filteredProducts.map((p: any) => ({ value: p.id, label: `${p.part_number} - ${p.name}` }))}
-                                    value={selectedProduct}
-                                    onChange={(v) => setSelectedProduct(v as string)}
-                                    placeholder={data.supplier_id ? 'Pilih produk...' : 'Pilih supplier dulu'}
-                                />
+                                <Label>Produk (bisa scan barcode)</Label>
+                                <div className="flex gap-2 items-center">
+                                    <div className="flex-1 min-w-0">
+                                        <SearchableSelect
+                                            options={filteredProducts.map((p: any) => ({ value: p.id, label: `${p.part_number} - ${p.name}` }))}
+                                            value={selectedProduct}
+                                            onChange={(v) => setSelectedProduct(v as string)}
+                                            placeholder={data.supplier_id ? 'Pilih produk...' : 'Pilih supplier dulu'}
+                                        />
+                                    </div>
+                                    <ScanButton
+                                        title="Scan barcode part"
+                                        onScan={(code) => {
+                                            const found = filteredProducts.find((p: any) => String(p.part_number).toUpperCase() === code.toUpperCase());
+                                            if (found) setSelectedProduct(String(found.id));
+                                            else alert(`Part "${code}" tidak ditemukan${data.supplier_id ? '' : ' — pilih supplier dulu'}.`);
+                                        }}
+                                    />
+                                </div>
                             </div>
                             <div className="flex gap-2 items-end">
                                 <div className="w-64 sm:w-72">

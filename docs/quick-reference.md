@@ -115,6 +115,22 @@ Menu: Transactions > Stocks
 
 ---
 
+## 📷 SCAN BARCODE
+
+Semua kolom pencarian (Produk, Stok, Rak, Lokasi, Shift, dll) punya tombol **📷**:
+
+```
+1. Klik 📷 di dalam kolom pencarian → izinkan kamera
+2. Arahkan kamera ke barcode part
+3. Hasil scan otomatis mengisi kolom pencarian (barcode part = part number)
+```
+
+- Di form **Tambah/Edit Item Cycle**, tombol 📷 di samping pilihan Produk langsung memilih produk hasil scan (kalau part di luar supplier terpilih → muncul peringatan).
+- Di Shopping, tombol scan lokasi/frame/part sudah tersedia masing-masing.
+- Scanner USB (keyboard-wedge) tetap jalan: fokuskan kursor ke kolom pencarian, lalu tembakkan barcode.
+
+---
+
 ## 🛠️ MASALAH UMUM
 
 | Masalah | Solusi |

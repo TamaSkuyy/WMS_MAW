@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
 import ImportModal from '../../../Components/ImportExport/ImportModal';
 import QrScanner from '../../../Components/QrScanner';
+import ScanButton from '../../../Components/ScanButton';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
@@ -118,13 +119,27 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
                 <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
                     <div className="flex flex-wrap items-end gap-3">
                         <div className="w-full sm:min-w-[200px]">
-                            <Label>Cari Lokasi</Label>
-                            <Input
-                                type="text"
-                                defaultValue={filters?.search || ''}
-                                placeholder="Nama lokasi tujuan..."
-                                onChange={(e) => router.get(route('shoppings.index'), { ...filters, search: e.target.value }, { preserveState: true, replace: true })}
-                            />
+                            <Label>Cari Lokasi (bisa scan barcode)</Label>
+                            <div className="flex gap-2">
+                                <div className="flex-1 min-w-0">
+                                    <Input
+                                        type="text"
+                                        defaultValue={filters?.search || ''}
+                                        placeholder="Nama lokasi tujuan..."
+                                        onChange={(e) => router.get(route('shoppings.index'), { ...filters, search: e.target.value }, { preserveState: true, replace: true })}
+                                    />
+                                </div>
+                                <ScanButton
+                                    title="Scan barcode lokasi"
+                                    onScan={(code) => {
+                                        const found = (shoppingLocations || []).find((l: any) =>
+                                            String(l.barcode || '').toUpperCase() === code.toUpperCase() ||
+                                            String(l.name || '').toUpperCase() === code.toUpperCase()
+                                        );
+                                        router.get(route('shoppings.index'), { ...filters, search: found ? found.name : code }, { preserveState: true, replace: true });
+                                    }}
+                                />
+                            </div>
                         </div>
                         <div className="w-full sm:min-w-[160px]">
                             <Label>Status</Label>

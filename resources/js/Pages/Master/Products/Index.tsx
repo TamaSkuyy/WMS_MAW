@@ -5,6 +5,7 @@ import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb'
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
 import Button from '../../../Tailadmin/components/ui/button/Button';
 import Input from '../../../Tailadmin/components/form/input/InputField';
+import SearchInput from '../../../Tailadmin/components/form/input/SearchInput';
 import SearchableSelect from '../../../Tailadmin/components/form/select/SearchableSelect';
 import TableActions from '../../../Tailadmin/components/common/TableActions';
 import EmptyState from '../../../Tailadmin/components/common/EmptyState';
@@ -33,17 +34,11 @@ export default function Index({ products, categories, suppliers, filters }: any)
             <ComponentCard title="Daftar Produk">
                 <div className="mb-4 flex gap-3 flex-wrap items-end">
                     <div className="min-w-[200px]">
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Cari</label>
-                        <Input
-                            type="text"
-                            defaultValue={filters?.search || ''}
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Cari / Scan</label>
+                        <SearchInput
+                            routeName="products.index"
+                            filters={filters}
                             placeholder="Part number atau nama..."
-                            onChange={(e) => {
-                                router.get(route('products.index'), {
-                                    ...filters,
-                                    search: e.target.value,
-                                }, { preserveState: true, replace: true });
-                            }}
                         />
                     </div>
                     <div className="min-w-[180px]">
