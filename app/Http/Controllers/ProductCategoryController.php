@@ -6,11 +6,14 @@ use App\Services\ImportExport\Base\BaseExporter;
 use App\Services\ImportExport\Base\BaseImporter;
 use App\Services\ImportExport\Exports\ProductCategoryExporter;
 use App\Services\ImportExport\Imports\ProductCategoryImporter;
+use App\Http\Controllers\Concerns\HasPagination;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class ProductCategoryController extends Controller
 {
+    use HasPagination;
+
     use HasImportExport;
 
     protected function importer(): BaseImporter
@@ -35,7 +38,7 @@ class ProductCategoryController extends Controller
                 ->when($request->search, function ($query, $search) {
                     $query->where('name', 'like', "%{$search}%");
                 })
-                ->paginate(10)
+                ->paginate($this->perPage(10))
                 ->withQueryString(),
             'filters' => $request->only(['search']),
         ]);

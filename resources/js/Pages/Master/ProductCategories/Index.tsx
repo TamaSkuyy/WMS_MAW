@@ -98,6 +98,7 @@ export default function Index({ categories, filters }: any) {
                 {categories.total > categories.per_page && (
                     <Pagination
                         prevUrl={categories.prev_page_url}
+                        perPage={categories.per_page}
                         nextUrl={categories.next_page_url}
                         currentPage={categories.current_page}
                         lastPage={categories.last_page}

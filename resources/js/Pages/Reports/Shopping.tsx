@@ -137,6 +137,7 @@ export default function Shopping({ items, summary, filters }: any) {
                 {items.total > items.per_page && (
                     <Pagination
                         prevUrl={items.prev_page_url}
+                        perPage={items.per_page}
                         nextUrl={items.next_page_url}
                         currentPage={items.current_page}
                         lastPage={items.last_page}

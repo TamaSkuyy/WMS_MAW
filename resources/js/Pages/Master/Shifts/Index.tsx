@@ -111,6 +111,7 @@ export default function Index({ shifts, filters }: any) {
                 {shifts.total > shifts.per_page && (
                     <Pagination
                         prevUrl={shifts.prev_page_url}
+                        perPage={shifts.per_page}
                         nextUrl={shifts.next_page_url}
                         currentPage={shifts.current_page}
                         lastPage={shifts.last_page}

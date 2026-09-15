@@ -3,17 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\ShoppingLocation;
+use App\Http\Controllers\Concerns\HasPagination;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class ShoppingLocationController extends Controller
 {
+    use HasPagination;
+
     public function index(Request $request)
     {
         return Inertia::render('Master/ShoppingLocations/Index', [
             'locations' => ShoppingLocation::orderBy('name')
                 ->when($request->search, fn($q, $s) => $q->where('name', 'like', "%{$s}%"))
-                ->paginate(10)
+                ->paginate($this->perPage(10))
                 ->withQueryString(),
             'filters' => $request->only(['search']),
         ]);

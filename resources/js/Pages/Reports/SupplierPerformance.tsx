@@ -191,6 +191,7 @@ export default function SupplierPerformance({ cycles, incompleteItems, perSuppli
                 {cycles.total > cycles.per_page && (
                     <Pagination
                         prevUrl={cycles.prev_page_url}
+                        perPage={cycles.per_page}
                         nextUrl={cycles.next_page_url}
                         currentPage={cycles.current_page}
                         lastPage={cycles.last_page}

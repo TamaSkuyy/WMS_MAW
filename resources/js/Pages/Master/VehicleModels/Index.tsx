@@ -98,6 +98,7 @@ export default function Index({ vehicleModels, filters }: any) {
                 {vehicleModels.total > vehicleModels.per_page && (
                     <Pagination
                         prevUrl={vehicleModels.prev_page_url}
+                        perPage={vehicleModels.per_page}
                         nextUrl={vehicleModels.next_page_url}
                         currentPage={vehicleModels.current_page}
                         lastPage={vehicleModels.last_page}

@@ -9,11 +9,14 @@ use App\Services\ImportExport\DTOs\ExportConfig;
 use App\Services\ImportExport\Enums\ExportFormat;
 use App\Services\ImportExport\Exports\SupplierPerformanceExporter;
 use App\Services\ImportExport\Managers\ExportManager;
+use App\Http\Controllers\Concerns\HasPagination;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class SupplierPerformanceController extends Controller
 {
+    use HasPagination;
+
     public function index(Request $request)
     {
         $filters = $request->only(['supplier_id', 'period', 'date_from', 'date_to']);
@@ -31,7 +34,7 @@ class SupplierPerformanceController extends Controller
             $query->whereDate('received_at', '<=', $filters['date_to']);
         }
 
-        $cycles = $query->latest('received_at')->paginate(15)->withQueryString();
+        $cycles = $query->latest('received_at')->paginate($this->perPage(15))->withQueryString();
 
         // --- Metrics ---
         $metricsQuery = Cycle::where('status', 'completed');

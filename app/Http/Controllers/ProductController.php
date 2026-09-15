@@ -12,11 +12,14 @@ use App\Services\ImportExport\Base\BaseExporter;
 use App\Services\ImportExport\Base\BaseImporter;
 use App\Services\ImportExport\Exports\ProductExporter;
 use App\Services\ImportExport\Imports\ProductImporter;
+use App\Http\Controllers\Concerns\HasPagination;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class ProductController extends Controller
 {
+    use HasPagination;
+
     use HasImportExport;
 
     protected function importer(): BaseImporter
@@ -51,7 +54,7 @@ class ProductController extends Controller
                 $query->where('supplier_id', $supplierId);
             })
             ->latest()
-            ->paginate(15)
+            ->paginate($this->perPage(15))
             ->withQueryString();
 
         // Attach total_stock and status per product

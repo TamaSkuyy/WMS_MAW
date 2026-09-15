@@ -73,6 +73,7 @@ export default function Index({ locations, filters }: any) {
                 {locations.total > locations.per_page && (
                     <Pagination
                         prevUrl={locations.prev_page_url}
+                        perPage={locations.per_page}
                         nextUrl={locations.next_page_url}
                         currentPage={locations.current_page}
                         lastPage={locations.last_page}

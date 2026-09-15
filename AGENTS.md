@@ -37,6 +37,11 @@ otomatis oleh harness, jadi jaga tetap ringkas. Detail panjang taruh di `docs/`.
 5. **Stock Opname** (`StockOpnameController`): header wajib `Part No`,
    `Qty Opname` (opsional `RAK`); normalisasi header = `strtolower` **dulu**, baru
    buang non-alphanumerik.
+6. **Pagination**: index memakai trait `HasPagination` (`?per_page=10|25|50|100`);
+   komponen `Pagination` mengurus per-page + lompat halaman via `usePage().url`.
+7. **Hapus massal transaksi** (`shoppings/bulk-delete`, `cycles/bulk-delete`) hanya
+   superadmin & semua status; stok dikoreksi lewat trait `AdjustsStock` (dijepit 0,
+   `stock_shortage` dilaporkan).
 
 ## Struktur
 

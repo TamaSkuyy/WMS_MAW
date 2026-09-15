@@ -11,6 +11,8 @@ use App\Models\Rack;
 use App\Models\Shopping;
 use App\Models\ShoppingLocation;
 use App\Models\Stock;
+use App\Http\Controllers\Concerns\AdjustsStock;
+use App\Http\Controllers\Concerns\HasPagination;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -18,6 +20,9 @@ use Inertia\Inertia;
 
 class ShoppingController extends Controller
 {
+    use AdjustsStock;
+    use HasPagination;
+
     public function index(Request $request)
     {
         $shoppings = Shopping::with(['shoppingLocation', 'shippedBy:id,name', 'items'])
@@ -25,7 +30,7 @@ class ShoppingController extends Controller
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->search, fn ($q, $s) => $q->whereHas('shoppingLocation', fn ($ql) => $ql->where('name', 'like', "%{$s}%")))
             ->latest()
-            ->paginate(10)
+            ->paginate($this->perPage(10))
             ->withQueryString();
 
         return Inertia::render('Transactions/Shopping/Index', [
@@ -397,6 +402,70 @@ class ShoppingController extends Controller
         }
 
         return redirect()->route('shoppings.index')->with('success', $msg);
+    }
+
+    /**
+     * Hapus massal shopping (SUPERADMIN — route group).
+     *
+     * Semua status boleh dihapus. Untuk shopping yang sudah dikirim
+     * (shipped/cripple/completed), stok dikembalikan sebesar qty item —
+     * karena saat pengiriman stok dikurangi. Draft tidak menyentuh stok.
+     */
+    public function bulkDelete(Request $request)
+    {
+        abort_unless(auth()->user()->can('delete shoppings'), 403);
+
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1|max:500',
+            'ids.*' => 'integer',
+        ]);
+
+        $ids = array_map('intval', $validated['ids']);
+
+        $result = DB::transaction(function () use ($ids) {
+            $shoppings = Shopping::with('items')
+                ->whereIn('id', $ids)
+                ->lockForUpdate()
+                ->get();
+
+            $deleted = 0;
+            $restored = 0;
+            $shortage = 0;
+
+            foreach ($shoppings as $shopping) {
+                $isShipped = in_array($shopping->status, ['shipped', 'cripple', 'completed'], true);
+
+                if ($isShipped) {
+                    foreach ($shopping->items as $item) {
+                        $adjust = $this->adjustStock((int) $item->product_id, $item->rack_id, (int) $item->quantity);
+                        $restored += max($adjust['applied'], 0);
+                        $shortage += $adjust['shortage'];
+                    }
+                }
+
+                $shopping->delete();
+                $deleted++;
+            }
+
+            return ['deleted' => $deleted, 'restored' => $restored, 'shortage' => $shortage];
+        });
+
+        try {
+            event(new StockChanged());
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'deleted' => $result['deleted'],
+            'stock_restored' => $result['restored'],
+            'stock_shortage' => $result['shortage'],
+            'message' => "{$result['deleted']} shopping dihapus"
+                . ($result['restored'] > 0 ? ", stok dikembalikan {$result['restored']} pcs" : '')
+                . ($result['shortage'] > 0 ? " (peringatan: {$result['shortage']} pcs tidak bisa dikembalikan karena stok tidak cukup)" : '')
+                . '.',
+        ]);
     }
 
     // ── KOREKSI shopping yang SUDAH dikirim (khusus permission correct shoppings) ──

@@ -7,11 +7,14 @@ use App\Models\Supplier;
 use App\Services\DeliveryMonitor\DeliveryMonitorSnapshotBuilder;
 use Carbon\Carbon;
 use Carbon\Exceptions\InvalidFormatException;
+use App\Http\Controllers\Concerns\HasPagination;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class DeliveryMonitorController extends Controller
 {
+    use HasPagination;
+
     public function index(Request $request)
     {
         $date = $this->resolveDate($request);
@@ -32,7 +35,7 @@ class DeliveryMonitorController extends Controller
             ->with(['items', 'deliverySlot'])
             ->orderByDesc('delivery_date')
             ->orderByDesc('created_at')
-            ->paginate(15);
+            ->paginate($this->perPage(15));
 
         $cycles->getCollection()->transform(fn (Cycle $cycle) => [
             'id' => $cycle->id,

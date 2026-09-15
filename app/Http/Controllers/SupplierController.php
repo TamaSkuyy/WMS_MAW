@@ -9,11 +9,14 @@ use App\Services\ImportExport\Base\BaseExporter;
 use App\Services\ImportExport\Base\BaseImporter;
 use App\Services\ImportExport\Exports\SupplierExporter;
 use App\Services\ImportExport\Imports\SupplierImporter;
+use App\Http\Controllers\Concerns\HasPagination;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class SupplierController extends Controller
 {
+    use HasPagination;
+
     use HasImportExport;
 
     protected function importer(): BaseImporter
@@ -43,7 +46,7 @@ class SupplierController extends Controller
                       ->orWhere('email', 'like', "%{$search}%");
             })
             ->latest()
-            ->paginate(10)
+            ->paginate($this->perPage(10))
             ->withQueryString();
 
         return Inertia::render('Master/Suppliers/Index', [

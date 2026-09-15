@@ -8,11 +8,14 @@ use App\Services\ImportExport\Base\BaseExporter;
 use App\Services\ImportExport\Base\BaseImporter;
 use App\Services\ImportExport\Exports\WorkLocationExporter;
 use App\Services\ImportExport\Imports\WorkLocationImporter;
+use App\Http\Controllers\Concerns\HasPagination;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class WorkLocationController extends Controller
 {
+    use HasPagination;
+
     use HasImportExport;
 
     protected function importer(): BaseImporter
@@ -37,7 +40,7 @@ class WorkLocationController extends Controller
                 ->when($request->search, function ($query, $search) {
                     $query->where('name', 'like', "%{$search}%");
                 })
-                ->paginate(10)
+                ->paginate($this->perPage(10))
                 ->withQueryString(),
             'filters' => $request->only(['search']),
         ]);

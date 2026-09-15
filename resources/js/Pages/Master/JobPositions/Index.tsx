@@ -107,6 +107,7 @@ export default function Index({ positions, filters, roles }: any) {
                 {positions.total > positions.per_page && (
                     <Pagination
                         prevUrl={positions.prev_page_url}
+                        perPage={positions.per_page}
                         nextUrl={positions.next_page_url}
                         currentPage={positions.current_page}
                         lastPage={positions.last_page}

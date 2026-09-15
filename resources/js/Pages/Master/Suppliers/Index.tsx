@@ -122,6 +122,7 @@ export default function Index({ suppliers, filters }: any) {
                 {suppliers.total > suppliers.per_page && (
                     <Pagination
                         prevUrl={suppliers.prev_page_url}
+                        perPage={suppliers.per_page}
                         nextUrl={suppliers.next_page_url}
                         currentPage={suppliers.current_page}
                         lastPage={suppliers.last_page}

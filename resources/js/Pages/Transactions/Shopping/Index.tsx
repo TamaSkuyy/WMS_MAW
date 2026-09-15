@@ -3,6 +3,7 @@ import AppLayout from '../../../Tailadmin/layout/AppLayout';
 import ImportModal from '../../../Components/ImportExport/ImportModal';
 import QrScanner from '../../../Components/QrScanner';
 import ScanButton from '../../../Components/ScanButton';
+import BulkDeleteBar from '../../../Components/BulkDeleteBar';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import PageBreadcrumb from '../../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../../Tailadmin/components/common/ComponentCard';
@@ -42,6 +43,47 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
     // daftar draft ter-refresh dari server.
     const [shippedFrames, setShippedFrames] = useState<string[]>([]);
     const [submitting, setSubmitting] = useState(false);
+
+    // Hapus massal (superadmin)
+    const isSuperadmin = ((usePage().props.auth as any)?.user?.roles || []).includes('superadmin');
+    const [deleteIds, setDeleteIds] = useState<number[]>([]);
+    const [deleting, setDeleting] = useState(false);
+    const pageIds: number[] = (shoppings?.data || []).map((s: any) => s.id);
+    const allPageSelected = pageIds.length > 0 && pageIds.every((id) => deleteIds.includes(id));
+    const toggleAllPage = () => {
+        setDeleteIds(allPageSelected ? [] : Array.from(new Set([...deleteIds, ...pageIds])));
+    };
+    const toggleOne = (id: number) => {
+        setDeleteIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+    };
+    const getCsrfToken = (): string =>
+        (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '';
+    const handleBulkDelete = async () => {
+        if (deleteIds.length === 0 || deleting) return;
+        setDeleting(true);
+        try {
+            const res = await fetch(route('shoppings.bulk-delete'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({ ids: deleteIds }),
+            });
+            const text = await res.text();
+            const data = text ? JSON.parse(text) : {};
+            if (!res.ok) throw new Error(data?.message || `Gagal menghapus (HTTP ${res.status})`);
+            alert(data.message || 'Data terhapus.');
+            setDeleteIds([]);
+            router.reload({ only: ['shoppings'] });
+        } catch (err: any) {
+            alert(err.message || 'Gagal menghapus data.');
+        } finally {
+            setDeleting(false);
+        }
+    };
 
     const draftMap = useMemo(() => {
         const m = new Map<number, DraftShopping>();
@@ -203,9 +245,32 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
                     />
                 ) : (
                 <div className="overflow-x-auto">
+                    {isSuperadmin && (
+                        <BulkDeleteBar
+                            count={deleteIds.length}
+                            busy={deleting}
+                            entityLabel="shopping"
+                            onClear={() => setDeleteIds([])}
+                            onConfirm={handleBulkDelete}
+                        />
+                    )}
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead className="bg-gray-50 dark:bg-gray-800">
                             <tr>
+                                {isSuperadmin && (
+                                    <th className="px-2 py-2 w-12">
+                                        <label className="flex min-h-11 min-w-11 items-center justify-center cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={allPageSelected}
+                                                onChange={toggleAllPage}
+                                                title="Pilih semua di halaman ini"
+                                                aria-label="Pilih semua di halaman ini"
+                                                className="h-5 w-5"
+                                            />
+                                        </label>
+                                    </th>
+                                )}
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lokasi Tujuan</th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal Kirim</th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dikirim Oleh</th>
@@ -216,7 +281,20 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
                             {shoppings.data.map((s: any) => (
-                                <tr key={s.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                <tr key={s.id} className={`transition-colors ${deleteIds.includes(s.id) ? 'bg-red-50 dark:bg-red-900/10' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'}`}>
+                                    {isSuperadmin && (
+                                        <td className="px-2 py-2">
+                                            <label className="flex min-h-11 min-w-11 items-center justify-center cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={deleteIds.includes(s.id)}
+                                                    onChange={() => toggleOne(s.id)}
+                                                    aria-label={`Pilih shopping ${s.id}`}
+                                                    className="h-5 w-5"
+                                                />
+                                            </label>
+                                        </td>
+                                    )}
                                     <td className="px-4 py-3 whitespace-nowrap text-sm">{s.shopping_location?.name || '-'}</td>
                                     <td className="px-4 py-3 whitespace-nowrap text-sm">
                                         {s.shopping_date ? new Date(s.shopping_date).toLocaleString('id-ID', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '-'}
@@ -274,6 +352,7 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
                 {shoppings.total > shoppings.per_page && (
                     <Pagination
                         prevUrl={shoppings.prev_page_url}
+                        perPage={shoppings.per_page}
                         nextUrl={shoppings.next_page_url}
                         currentPage={shoppings.current_page}
                         lastPage={shoppings.last_page}

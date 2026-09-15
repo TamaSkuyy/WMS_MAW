@@ -18,6 +18,8 @@ use App\Services\ImportExport\Base\BaseImporter;
 use App\Services\ImportExport\Exports\CycleExporter;
 use App\Services\ImportExport\Imports\CycleImporter;
 use App\Services\DataOrder\DataOrderImportService;
+use App\Http\Controllers\Concerns\AdjustsStock;
+use App\Http\Controllers\Concerns\HasPagination;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -25,6 +27,9 @@ use Inertia\Inertia;
 
 class CycleController extends Controller
 {
+    use AdjustsStock;
+    use HasPagination;
+
     use HasImportExport;
 
     protected function importer(): BaseImporter
@@ -47,7 +52,7 @@ class CycleController extends Controller
             ->when($request->supplier_id, fn($q, $id) => $q->where('supplier_id', $id))
             ->when($request->status, fn($q, $s) => $q->where('status', $s))
             ->latest()
-            ->paginate(10)
+            ->paginate($this->perPage(10))
             ->withQueryString();
 
         return Inertia::render('Transactions/Cycles/Index', [
@@ -509,6 +514,77 @@ class CycleController extends Controller
         }
 
         return redirect()->route('cycles.show', $cycle)->with('success', 'Barang diterima. Stock diperbarui.');
+    }
+
+    /**
+     * Hapus massal cycle (SUPERADMIN — route group).
+     *
+     * Semua status boleh dihapus. Stok dikoreksi otomatis: qty yang pernah
+     * diterima (dari receive_logs; fallback received_quantity) dikurangi lagi
+     * dari stok, dijepit di 0 kalau stok tidak cukup (dicatat sebagai shortage).
+     * Draft tidak menyentuh stok.
+     */
+    public function bulkDelete(Request $request)
+    {
+        abort_unless(auth()->user()->can('delete cycles'), 403);
+
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1|max:500',
+            'ids.*' => 'integer',
+        ]);
+
+        $ids = array_map('intval', $validated['ids']);
+
+        $result = DB::transaction(function () use ($ids) {
+            $cycles = Cycle::with(['items.receiveLogs'])
+                ->whereIn('id', $ids)
+                ->lockForUpdate()
+                ->get();
+
+            $deleted = 0;
+            $reduced = 0;
+            $shortage = 0;
+
+            foreach ($cycles as $cycle) {
+                foreach ($cycle->items as $item) {
+                    $logs = $item->receiveLogs;
+
+                    if ($logs->isNotEmpty()) {
+                        foreach ($logs as $log) {
+                            $adjust = $this->adjustStock((int) $item->product_id, $log->rack_id, -(int) $log->quantity);
+                            $reduced += abs(min($adjust['applied'], 0));
+                            $shortage += $adjust['shortage'];
+                        }
+                    } elseif ((int) $item->received_quantity > 0) {
+                        $adjust = $this->adjustStock((int) $item->product_id, $item->rack_id, -(int) $item->received_quantity);
+                        $reduced += abs(min($adjust['applied'], 0));
+                        $shortage += $adjust['shortage'];
+                    }
+                }
+
+                $cycle->delete();
+                $deleted++;
+            }
+
+            return ['deleted' => $deleted, 'reduced' => $reduced, 'shortage' => $shortage];
+        });
+
+        try {
+            event(new StockChanged());
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'deleted' => $result['deleted'],
+            'stock_reduced' => $result['reduced'],
+            'stock_shortage' => $result['shortage'],
+            'message' => "{$result['deleted']} cycle dihapus"
+                . ($result['reduced'] > 0 ? ", stok dikurangi {$result['reduced']} pcs" : '')
+                . ($result['shortage'] > 0 ? " (peringatan: {$result['shortage']} pcs tidak bisa dikurangi karena stok tidak cukup)" : '')
+                . '.',
+        ]);
     }
 
     // ── KOREKSI cycle yang SUDAH diterima (khusus permission correct cycles) ──

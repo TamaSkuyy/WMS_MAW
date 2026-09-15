@@ -123,6 +123,7 @@ export default function Index({ racks, filters }: any) {
                 {racks.total > racks.per_page && (
                     <Pagination
                         prevUrl={racks.prev_page_url}
+                        perPage={racks.per_page}
                         nextUrl={racks.next_page_url}
                         currentPage={racks.current_page}
                         lastPage={racks.last_page}

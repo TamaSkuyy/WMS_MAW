@@ -13,11 +13,14 @@ use App\Services\ImportExport\Base\BaseExporter;
 use App\Services\ImportExport\Base\BaseImporter;
 use App\Services\ImportExport\Exports\EmployeeExporter;
 use App\Services\ImportExport\Imports\EmployeeImporter;
+use App\Http\Controllers\Concerns\HasPagination;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class EmployeeController extends Controller
 {
+    use HasPagination;
+
     use HasImportExport;
 
     protected function importer(): BaseImporter
@@ -45,7 +48,7 @@ class EmployeeController extends Controller
                           ->orWhere('nik', 'like', "%{$search}%")
                           ->orWhere('email', 'like', "%{$search}%");
                 })
-                ->paginate(10)
+                ->paginate($this->perPage(10))
                 ->withQueryString(),
             'filters' => $request->only(['search']),
         ]);

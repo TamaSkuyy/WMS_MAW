@@ -183,6 +183,7 @@ export default function Index({ products, categories, suppliers, filters }: any)
                 {products.total > products.per_page && (
                     <Pagination
                         prevUrl={products.prev_page_url}
+                        perPage={products.per_page}
                         nextUrl={products.next_page_url}
                         currentPage={products.current_page}
                         lastPage={products.last_page}

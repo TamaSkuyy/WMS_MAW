@@ -11,6 +11,7 @@ import ImportExportToolbar from "../../../Components/ImportExport/ImportExportTo
 import ImportModal from "../../../Components/ImportExport/ImportModal";
 import ReceivePickerModal from "../../../Components/Cycles/ReceivePickerModal";
 import DataOrderImportModal from "../../../Components/Cycles/DataOrderImportModal";
+import BulkDeleteBar from "../../../Components/BulkDeleteBar";
 
 export default function Index({ cycles, suppliers, filters }: any) {
     const permissions = (usePage().props.auth as any)?.user?.permissions || [];
@@ -21,6 +22,46 @@ export default function Index({ cycles, suppliers, filters }: any) {
     const [importModalOpen, setImportModalOpen] = useState(false);
     const [pickerOpen, setPickerOpen] = useState(false);
     const [dataOrderOpen, setDataOrderOpen] = useState(false);
+
+    // Hapus massal (superadmin)
+    const isSuperadmin = ((usePage().props.auth as any)?.user?.roles || []).includes('superadmin');
+    const [deleteIds, setDeleteIds] = useState<number[]>([]);
+    const [deleting, setDeleting] = useState(false);
+    const pageIds: number[] = (cycles?.data || []).map((c: any) => c.id);
+    const allPageSelected = pageIds.length > 0 && pageIds.every((id) => deleteIds.includes(id));
+    const toggleAllPage = () => {
+        setDeleteIds(allPageSelected ? [] : Array.from(new Set([...deleteIds, ...pageIds])));
+    };
+    const toggleOne = (id: number) => {
+        setDeleteIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+    };
+    const handleBulkDelete = async () => {
+        if (deleteIds.length === 0 || deleting) return;
+        setDeleting(true);
+        try {
+            const res = await fetch(route('cycles.bulk-delete'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({ ids: deleteIds }),
+            });
+            const text = await res.text();
+            const data = text ? JSON.parse(text) : {};
+            if (!res.ok) throw new Error(data?.message || `Gagal menghapus (HTTP ${res.status})`);
+            alert(data.message || 'Data terhapus.');
+            setDeleteIds([]);
+            router.reload({ only: ['cycles'] });
+        } catch (err: any) {
+            alert(err.message || 'Gagal menghapus data.');
+        } finally {
+            setDeleting(false);
+        }
+    };
+
     const handleDelete = (id: number) => {
         if (confirm("Hapus cycle ini?")) {
             router.delete(route("cycles.destroy", id));
@@ -179,9 +220,32 @@ export default function Index({ cycles, suppliers, filters }: any) {
                     />
                 ) : (
                     <div className="overflow-x-auto">
+                        {isSuperadmin && (
+                            <BulkDeleteBar
+                                count={deleteIds.length}
+                                busy={deleting}
+                                entityLabel="cycle"
+                                onClear={() => setDeleteIds([])}
+                                onConfirm={handleBulkDelete}
+                            />
+                        )}
                         <table className="min-w-full">
                             <thead className="bg-[#F8F9FC] border-b border-[#E9ECEF]">
                                 <tr>
+                                    {isSuperadmin && (
+                                        <th className="px-2 py-2 w-12">
+                                            <label className="flex min-h-11 min-w-11 items-center justify-center cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={allPageSelected}
+                                                    onChange={toggleAllPage}
+                                                    title="Pilih semua di halaman ini"
+                                                    aria-label="Pilih semua di halaman ini"
+                                                    className="h-5 w-5"
+                                                />
+                                            </label>
+                                        </th>
+                                    )}
                                     <th className="px-4 py-3 text-left text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider">
                                         Supplier
                                     </th>
@@ -212,8 +276,21 @@ export default function Index({ cycles, suppliers, filters }: any) {
                                 {cycles.data.map((cycle: any) => (
                                     <tr
                                         key={cycle.id}
-                                        className="border-b border-[#F1F3F5] hover:bg-[#F8F9FC] transition-all duration-150"
+                                        className={`border-b border-[#F1F3F5] transition-all duration-150 ${deleteIds.includes(cycle.id) ? 'bg-red-50 dark:bg-red-900/10' : 'hover:bg-[#F8F9FC]'}`}
                                     >
+                                        {isSuperadmin && (
+                                            <td className="px-2 py-2">
+                                                <label className="flex min-h-11 min-w-11 items-center justify-center cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={deleteIds.includes(cycle.id)}
+                                                        onChange={() => toggleOne(cycle.id)}
+                                                        aria-label={`Pilih cycle ${cycle.id}`}
+                                                        className="h-5 w-5"
+                                                    />
+                                                </label>
+                                            </td>
+                                        )}
                                         <td className="px-4 py-3 whitespace-nowrap text-sm text-[#1A1D23]">
                                             {cycle.supplier?.name || "-"}
                                         </td>
@@ -356,6 +433,7 @@ export default function Index({ cycles, suppliers, filters }: any) {
                 {cycles.total > cycles.per_page && (
                     <Pagination
                         prevUrl={cycles.prev_page_url}
+                        perPage={cycles.per_page}
                         nextUrl={cycles.next_page_url}
                         currentPage={cycles.current_page}
                         lastPage={cycles.last_page}

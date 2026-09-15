@@ -554,6 +554,13 @@ Route::middleware('auth')->group(function () {
                 ->name('data-reset.execute');
         });
 
+        // Hapus massal transaksi (superadmin) — stok dikoreksi otomatis.
+        // Ditaruh di grup superadmin; controller tetap cek permission delete.
+        Route::middleware('throttle:10,1')->group(function () {
+            Route::post('shoppings/bulk-delete', [ShoppingController::class, 'bulkDelete'])->name('shoppings.bulk-delete');
+            Route::post('cycles/bulk-delete', [CycleController::class, 'bulkDelete'])->name('cycles.bulk-delete');
+        });
+
         Route::get('/test-broadcast', function () {
             $user = auth()->user();
             if (!$user) return 'Anda harus login dulu!';

@@ -157,6 +157,26 @@ lewat halaman **Pemutihan Data** (superadmin):
 
 ---
 
+## 📄 NAVIGASI TABEL & HAPUS MASSAL
+
+**Navigasi (semua menu):**
+- Pilih **Baris** per halaman: 10 (default) / 25 / 50 / 100.
+- Tombol **« Pertama**, **Sebelumnya**, **Berikutnya**, **Terakhir »**, dan isi
+  **"Ke hal."** + klik **Ke** untuk lompat langsung ke halaman tertentu.
+
+**Hapus massal (khusus SUPERADMIN, di Shopping & Receiving/Cycles):**
+```
+1. Centang baris yang mau dihapus (atau centang header = pilih semua di halaman itu)
+2. Klik "🗑️ Hapus N terpilih"
+3. Baca peringatan → centang pernyataan → "Hapus Permanen"
+```
+- **Semua status** boleh dihapus (draft/shipped/completed).
+- **Stok dikoreksi otomatis**: pengiriman shopping dikembalikan ke stok;
+  penerimaan cycle dikurangi kembali dari stok. Kalau stok tidak cukup, nilainya
+  dijepit 0 dan muncul peringatan jumlah yang tidak bisa dikoreksi.
+
+---
+
 ## 🛠️ MASALAH UMUM
 
 | Masalah | Solusi |

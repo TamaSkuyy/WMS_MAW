@@ -137,6 +137,7 @@ export default function Index({ employees, filters }: any) {
                 {employees.total > employees.per_page && (
                     <Pagination
                         prevUrl={employees.prev_page_url}
+                        perPage={employees.per_page}
                         nextUrl={employees.next_page_url}
                         currentPage={employees.current_page}
                         lastPage={employees.last_page}

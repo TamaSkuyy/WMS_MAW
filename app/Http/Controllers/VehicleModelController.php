@@ -6,11 +6,14 @@ use App\Services\ImportExport\Base\BaseExporter;
 use App\Services\ImportExport\Base\BaseImporter;
 use App\Services\ImportExport\Exports\VehicleModelExporter;
 use App\Services\ImportExport\Imports\VehicleModelImporter;
+use App\Http\Controllers\Concerns\HasPagination;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class VehicleModelController extends Controller
 {
+    use HasPagination;
+
     use HasImportExport;
 
     protected function importer(): BaseImporter
@@ -35,7 +38,7 @@ class VehicleModelController extends Controller
                 ->when($request->search, function ($query, $search) {
                     $query->where('name', 'like', "%{$search}%");
                 })
-                ->paginate(10)
+                ->paginate($this->perPage(10))
                 ->withQueryString(),
             'filters' => $request->only(['search']),
         ]);

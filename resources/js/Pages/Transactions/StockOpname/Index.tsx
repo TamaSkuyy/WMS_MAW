@@ -317,6 +317,7 @@ export default function StockOpnameIndex({ opnames, zones, racks }: any) {
         {opnames.total > opnames.per_page && (
           <Pagination
             prevUrl={opnames.prev_page_url}
+                        perPage={opnames.per_page}
             nextUrl={opnames.next_page_url}
             currentPage={opnames.current_page}
             lastPage={opnames.last_page}

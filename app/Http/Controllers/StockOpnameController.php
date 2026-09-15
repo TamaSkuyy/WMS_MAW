@@ -9,6 +9,7 @@ use App\Models\StockOpname;
 use App\Models\StockOpnameItem;
 use App\Services\ImportExport\Support\RawFileImport;
 use App\Services\StockOpname\StockOpnameTemplateExport;
+use App\Http\Controllers\Concerns\HasPagination;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -18,6 +19,8 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class StockOpnameController extends Controller
 {
+    use HasPagination;
+
     /** Token yang dianggap "tanpa rak / relay" di kolom RAK file excel. */
     private const RELAY_TOKENS = ['', 'relay', 'overflow', '-', '—', 'non rak', 'tanpa rak'];
 
@@ -28,7 +31,7 @@ class StockOpnameController extends Controller
     {
         $opnames = StockOpname::with('creator:id,name')
             ->latest('id')
-            ->paginate(15);
+            ->paginate($this->perPage(15));
 
         return Inertia::render('Transactions/StockOpname/Index', [
             'opnames' => $opnames,

@@ -8,11 +8,14 @@ use App\Services\ImportExport\Base\BaseExporter;
 use App\Services\ImportExport\Base\BaseImporter;
 use App\Services\ImportExport\Exports\RackExporter;
 use App\Services\ImportExport\Imports\RackImporter;
+use App\Http\Controllers\Concerns\HasPagination;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class RackController extends Controller
 {
+    use HasPagination;
+
     use HasImportExport;
 
     protected function importer(): BaseImporter
@@ -39,7 +42,7 @@ class RackController extends Controller
                     $query->where('code', 'like', "%{$search}%")
                           ->orWhere('zone', 'like', "%{$search}%");
                 })
-                ->paginate(10)
+                ->paginate($this->perPage(10))
                 ->withQueryString(),
             'filters' => $request->only(['search']),
         ]);

@@ -95,6 +95,7 @@ export default function Index({ departments, filters }: any) {
                 {departments.total > departments.per_page && (
                     <Pagination
                         prevUrl={departments.prev_page_url}
+                        perPage={departments.per_page}
                         nextUrl={departments.next_page_url}
                         currentPage={departments.current_page}
                         lastPage={departments.last_page}

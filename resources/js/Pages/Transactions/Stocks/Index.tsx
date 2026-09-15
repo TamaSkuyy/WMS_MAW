@@ -84,6 +84,7 @@ export default function Index({ stocks }: any) {
                 {stocks.total > stocks.per_page && (
                     <Pagination
                         prevUrl={stocks.prev_page_url}
+                        perPage={stocks.per_page}
                         nextUrl={stocks.next_page_url}
                         currentPage={stocks.current_page}
                         lastPage={stocks.last_page}

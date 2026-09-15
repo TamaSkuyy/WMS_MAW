@@ -11,16 +11,19 @@ use App\Services\ImportExport\Exports\ReceivingReportExporter;
 use App\Services\ImportExport\Exports\ShoppingReportExporter;
 use App\Services\ImportExport\Managers\ExportManager;
 use Illuminate\Database\Eloquent\Builder;
+use App\Http\Controllers\Concerns\HasPagination;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class ReportController extends Controller
 {
+    use HasPagination;
+
     public function receiving(Request $request)
     {
         $filters = $request->only(['date_from', 'date_to', 'supplier_id', 'status']);
 
-        $items = $this->receivingQuery($filters)->paginate(15)->withQueryString();
+        $items = $this->receivingQuery($filters)->paginate($this->perPage(15))->withQueryString();
 
         return Inertia::render('Reports/Receiving', [
             'items' => $items,
@@ -84,7 +87,7 @@ class ReportController extends Controller
     {
         $filters = $request->only(['date_from', 'date_to', 'partner', 'status']);
 
-        $items = $this->shoppingQuery($filters)->paginate(15)->withQueryString();
+        $items = $this->shoppingQuery($filters)->paginate($this->perPage(15))->withQueryString();
 
         return Inertia::render('Reports/Shopping', [
             'items' => $items,

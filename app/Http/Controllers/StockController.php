@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Rack;
 use App\Models\Stock;
+use App\Http\Controllers\Concerns\HasPagination;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class StockController extends Controller
 {
+    use HasPagination;
+
     public function index(Request $request)
     {
         $stocks = Stock::with(['product.supplier', 'product.vehicleModel', 'rack'])
@@ -27,7 +30,7 @@ class StockController extends Controller
                 });
             })
             ->orderBy('quantity', 'desc')
-            ->paginate(20)
+            ->paginate($this->perPage(20))
             ->withQueryString();
 
         // Collect all (product_id, rack_id) pairs from current page
