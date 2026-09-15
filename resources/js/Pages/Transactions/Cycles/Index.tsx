@@ -5,6 +5,7 @@ import PageBreadcrumb from "../../../Tailadmin/components/common/PageBreadCrumb"
 import ComponentCard from "../../../Tailadmin/components/common/ComponentCard";
 import Button from "../../../Tailadmin/components/ui/button/Button";
 import SearchableSelect from "../../../Tailadmin/components/form/select/SearchableSelect";
+import SearchInput from "../../../Tailadmin/components/form/input/SearchInput";
 import EmptyState from "../../../Tailadmin/components/common/EmptyState";
 import Pagination from "../../../Tailadmin/components/common/Pagination";
 import ImportExportToolbar from "../../../Components/ImportExport/ImportExportToolbar";
@@ -80,6 +81,16 @@ export default function Index({ cycles, suppliers, filters }: any) {
             <PageBreadcrumb pageTitle="Cycle" />
             <ComponentCard title="Daftar Cycle">
                 <div className="mb-4 flex gap-3 flex-wrap items-end">
+                    <div className="w-full sm:flex-1 sm:min-w-[240px]">
+                        <label className="block text-xs font-medium text-gray-500 mb-1">
+                            Cari / Scan
+                        </label>
+                        <SearchInput
+                            routeName="cycles.index"
+                            filters={filters}
+                            placeholder="Supplier, no. cycle, atau part number..."
+                        />
+                    </div>
                     <div className="w-full sm:min-w-[200px]">
                         <label className="block text-xs font-medium text-gray-500 mb-1">
                             Supplier

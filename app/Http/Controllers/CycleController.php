@@ -51,6 +51,23 @@ class CycleController extends Controller
         $cycles = Cycle::with(['supplier', 'creator', 'carrier'])
             ->when($request->supplier_id, fn($q, $id) => $q->where('supplier_id', $id))
             ->when($request->status, fn($q, $s) => $q->where('status', $s))
+            ->when($request->search, function ($q, $search) {
+                $term = trim((string) $search);
+
+                $q->where(function ($qq) use ($term) {
+                    // Nomor cycle (cocok persis kalau input angka)
+                    if (is_numeric($term)) {
+                        $qq->orWhere('cycle_number', (int) $term);
+                    }
+
+                    $qq->orWhereHas('supplier', fn ($qs) => $qs->where('name', 'like', "%{$term}%"))
+                        ->orWhereHas('supplier', fn ($qs) => $qs->where('code', 'like', "%{$term}%"))
+                        ->orWhereHas('items.product', function ($qp) use ($term) {
+                            $qp->where('part_number', 'like', "%{$term}%")
+                                ->orWhere('name', 'like', "%{$term}%");
+                        });
+                });
+            })
             ->latest()
             ->paginate($this->perPage(10))
             ->withQueryString();
@@ -58,7 +75,7 @@ class CycleController extends Controller
         return Inertia::render('Transactions/Cycles/Index', [
             'cycles' => $cycles,
             'suppliers' => Supplier::orderBy('name')->get(),
-            'filters' => $request->only(['supplier_id', 'status']),
+            'filters' => $request->only(['supplier_id', 'status', 'search']),
         ]);
     }
 
