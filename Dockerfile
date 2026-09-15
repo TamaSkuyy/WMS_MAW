@@ -27,6 +27,18 @@ WORKDIR /var/www/html
 # Copy application files
 COPY . .
 
+# Buang cache bootstrap lama dari konteks build (mis. routes-v7.php/config.php)
+# supaya rute terbaru — termasuk /health/ping — tidak tertimpa cache stale.
+# Sekaligus siapkan direktori runtime storage yang di-ignore .dockerignore.
+RUN rm -f bootstrap/cache/*.php \
+    && mkdir -p storage/logs \
+       storage/framework/cache/data \
+       storage/framework/sessions \
+       storage/framework/views \
+       storage/framework/testing \
+       storage/app/private/imports \
+    && chmod -R 775 storage bootstrap/cache
+
 # Install dependencies (no dev)
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 

@@ -433,6 +433,8 @@ smart_rebuild() {
     dc build
 
     # Maintenance mode SEBELUM restart apa pun
+    # Trap: apa pun yang terjadi (gagal/Ctrl+C), maintenance mode dimatikan lagi
+    trap 'dc exec -T app php artisan up 2>/dev/null || true' EXIT
     APP_CONTAINER=$(dc ps -q app 2>/dev/null | head -1 || true)
     if [ -n "$APP_CONTAINER" ]; then
         dc exec -T app php artisan down --retry=5 --render="errors::503" 2>/dev/null || true
@@ -443,7 +445,8 @@ smart_rebuild() {
 
     # Tunggu app healthy
     log "Menunggu app healthy..."
-    RETRIES=18
+    # 30 × 5s = 150s: cukup untuk start_period healthcheck (60s) + boot Octane
+    RETRIES=30
     for i in $(seq 1 $RETRIES); do
         STATUS=$(dc ps app --format '{{.Health}}' 2>/dev/null || echo "starting")
         if [ "$STATUS" = "healthy" ]; then
@@ -452,7 +455,14 @@ smart_rebuild() {
         fi
         if [ "$i" = "$RETRIES" ]; then
             warn "App belum healthy setelah ${RETRIES} percobaan."
-            dc logs app --tail=20 2>&1 || true
+            # Diagnosa: status + output healthcheck terakhir (curl exit/HTTP code)
+            APP_CID=$(dc ps -q app 2>/dev/null | head -1)
+            if [ -n "$APP_CID" ]; then
+                docker inspect --format '{{json .State.Health}}' "$APP_CID" 2>/dev/null || true
+            fi
+            dc logs app --tail=40 2>&1 || true
+            # Jangan tinggalkan situs dalam maintenance mode saat gagal
+            dc exec -T app php artisan up 2>/dev/null || true
             err "Rebuild gagal. Cek logs di atas."
             exit 1
         fi
@@ -639,7 +649,8 @@ dc up -d
 
 # ── Wait for app health ──────────────────────────────────────────────────────
 log "Menunggu app healthy..."
-RETRIES=20
+# 30 × 5s = 150s (start_period healthcheck 60s + boot Octane)
+RETRIES=30
 for i in $(seq 1 $RETRIES); do
     STATUS=$(dc ps app --format '{{.Health}}' 2>/dev/null || echo "starting")
     if [ "$STATUS" = "healthy" ]; then
@@ -648,6 +659,12 @@ for i in $(seq 1 $RETRIES); do
     fi
     if [ "$i" = "$RETRIES" ]; then
         warn "App belum healthy setelah ${RETRIES} percobaan."
+        APP_CID=$(dc ps -q app 2>/dev/null | head -1)
+        if [ -n "$APP_CID" ]; then
+            warn "=== Healthcheck terakhir ==="
+            docker inspect --format '{{json .State.Health}}' "$APP_CID" 2>/dev/null || true
+            echo
+        fi
         warn "=== Container Status ==="
         dc ps
         echo
@@ -657,6 +674,8 @@ for i in $(seq 1 $RETRIES); do
         warn "=== Manual healthcheck test ==="
         dc exec -T app curl -sv http://localhost:8080/health/ping 2>&1 || echo "(curl gagal — Octane mungkin belum start)"
         echo
+        # Jangan tinggalkan situs dalam maintenance mode saat deploy gagal
+        dc exec -T app php artisan up 2>/dev/null || true
         err "Deployment gagal. Fix error di atas lalu jalankan ulang."
         exit 1
     fi

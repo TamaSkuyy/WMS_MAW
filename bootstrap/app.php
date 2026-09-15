@@ -14,6 +14,16 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
 
+        // Endpoint healthcheck Docker TIDAK boleh kena maintenance mode.
+        // Tanpa ini, `deploy-production.sh --rebuild` (yang menyalakan
+        // maintenance sebelum menunggu app healthy) selalu gagal karena
+        // healthcheck dibalas 503. Route bawaan `health: '/up'` sudah otomatis
+        // dikecualikan Laravel; route kustom ini perlu didaftarkan manual.
+        $middleware->preventRequestsDuringMaintenance(except: [
+            'health/ping',
+            'up',
+        ]);
+
         $middleware->web(append: [
             \App\Http\Middleware\SecurityHeaders::class,
             \App\Http\Middleware\HandleInertiaRequests::class,

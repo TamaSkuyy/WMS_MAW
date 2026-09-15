@@ -1,0 +1,42 @@
+# Konteks build Docker — jangan kirim yang tidak dibutuhkan image.
+# Tanpa file ini build mengirim seluruh repo (node_modules + storage + .git
+# ± 370 MB) dan bisa membawa cache rute/config lama ke dalam image.
+
+.git
+.gitignore
+.github
+.vscode
+.claude
+.superpowers
+.agents
+
+node_modules
+vendor
+frankenphp
+install.log
+.phpunit.result.cache
+phpunit.xml
+tests
+
+# Runtime storage — isinya dibuat ulang di container (Dockerfile menyiapkan
+# direktorinya). Volume produksi `storage-vol` tetap dipakai saat runtime.
+storage/logs/*
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/framework/testing/*
+storage/app/private/imports/*
+storage/app/private/scratch/*
+
+# Hasil build frontend di-copy terpisah ke container nginx (bind mount ./public)
+public/build
+
+# Arsip lokal, backup, dan dokumentasi
+backups
+docs
+*.log
+
+# File env tidak boleh masuk image
+.env
+.env.*
+!.env.example

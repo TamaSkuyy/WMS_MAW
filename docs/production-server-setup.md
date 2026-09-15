@@ -368,6 +368,8 @@ docker exec $(docker compose -p wms-wma-prod -f docker-compose.prod.yml --env-fi
 | Worker stuck / queue not processing | `./deploy-production.sh --check-queue` untuk diagnosa; restart worker: `docker compose ... restart queue` (atau `docker compose ... exec app php artisan queue:restart` untuk restart graceful setelah job selesai) |
 | Reverb WebSocket not connecting | Cek `REVERB_*` vars di `.env.prod`; pastikan port nginx proxy `/app` ke reverb |
 | Maintenance mode stuck | `docker compose ... exec app php artisan up` |
+| `--rebuild` berhenti di "App belum healthy" padahal Octane jalan | Dulu: maintenance mode memblokir `/health/ping` (503). Sekarang `/health/ping` & `/up` dikecualikan dari maintenance (`bootstrap/app.php`) + script mencetak output healthcheck terakhir & otomatis `artisan up` saat gagal. Jalankan `git pull` lalu rebuild. |
+| Route baru 404 setelah rebuild | Cache rute lama ikut ter-copy ke image. Sekarang `.dockerignore` + `Dockerfile` membuang `bootstrap/cache/*.php` sebelum build. Pastikan `git pull` dulu. |
 
 ### 9.1 502 Bad Gateway saat idle (penting)
 
