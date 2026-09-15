@@ -131,6 +131,32 @@ Semua kolom pencarian (Produk, Stok, Rak, Lokasi, Shift, dll) punya tombol **�
 
 ---
 
+## 🧹 PEMUTIHAN / MENGHAPUS TRANSAKSI
+
+Transaksi yang sudah **Shipped** (Shopping) atau **Completed** (Receiving) tidak
+punya tombol hapus per-item — itu disengaja (histori & stok aman). Menghapusnya
+lewat halaman **Pemutihan Data** (superadmin):
+
+```
+1. Buka: Pemutihan Data (menu superadmin)
+2. Isi "Dari Tanggal" dan/atau "Sampai Tanggal"
+3. Klik "Pratinjau" → cek jumlah: cycles (diterima) & shoppings (dikirim)
+4. Ketik frasa PEMUTIHAN + password Anda → Eksekusi
+   (backup database otomatis dibuat lebih dulu)
+```
+
+- **Mode tanggal** = hapus riwayat tuntas dalam rentang: cycle `completed`,
+  shopping `shipped`/`cripple`/`completed`, stock opname, koreksi, import log,
+  notifikasi. **Stok TIDAK diubah** dan antrian/cache tidak disentuh.
+- **Mode total** (tanpa tanggal) = semua transaksi dihapus + **stok direset 0**.
+- Tanggal acuan: `received_at` cycle & `shipped_at` shopping; kalau data lama
+  kosong, dipakai tanggal transaksi (`delivery_date`/`shopping_date`) — jadi data
+  lama tetap ikut terhapus.
+- Untuk koreksi 1 transaksi (bukan hapus massal), pakai tombol **Koreksi** di
+  detail transaksi.
+
+---
+
 ## 🛠️ MASALAH UMUM
 
 | Masalah | Solusi |

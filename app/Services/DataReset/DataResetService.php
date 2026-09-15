@@ -132,7 +132,7 @@ class DataResetService
     {
         $stats = [];
 
-        // Cycle yang sudah diterima dalam rentang
+        // Cycle completed dalam rentang (fallback tanggal transaksi)
         $cycleIds = $this->cycleScope($from, $to)->pluck('id');
         $stats['cycles'] = $cycleIds->count();
         if ($cycleIds->isNotEmpty()) {
@@ -141,7 +141,7 @@ class DataResetService
             DB::table('stock_corrections')->where('correctable_type', Cycle::class)->whereIn('correctable_id', $cycleIds)->delete();
         }
 
-        // Shopping yang sudah dikirim dalam rentang
+        // Shopping shipped/cripple/completed dalam rentang (fallback tanggal transaksi)
         $shoppingIds = $this->shoppingScope($from, $to)->pluck('id');
         $stats['shoppings'] = $shoppingIds->count();
         if ($shoppingIds->isNotEmpty()) {
@@ -176,16 +176,53 @@ class DataResetService
         return $stats;
     }
 
-    /** Cycle yang sudah diterima (received_at) dalam rentang tanggal. */
+    /**
+     * Cycle yang sudah selesai (completed) dalam rentang tanggal.
+     *
+     * Sebelumnya hanya `received_at` — baris lama yang `received_at`-nya NULL
+     * ikut terlewat sehingga pemutihan terasa "tidak menghapus". Sekarang
+     * berbasis STATUS + fallback tanggal: received_at → delivery_date → created_at.
+     */
     private function cycleScope(?string $from, ?string $to)
     {
-        return $this->dateScope('cycles', 'received_at', $from, $to)->whereNotNull('received_at');
+        $q = DB::table('cycles')->where('status', 'completed');
+
+        return $this->applyDateFallback($q, ['received_at', 'delivery_date', 'created_at'], $from, $to);
     }
 
-    /** Shopping yang sudah dikirim (shipped_at) dalam rentang tanggal. */
+    /**
+     * Shopping yang sudah dikirim dalam rentang tanggal.
+     *
+     * Status final shopping: shipped, cripple, dan completed. Tanggal memakai
+     * fallback: shipped_at → shopping_date → created_at (agar data lama yang
+     * `shipped_at`-nya NULL tetap ikut terhapus).
+     */
     private function shoppingScope(?string $from, ?string $to)
     {
-        return $this->dateScope('shoppings', 'shipped_at', $from, $to)->whereNotNull('shipped_at');
+        $q = DB::table('shoppings')->whereIn('status', ['shipped', 'cripple', 'completed']);
+
+        return $this->applyDateFallback($q, ['shipped_at', 'shopping_date', 'created_at'], $from, $to);
+    }
+
+    /**
+     * Terapkan filter rentang tanggal pada ekspresi COALESCE (fallback kolom).
+     *
+     * @param  \Illuminate\Database\Query\Builder  $q
+     * @param  array<int, string>  $columns
+     */
+    private function applyDateFallback($q, array $columns, ?string $from, ?string $to)
+    {
+        $expression = 'COALESCE(' . implode(', ', $columns) . ')';
+
+        if ($from !== null && $from !== '') {
+            $q->whereDate(DB::raw($expression), '>=', $from);
+        }
+
+        if ($to !== null && $to !== '') {
+            $q->whereDate(DB::raw($expression), '<=', $to);
+        }
+
+        return $q;
     }
 
     private function dateScope(string $table, string $column, ?string $from, ?string $to)
