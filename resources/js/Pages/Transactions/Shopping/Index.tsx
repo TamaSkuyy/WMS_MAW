@@ -38,6 +38,9 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
     const [frameSearch, setFrameSearch] = useState('');
     const [scannerOpen, setScannerOpen] = useState(false);
     const [scanMsg, setScanMsg] = useState<{ type: 'ok' | 'error'; text: string } | null>(null);
+    // Frame yang baru saja dikirim di sesi ini — dicegah discan ulang sebelum
+    // daftar draft ter-refresh dari server.
+    const [shippedFrames, setShippedFrames] = useState<string[]>([]);
     const [submitting, setSubmitting] = useState(false);
 
     const draftMap = useMemo(() => {
@@ -64,13 +67,27 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
     };
 
     const handleScan = (code: string) => {
+        const scanned = code.trim().toLowerCase();
         const match = (draftShoppings as DraftShopping[]).find(
-            (d) => d.frame_number.toLowerCase() === code.toLowerCase()
+            (d) => d.frame_number.toLowerCase() === scanned
         );
         if (!match) {
             setScanMsg({ type: 'error', text: `"${code}" tidak ditemukan di shopping draft` });
             return;
         }
+
+        // Frame yang sudah discan/dipilih tidak boleh discan ulang.
+        if (selectedIds.includes(match.id)) {
+            setScanMsg({ type: 'error', text: `Frame ${match.frame_number} sudah discan — tidak perlu diulang` });
+            return;
+        }
+
+        // Frame yang sudah dikirim (sesi ini) juga tidak boleh discan lagi.
+        if (shippedFrames.includes(scanned)) {
+            setScanMsg({ type: 'error', text: `Frame ${match.frame_number} sudah dikirim` });
+            return;
+        }
+
         addSelected(match.id);
         setScanMsg({ type: 'ok', text: `✓ ${match.frame_number} ditambahkan` });
     };
@@ -89,6 +106,12 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
             {
                 preserveScroll: true,
                 onSuccess: () => {
+                    // Tandai frame yang baru dikirim supaya tidak bisa discan ulang
+                    // sebelum props draftShoppings ter-refresh.
+                    setShippedFrames((prev) => [
+                        ...prev,
+                        ...selectedDrafts.map((d) => d.frame_number.toLowerCase()),
+                    ]);
                     setBulkShipOpen(false);
                     setSelectedIds([]);
                     setFrameSearch('');
@@ -343,13 +366,17 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
                                                 type="button"
                                                 onClick={() => addSelected(d.id)}
                                                 disabled={selectedIds.includes(d.id)}
-                                                className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 flex justify-between gap-2 ${
-                                                    selectedIds.includes(d.id) ? 'opacity-50' : ''
+                                                className={`w-full text-left px-3 py-2 text-sm flex justify-between gap-2 ${
+                                                    selectedIds.includes(d.id)
+                                                        ? 'opacity-50 cursor-not-allowed bg-gray-50 dark:bg-gray-800/60'
+                                                        : 'hover:bg-gray-50 dark:hover:bg-gray-800'
                                                 }`}
                                             >
                                                 <span className="font-mono">{d.frame_number}</span>
                                                 <span className="text-xs text-gray-400">
-                                                    {d.shopping_location?.name || '—'}
+                                                    {selectedIds.includes(d.id)
+                                                        ? '✓ sudah discan'
+                                                        : (d.shopping_location?.name || '—')}
                                                     {d.is_cripple ? ' ⚠️' : ''}
                                                 </span>
                                             </button>
