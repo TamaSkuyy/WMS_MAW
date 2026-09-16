@@ -370,6 +370,7 @@ docker exec $(docker compose -p wms-wma-prod -f docker-compose.prod.yml --env-fi
 | Maintenance mode stuck | `docker compose ... exec app php artisan up` |
 | `--rebuild` berhenti di "App belum healthy" padahal Octane jalan | Dulu: maintenance mode memblokir `/health/ping` (503). Sekarang `/health/ping` & `/up` dikecualikan dari maintenance (`bootstrap/app.php`) + script mencetak output healthcheck terakhir & otomatis `artisan up` saat gagal. Jalankan `git pull` lalu rebuild. |
 | Route baru 404 setelah rebuild | Cache rute lama ikut ter-copy ke image. Sekarang `.dockerignore` + `Dockerfile` membuang `bootstrap/cache/*.php` sebelum build. Pastikan `git pull` dulu. |
+| Deploy berhenti di "Cek koneksi Redis" — `Class "Illuminate\Redis\Connectors\PhpRedisConnector" not found` | **Bukan extension yang hilang.** Skrip cek Redis dulu menjalankan `php -r` tanpa autoloader/bootstrap. Sekarang sudah diperbaiki (`require vendor/autoload.php` → bootstrap → `Redis::connection()->ping()`). Jalankan `git pull` lalu deploy ulang. Untuk memastikan extension: `docker compose ... exec app php -m \| grep -i '^redis$'` — kalau kosong baru rebuild (Dockerfile sudah memuat `redis`). |
 
 ### 9.1 502 Bad Gateway saat idle (penting)
 

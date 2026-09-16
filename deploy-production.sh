@@ -686,17 +686,55 @@ echo
 
 # ── Wait for Redis ────────────────────────────────────────────────────────────
 log "Cek koneksi Redis..."
+
+# Pastikan extension phpredis benar-benar terpasang di image (Dockerfile
+# memasang 'redis' pada install-php-extensions).
+if ! dc exec -T app php -m 2>/dev/null | grep -qi '^redis$'; then
+    warn "Extension phpredis (php-redis) TIDAK terdeteksi di container app!"
+    warn "Cek Dockerfile: pastikan 'redis' ada di daftar install-php-extensions, lalu rebuild."
+fi
+
 RETRIES=10
+REDIS_OK=0
 for i in $(seq 1 $RETRIES); do
-    if dc exec -T app php -r "try { (new \Illuminate\Redis\Connectors\PhpRedisConnector)->connect(array_merge(config('database.redis.default'), ['timeout'=>1])); echo 'OK'; } catch(\Exception \$e) { exit(1); }" 2>/dev/null; then
+    # WAJIB bootstrap Laravel dulu (require bootstrap/app.php) — `php -r` polos
+    # tidak punya autoloader, sehingga class framework seperti PhpRedisConnector
+    # tidak ketemu (error lama: 'Class ... not found').
+    if dc exec -T app php -r '
+        require "vendor/autoload.php";
+        $app = require "bootstrap/app.php";
+        $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+        try {
+            Illuminate\Support\Facades\Redis::connection()->ping();
+            echo "OK";
+        } catch (Throwable $e) {
+            fwrite(STDERR, $e->getMessage());
+            exit(1);
+        }
+    ' 2>/dev/null; then
         log "Redis OK ✓"
+        REDIS_OK=1
         break
-    fi
-    if [ "$i" = "$RETRIES" ]; then
-        warn "Redis belum siap — lanjut aja, config:cache bakal retry"
     fi
     sleep 2
 done
+
+if [ "$REDIS_OK" != "1" ]; then
+    warn "Redis belum siap — error asli dari container:"
+    dc exec -T app php -r '
+        require "vendor/autoload.php";
+        $app = require "bootstrap/app.php";
+        $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+        try {
+            Illuminate\Support\Facades\Redis::connection()->ping();
+            echo "OK";
+        } catch (Throwable $e) {
+            fwrite(STDERR, get_class($e) . ": " . $e->getMessage());
+            exit(1);
+        }
+    ' 2>&1 || true
+    warn "Lanjut aja, config:cache bakal retry"
+fi
 
 # ── Run migrations ───────────────────────────────────────────────────────────
 log "Menjalankan migrasi database..."
