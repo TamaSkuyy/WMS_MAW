@@ -642,13 +642,27 @@ Penyebab: Laravel (lewat `Vite::prefetch()` + middleware
 sesi/XSRF. Default nginx cuma `proxy_buffer_size 4k` (atau 8k) → nginx menolak
 respons → 502 pada halaman yang headernya paling besar (mis. `/shoppings/create`).
 
-Cek cepat besarnya header di server:
+Cek header mana yang membengkak (2 langkah):
 
 ```bash
-# Ukuran header Link dari app (langsung ke Octane, tanpa nginx)
-curl -sS -D - -o /dev/null -H 'Cookie: laravel_session=x' http://127.0.0.1:8081/shoppings/create \
-  | awk 'BEGIN{RS="\r\n"} {print length($0)"\t"substr($0,1,60)}' | sort -rn | head -5
+# 1) Halaman TANPA login (mis. /login) — cukup untuk melihat header dasar app
+curl -sS -D - -o /dev/null http://127.0.0.1:8081/login \
+  | awk 'BEGIN{RS="\r\n"} NF {print length($0)"\t"substr($0,1,70)}' | sort -rn | head -8
+
+# 2) Halaman yang 502 — WAJIB pakai cookie sesi yang valid.
+#    Ambil nilai `laravel_session` dari browser: DevTools → Application/Storage → Cookies.
+curl -sS -D - -o /dev/null \
+  -H 'Cookie: laravel_session=<PASTE_NILAI_COOKIE>' \
+  -H 'Accept: text/html' \
+  http://127.0.0.1:8081/shoppings/create \
+  | awk 'BEGIN{RS="\r\n"} NF {print length($0)"\t"substr($0,1,70)}' | sort -rn | head -8
 ```
+
+> Catatan: tanpa login, `/shoppings/create` hanya membalas 302 ke `/login` (header
+> kecil ±500 byte) — jadi pengukuran tanpa cookie **tidak** menggambarkan kasus 502.
+> Kalau halaman terbesar hanya ±2 KB, artinya buffer nginx di server memang lebih
+> kecil dari itu (cek `nginx -T | grep proxy_buffer`) dan cukup dinaikkan seperti
+> di bawah.
 
 Perbaikan (sudah dipasang di repo untuk docker nginx — `docker/nginx/default.conf`):
 

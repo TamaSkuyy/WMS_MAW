@@ -73,6 +73,38 @@ verify_app_files() {
     return $missing
 }
 
+# ── Reload nginx + pastikan buffer header aktif ──────────────────────────────
+# docker/nginx/default.conf di-bind-mount dari repo: file baru langsung terlihat
+# container, TAPI nginx harus di-reload agar konfigurasinya dipakai. Tanpa reload,
+# perubahan buffer header tidak aktif dan halaman besar tetap 502
+# ("upstream sent too big header").
+reload_nginx() {
+    if ! dc exec -T nginx nginx -t >/dev/null 2>&1; then
+        err "Konfigurasi nginx di container TIDAK valid (cek docker/nginx/default.conf)."
+        dc exec -T nginx nginx -t 2>&1 | tail -5 || true
+        return 1
+    fi
+
+    if dc exec -T nginx nginx -s reload 2>/dev/null; then
+        log "nginx reload ✓"
+    else
+        warn "nginx reload gagal — jalankan manual: ${COMPOSE_CMD} -p ${PROJECT_NAME} -f ${COMPOSE_FILE} exec nginx nginx -s reload"
+        return 1
+    fi
+
+    local buffers
+    buffers=$(dc exec -T nginx nginx -T 2>/dev/null | grep -E "proxy_buffer_size|proxy_buffers|proxy_busy_buffers_size" || true)
+    if [ -z "${buffers}" ]; then
+        warn "Buffer header nginx BELUM aktif — halaman dengan header besar bisa 502."
+        warn "Pastikan docker/nginx/default.conf terbaru (proxy_buffer_size 32k) sudah ter-pull."
+    else
+        log "Buffer header nginx aktif:"
+        echo "${buffers}" | sed 's/^/    /'
+    fi
+
+    return 0
+}
+
 # ── Cek konfigurasi log ──────────────────────────────────────────────────────
 # LOG_CHANNEL kosong → "Log [] is not defined" dan error tidak tersimpan di log.
 check_log_config() {
@@ -498,9 +530,7 @@ quick_update() {
     # 8. Reload nginx: conf di-bind-mount dari repo, jadi perubahan
     # docker/nginx/default.conf (mis. buffer header) baru aktif setelah reload.
     log "8/8 Reload nginx (ambil docker/nginx/default.conf terbaru)..."
-    dc exec -T nginx nginx -s reload 2>/dev/null \
-        && log "  nginx reload OK ✓" \
-        || warn "  nginx reload gagal — jalankan: dc exec nginx nginx -s reload"
+    reload_nginx || true
 
     # Maintenance mode OFF — juga ditangani oleh trap EXIT di atas
     trap - EXIT
@@ -615,6 +645,8 @@ smart_rebuild() {
 
     # Restart nginx juga untuk pick up image baru
     dc up -d --no-deps nginx 2>/dev/null || true
+    # Reload + verifikasi buffer header nginx (conf di-bind-mount dari repo)
+    reload_nginx || true
 
     local END_TIME ELAPSED
     END_TIME=$(date +%s)
@@ -855,6 +887,11 @@ fi
 # ── Start services ───────────────────────────────────────────────────────────
 log "Menjalankan production stack..."
 dc up -d
+
+# Conf nginx di-bind-mount dari repo → reload supaya perubahan (mis. buffer
+# header anti-502) benar-benar aktif, walau container tidak di-recreate.
+log "Reload nginx + verifikasi buffer header..."
+reload_nginx || warn "Cek konfigurasi nginx: ${COMPOSE_CMD} -p ${PROJECT_NAME} -f ${COMPOSE_FILE} exec nginx nginx -t"
 
 # ── Wait for app health ──────────────────────────────────────────────────────
 log "Menunggu app healthy..."
