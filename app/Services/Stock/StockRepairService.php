@@ -285,6 +285,130 @@ class StockRepairService
     }
 
     /**
+     * Analisis SETIAP baris RELAY yang punya qty > 0: mana yang PALSU (dobel)
+     * dan mana yang SAH (memang diterima tanpa rak / overflow)?
+     *
+     * Dasarnya: buku besar. Kalau TIDAK PERNAH ada penerimaan yang masuk ke RELAY
+     * (`inbound_relay = 0`) tapi baris RELAY berisi qty, berarti qty itu bukan
+     * hasil penerimaan — hampir selalu dari stock opname yang file-nya kehilangan
+     * kolom RAK, sehingga baris RELAY dibuat berdampingan dengan baris rak yang
+     * sudah ada (inilah "stok dobel khususnya relay").
+     *
+     * Verdict:
+     *  - PALSU   : qty > 0, tidak ada penerimaan ke RELAY, tidak ada pengiriman
+     *              dari RELAY, ADA TEPAT SATU bukti baris dibuat opname, produk
+     *              sudah punya stok di rak, dan SELURUH qty relay dijelaskan oleh
+     *              opname itu (tidak ada penyesuaian opname lain) → aman dinolkan
+     *              karena barangnya sudah terhitung di rak.
+     *  - SAH     : ada penerimaan yang memang masuk ke RELAY (relay/overflow asli).
+     *  - PERIKSA : sisanya (qty tidak sepenuhnya dijelaskan opname, ada beberapa
+     *              opname, atau tanpa stok rak) → jangan diubah tanpa dilihat manusia.
+     *  - KOSONG  : baris RELAY qty 0 (sisa opname lama; aman dihapus, tidak
+     *              mengubah total stok).
+     *
+     * @return array<int,array{
+     *     product_id:int, part_number:string, product_name:string,
+     *     relay:int, rack_total:int, rack_detail:string,
+     *     inbound_relay:int, outbound_relay:int, opname_created:int,
+     *     opname_adjust:int, opname:string|null,
+     *     relay_created_at:string|null, mirror:bool, verdict:string
+     * }>
+     */
+    public function relayBuckets(?int $productId = null): array
+    {
+        $relayRows = Stock::query()
+            ->when($productId !== null, fn ($q) => $q->where('product_id', $productId))
+            ->whereNull('rack_id')
+            ->orderBy('id')
+            ->get(['id', 'product_id', 'quantity', 'created_at']);
+
+        if ($relayRows->isEmpty()) {
+            return [];
+        }
+
+        $productIds = $relayRows->pluck('product_id')->unique()->values()->all();
+        $products = Product::whereIn('id', $productIds)->get(['id', 'part_number', 'name'])->keyBy('id');
+
+        $rackRows = Stock::query()
+            ->with('rack:id,code')
+            ->whereIn('product_id', $productIds)
+            ->whereNotNull('rack_id')
+            ->orderBy('id')
+            ->get(['id', 'product_id', 'rack_id', 'quantity'])
+            ->groupBy('product_id');
+
+        // Bukti baris RELAY dibuat oleh stock opname (qty sistem 0 → dibuat baru).
+        $opnameCreated = DB::table('stock_opname_items as oi')
+            ->join('stock_opnames as o', 'o.id', '=', 'oi.stock_opname_id')
+            ->whereIn('oi.product_id', $productIds)
+            ->whereNull('oi.rack_code')
+            ->where('oi.sap_qty', 0)
+            ->where('oi.diff', '<>', 0)
+            ->orderBy('oi.id')
+            ->get(['oi.product_id', 'o.code', 'oi.actual_qty'])
+            ->groupBy('product_id');
+
+        $ledger = new StockLedger();
+        $inbound = $ledger->inbound();
+        $outbound = $ledger->outbound();
+        $opnameAdjust = $ledger->opnameAdjustments();
+
+        $out = [];
+
+        foreach ($relayRows as $row) {
+            $pid = (int) $row->product_id;
+            $relay = (int) $row->quantity;
+            $racks = $rackRows[$pid] ?? collect();
+            $rackTotal = (int) $racks->sum('quantity');
+            $key = StockLedger::key($pid, null);
+
+            $inRelay = (int) ($inbound[$key] ?? 0);
+            $outRelay = (int) ($outbound[$key] ?? 0);
+            $adjustRelay = (int) ($opnameAdjust[$key] ?? 0);
+
+            $evidence = $opnameCreated[$pid] ?? collect();
+            $codes = $evidence->pluck('code')->unique()->values()->all();
+            $createdQty = (int) $evidence->sum('actual_qty');
+
+            $fullyExplainedByOneOpname = count($codes) === 1
+                && $createdQty > 0
+                && $adjustRelay === $createdQty
+                && $relay === $createdQty;
+
+            $verdict = match (true) {
+                $relay <= 0 => 'KOSONG',
+                $inRelay > 0 => 'SAH',
+                $fullyExplainedByOneOpname && $rackTotal > 0 => 'PALSU',
+                default => 'PERIKSA',
+            };
+
+            $out[] = [
+                'product_id' => $pid,
+                'part_number' => (string) ($products[$pid]->part_number ?? '#' . $pid),
+                'product_name' => (string) ($products[$pid]->name ?? ''),
+                'relay' => $relay,
+                'rack_total' => $rackTotal,
+                'rack_detail' => $racks->map(fn (Stock $s) => ($s->rack?->code ?? '?') . ':' . (int) $s->quantity)->implode(' | '),
+                'inbound_relay' => $inRelay,
+                'outbound_relay' => $outRelay,
+                'opname_created' => $createdQty,
+                'opname_adjust' => $adjustRelay,
+                'opname' => empty($codes) ? null : implode(',', $codes),
+                'relay_created_at' => $row->created_at?->format('Y-m-d H:i'),
+                'mirror' => $relay > 0 && $relay === $rackTotal,
+                'verdict' => $verdict,
+            ];
+        }
+
+        $priority = ['PALSU' => 0, 'PERIKSA' => 1, 'KOSONG' => 2, 'SAH' => 3];
+
+        usort($out, fn ($a, $b) => [$priority[$a['verdict']], -$a['relay'], $a['part_number']]
+            <=> [$priority[$b['verdict']], -$b['relay'], $b['part_number']]);
+
+        return $out;
+    }
+
+    /**
      * Tulis isi bucket: qty<=0 → hapus barisnya; kalau ada baris duplikat,
      * semuanya disatukan ke baris id terkecil.
      */

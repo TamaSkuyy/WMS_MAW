@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Product;
 use App\Models\Rack;
 use App\Services\Stock\StockLedger;
+use App\Services\Stock\StockRepairService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -39,21 +40,58 @@ class StockAudit extends Command
 
         $summary = $this->summary();
         $duplicates = $this->duplicateRows($products, $limit);
-        $relayDoubles = $this->relayDoubles($products, $limit);
+        $relay = $this->relayAnalysis($products, $limit);
         $opnameRelay = $this->relayCreatedByOpname($products, $limit);
+        $opnameHistory = $this->opnameHistory();
         $ledgerDiffs = $this->option('no-ledger')
             ? null
             : $this->ledgerDiffs($products, $limit);
 
         if ($this->option('json')) {
-            $this->line(json_encode(compact('summary', 'duplicates', 'relayDoubles', 'opnameRelay', 'ledgerDiffs'), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            $this->line(json_encode(compact('summary', 'duplicates', 'relay', 'opnameRelay', 'opnameHistory', 'ledgerDiffs'), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
             return self::SUCCESS;
         }
 
-        $this->render($summary, $duplicates, $relayDoubles, $opnameRelay, $ledgerDiffs, $racks, $limit, $search);
+        $this->render($summary, $duplicates, $relay, $opnameRelay, $opnameHistory, $ledgerDiffs, $racks, $limit, $search);
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Ringkasan 10 opname terakhir: berapa baris isinya RELAY vs rak.
+     * Kalau `relay_items` = seluruh baris, file opname memang tanpa kolom RAK —
+     * persis penyebab baris RELAY palsu.
+     *
+     * @return array<int,array>
+     */
+    private function opnameHistory(): array
+    {
+        return DB::table('stock_opnames as o')
+            ->leftJoin('stock_opname_items as oi', 'oi.stock_opname_id', '=', 'o.id')
+            ->groupBy('o.id', 'o.code', 'o.opname_date', 'o.total_items', 'o.diff_items', 'o.new_items', 'o.notes')
+            ->orderByDesc('o.id')
+            ->limit(10)
+            ->get([
+                'o.code',
+                'o.opname_date',
+                'o.total_items',
+                'o.diff_items',
+                'o.new_items',
+                'o.notes',
+                DB::raw('SUM(oi.rack_code IS NULL) AS relay_items'),
+                DB::raw('SUM(oi.rack_code IS NOT NULL) AS rack_items'),
+            ])
+            ->map(fn ($r) => [
+                'code' => $r->code,
+                'date' => (string) $r->opname_date,
+                'total_items' => (int) $r->total_items,
+                'new_items' => (int) $r->new_items,
+                'relay_items' => (int) $r->relay_items,
+                'rack_items' => (int) $r->rack_items,
+                'notes' => (string) ($r->notes ?? ''),
+            ])
+            ->all();
     }
 
     /** @return array<string,int> */
@@ -110,49 +148,26 @@ class StockAudit extends Command
     }
 
     /**
-     * Produk yang punya baris RELAY berisi qty DAN baris rak — kandidat "dobel".
+     * Analisis baris RELAY per produk (PALSU / SAH / PERIKSA / KOSONG).
      *
      * @param  array<int,Product>  $products
+     * @return array{rows:array<int,array>, summary:array<string,array{count:int, qty:int}>}
      */
-    private function relayDoubles(array $products, int $limit): array
+    private function relayAnalysis(array $products, int $limit): array
     {
-        $relayQty = DB::table('stocks')->whereNull('rack_id')->pluck('quantity', 'product_id');
-        $rackRows = DB::table('stocks as s')
-            ->join('racks as r', 'r.id', '=', 's.rack_id')
-            ->whereNotNull('s.rack_id')
-            ->get(['s.product_id', 's.quantity', 'r.code'])
-            ->groupBy('product_id');
+        $all = (new StockRepairService())->relayBuckets();
+        $filtered = array_values(array_filter($all, fn ($r) => $this->matches($products, $r['product_id'])));
 
-        $out = [];
+        $summary = [];
 
-        foreach ($relayQty as $productId => $relay) {
-            $productId = (int) $productId;
-            $relay = (int) $relay;
-
-            if ($relay <= 0 || ! isset($rackRows[$productId]) || ! $this->matches($products, $productId)) {
-                continue;
-            }
-
-            $racks = $rackRows[$productId];
-            $rackTotal = (int) $racks->sum('quantity');
-
-            $out[] = [
-                'product_id' => $productId,
-                'part_number' => $products[$productId]->part_number ?? '#' . $productId,
-                'product_name' => $products[$productId]->name ?? '',
-                'relay' => $relay,
-                'rack_total' => $rackTotal,
-                'rack_detail' => $racks->map(fn ($r) => $r->code . ':' . (int) $r->quantity)->implode(' | '),
-                'indication' => $relay === $rackTotal
-                    ? 'KUAT — qty relay = total rak'
-                    : ($rackTotal > $relay ? 'sedang — relay sebagian dari rak' : 'lemah'),
-                'score' => $relay === $rackTotal ? 0 : 1,
-            ];
+        foreach ($filtered as $row) {
+            $v = $row['verdict'];
+            $summary[$v] ??= ['count' => 0, 'qty' => 0];
+            $summary[$v]['count']++;
+            $summary[$v]['qty'] += $row['relay'];
         }
 
-        usort($out, fn ($a, $b) => [$a['score'], -$a['relay']] <=> [$b['score'], -$b['relay']]);
-
-        return array_slice($out, 0, $limit);
+        return ['rows' => array_slice($filtered, 0, $limit), 'summary' => $summary];
     }
 
     /**
@@ -228,7 +243,7 @@ class StockAudit extends Command
             ->all();
     }
 
-    private function render(array $summary, array $duplicates, array $relayDoubles, array $opnameRelay, ?array $ledgerDiffs, $racks, int $limit, string $search): void
+    private function render(array $summary, array $duplicates, array $relay, array $opnameRelay, array $opnameHistory, ?array $ledgerDiffs, $racks, int $limit, string $search): void
     {
         $this->newLine();
         $this->info('╔══════════════════════════════════════════════════════════════╗');
@@ -259,16 +274,36 @@ class StockAudit extends Command
         }
 
         $this->newLine();
-        $this->line('<options=bold>2) KANDIDAT DOBEL RELAY (produk punya qty di rak DAN di RELAY)</>');
-        if (empty($relayDoubles)) {
-            $this->line('   <fg=green>tidak ada ✓</>');
+        $this->line('<options=bold>2) BARIS RELAY — PALSU (dobel) atau SAH (relay/overflow asli)?</>');
+        if (empty($relay['rows'])) {
+            $this->line('   <fg=green>tidak ada baris RELAY berisi qty ✓</>');
         } else {
             $this->table(
-                ['part_number', 'produk', 'rak', 'relay', 'total rak', 'indikasi'],
-                array_map(fn ($r) => [$r['part_number'], mb_substr($r['product_name'], 0, 30), $r['rack_detail'], $r['relay'], $r['rack_total'], $r['indication']], $relayDoubles)
+                ['part_number', 'produk', 'rak', 'relay', 'total rak', 'terima ke RELAY', 'dibuat opname', 'verdict'],
+                array_map(fn ($r) => [
+                    $r['part_number'],
+                    mb_substr($r['product_name'], 0, 26),
+                    mb_substr($r['rack_detail'], 0, 26),
+                    $r['relay'],
+                    $r['rack_total'],
+                    $r['inbound_relay'],
+                    $r['opname'] ?? '-',
+                    $r['verdict'],
+                ], $relay['rows'])
             );
-            $this->line('   → kalau RELAY memang barang fisik yang sama dengan rak: <fg=yellow>php artisan stocks:set-quantity --product=ID --rack=RELAY --qty=0 --reason="..." --apply</>');
-            $this->line('     kalau RELAY hanya salah rak: <fg=yellow>--move-to=KODE_RAK</>');
+
+            $s = $relay['summary'];
+            $this->line(sprintf(
+                '   PALSU: %d produk / %s pcs  •  PERIKSA: %d / %s  •  SAH: %d / %s  •  KOSONG(0 pcs): %d',
+                $s['PALSU']['count'] ?? 0, number_format($s['PALSU']['qty'] ?? 0, 0, ',', '.'),
+                $s['PERIKSA']['count'] ?? 0, number_format($s['PERIKSA']['qty'] ?? 0, 0, ',', '.'),
+                $s['SAH']['count'] ?? 0, number_format($s['SAH']['qty'] ?? 0, 0, ',', '.'),
+                $s['KOSONG']['count'] ?? 0,
+            ));
+            $this->line('   Arti: PALSU = tidak pernah ada penerimaan ke RELAY tapi barisnya berisi & dibuat opname → dobel (barangnya sudah di rak).');
+            $this->line('         SAH  = memang pernah diterima tanpa rak (jangan diubah!). PERIKSA = perlu dilihat manusia.');
+            $this->line(sprintf('   → tampil maksimal %d baris. Semua kandidat PALSU dinolkan sekaligus dengan:', $limit));
+            $this->line('     <fg=yellow>php artisan stocks:fix-phantom-relay --apply --reason="hapus baris RELAY palsu hasil opname"</>');
         }
 
         $this->newLine();
@@ -283,11 +318,33 @@ class StockAudit extends Command
         }
 
         $this->newLine();
+        $this->line('<options=bold>3b) RIWAYAT OPNAME TERAKHIR (relay_items = baris tanpa RAK)</>');
+        if (empty($opnameHistory)) {
+            $this->line('   belum ada riwayat opname');
+        } else {
+            $this->table(
+                ['opname', 'tanggal', 'baris', 'baru', 'relay_items', 'rak_items', 'notes'],
+                array_map(fn ($o) => [
+                    $o['code'],
+                    $o['date'],
+                    $o['total_items'],
+                    $o['new_items'],
+                    $o['relay_items'],
+                    $o['rack_items'],
+                    mb_substr($o['notes'], 0, 30),
+                ], $opnameHistory)
+            );
+            $this->line('   Kalau relay_items = seluruh baris → file opname itu memang tanpa kolom RAK (biang baris RELAY palsu).');
+        }
+
+        $this->newLine();
         $this->line('<options=bold>4) SELISIH STOK SISTEM vs BUKU BESAR TRANSAKSI</>');
         if ($ledgerDiffs === null) {
             $this->line('   (dilewati — opsi --no-ledger)');
         } elseif (empty($ledgerDiffs)) {
             $this->line('   <fg=green>stok sistem cocok dengan riwayat transaksi ✓</>');
+            $this->line('   Catatan: buku besar MENGHITUNG stock opname sebagai kebenaran, jadi baris RELAY palsu');
+            $this->line('   hasil opname tetap "cocok" di sini — nilainya pakai bagian 2 & 3.');
         } else {
             $this->table(
                 ['part_number', 'produk', 'rak', 'sistem', 'seharusnya', 'selisih'],

@@ -759,6 +759,21 @@ Penyebab dobel yang sudah ditemukan:
    (`⚠ produk ini SUDAH punya stok di <rak> — kalau barangnya sama, JANGAN
    diterapkan`), dan penerapan opname ikut merapikan baris duplikat bucket itu.
 
+> **Penting:** bagian 4 `stocks:audit` (selisih buku besar) **tidak bisa**
+> mendeteksi dobel jenis #2, karena buku besar menghitung stock opname sebagai
+> kebenaran. Penilaiannya ada di bagian **2** (verdict per baris RELAY) dan
+> bagian **3/3b** (bukti & riwayat opname).
+
+Cara membedakan baris RELAY **palsu** (dobel) vs **sah** (memang diterima tanpa
+rak / overflow) — dipakai otomatis oleh `stocks:audit` bagian 2:
+
+| Verdict | Arti | Tindakan |
+| --- | --- | --- |
+| `PALSU` | tidak pernah ada penerimaan ke RELAY, tidak ada pengiriman dari RELAY, qty relay persis dijelaskan **satu** opname "buat baris baru", dan produk sudah punya stok di rak | aman dihapus (`stocks:fix-phantom-relay --apply`) |
+| `SAH` | ada penerimaan yang memang masuk ke RELAY | **jangan diubah** |
+| `PERIKSA` | qty relay tidak sepenuhnya dijelaskan satu opname (ada opname lanjutan/multi-opname) atau produk tanpa stok rak | periksa manusia dulu |
+| `KOSONG` | baris RELAY qty 0 (sisa opname lama) | opsional dibersihkan (`--clean-empty`) |
+
 #### Langkah 1 — Audit dulu (read-only, aman, tidak mengubah data)
 
 ```bash
@@ -775,12 +790,19 @@ Isi keluaran:
 | --- | --- |
 | 1) Baris duplikat | produk + rak/RELAY yang sama muncul >1× (qty bisa terlihat dobel) |
 | 2) Kandidat dobel RELAY | produk punya qty di rak **dan** di RELAY — "KUAT" kalau qty relay = total rak |
+| 2) Verdict baris RELAY | PALSU (dobel) / SAH / PERIKSA / KOSONG + jumlah produk & pcs tiap kategori |
 | 3) Baris RELAY dari opname | bukti baris RELAY baru dibuat oleh stock opname (qty sistem 0) |
-| 4) Selisih buku besar | stok sistem vs hitungan riwayat (terima − kirim ± opname ± perbaikan CLI) |
+| 3b) Riwayat opname | `relay_items` vs `rak_items` per opname — kalau relay_items = semua baris, file opname itu memang tanpa kolom RAK |
+| 4) Selisih buku besar | stok sistem vs hitungan riwayat (terima − kirim ± opname). **Tidak mendeteksi dobel dari opname** — pakai bagian 2/3 |
 
 #### Langkah 2 — Perbaiki (dry-run dulu, baru `--apply`)
 
 ```bash
+# a0) Hapus baris RELAY PALSU (dobel hasil opname tanpa kolom RAK) — lihat bagian 2 audit
+$DC exec -T app php artisan stocks:fix-phantom-relay                        # pratinjau: daftar + total pcs
+$DC exec -T app php artisan stocks:fix-phantom-relay --apply --reason="hapus baris RELAY palsu hasil opname"
+# opsi: --include-review (ikut PERIKSA, hati-hati), --clean-empty (hapus baris RELAY 0 pcs), --product=PART
+
 # a) Gabungkan baris duplikat (kunci produk+rak/RELAY sama)
 $DC exec -T app php artisan stocks:merge-duplicates                    # pratinjau
 $DC exec -T app php artisan stocks:merge-duplicates --apply --reason="gabung baris relay duplikat"

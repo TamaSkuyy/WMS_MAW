@@ -95,16 +95,23 @@ otomatis oleh harness, jadi jaga tetap ringkas. Detail panjang taruh di `docs/`.
     `2026_09_18_000001_add_null_safe_unique_index_to_stocks` ada index unik
     NULL-safe `(product_id, IFNULL(rack_id,0))` → insert duplikat DITOLAK MySQL.
     Perbaikan data stok dilakukan lewat CLI, bukan tinker manual:
-    `stocks:audit` (read-only: duplikat, relay dobel, selisih vs buku besar —
-    `App\Services\Stock\StockLedger`), `stocks:merge-duplicates`,
-    `stocks:set-quantity` (`--qty`/`--move-to`/`--from-ledger`, dry-run default,
-    wajib `--reason` saat `--apply`). Penyesuaiannya dicatat sebagai baris
-    **stock opname** `FIX-…` (`StockRepairService::recordOpname()`) supaya
-    konsisten dengan buku besar & muncul di Riwayat Opname. Buku besar = Σ
-    `cycle_items.received_quantity` − Σ shopping terkirim + Σ diff opname
-    (koreksi cycle/shopping sudah termasuk di dua suku pertama; `receive_logs`
-    tidak dipakai karena baru ada sejak 2026-07-29). Test penjaga:
-    `tests/Feature/StockRepairTest.php`.
+    `stocks:audit` (read-only: duplikat, verdict baris RELAY PALSU/SAH/PERIKSA,
+    riwayat opname, selisih vs buku besar — `App\Services\Stock\StockLedger`),
+    `stocks:merge-duplicates`, `stocks:fix-phantom-relay` (baris RELAY palsu
+    hasil opname tanpa kolom RAK), `stocks:set-quantity`
+    (`--qty`/`--move-to`/`--from-ledger`, dry-run default, wajib `--reason` saat
+    `--apply`). Klasifikasi PALSU/SAH/PERIKSA ada di
+    `StockRepairService::relayBuckets()` — **hanya PALSU yang boleh dihapus
+    otomatis** (qty relay persis dijelaskan satu opname "buat baris baru" &
+    tidak ada penerimaan ke RELAY); RELAY yang SAH = overflow asli. Buku besar
+    MENGHITUNG opname sebagai kebenaran, jadi baris RELAY palsu hasil opname
+    tidak terlihat sebagai selisih di bagian 4 audit — pakai bagian 2/3.
+    Penyesuaian CLI dicatat sebagai baris **stock opname** `FIX-…`
+    (`StockRepairService::recordOpname()`) supaya konsisten dengan buku besar &
+    muncul di Riwayat Opname. Buku besar = Σ `cycle_items.received_quantity` −
+    Σ shopping terkirim + Σ diff opname (koreksi cycle/shopping sudah termasuk di
+    dua suku pertama; `receive_logs` tidak dipakai karena baru ada sejak
+    2026-07-29). Test penjaga: `tests/Feature/StockRepairTest.php`.
 
 ## Struktur
 

@@ -240,4 +240,110 @@ class StockRepairTest extends TestCase
         $this->assertStringContainsString('SUDAH punya stok', $rows[0]['message']);
         $this->assertStringContainsString('C-03', $rows[0]['message']);
     }
+
+    /** Opname tanpa kolom RAK pada produk yang stoknya sudah di rak → baris RELAY PALSU. */
+    public function test_rackless_opname_creates_phantom_relay_and_fix_command_removes_it(): void
+    {
+        $rack = Rack::factory()->create(['code' => 'D-04']);
+        $product = $this->receiveInto($rack->id, 5);
+
+        $this->applyOpname($product->part_number, '', 5);
+
+        $this->assertSame(5, $this->bucketQty($product->id, null), 'Opname membuat baris RELAY baru (dobel).');
+        $this->assertSame(10, $this->bucketQty($product->id, null) + $this->bucketQty($product->id, $rack->id));
+
+        $bucket = (new StockRepairService())->relayBuckets($product->id)[0] ?? null;
+        $this->assertNotNull($bucket);
+        $this->assertSame('PALSU', $bucket['verdict']);
+        $this->assertSame(0, $bucket['inbound_relay'], 'Tidak pernah ada penerimaan ke RELAY.');
+        $this->assertTrue($bucket['mirror']);
+        $this->assertNotNull($bucket['opname'], 'Harus ada bukti dibuat opname.');
+
+        // Dry-run dulu: tidak boleh berubah.
+        $this->artisan('stocks:fix-phantom-relay')->assertExitCode(0);
+        $this->assertSame(5, $this->bucketQty($product->id, null));
+
+        $this->artisan('stocks:fix-phantom-relay', [
+            '--reason' => 'hapus baris RELAY palsu hasil opname tanpa kolom RAK',
+            '--apply' => true,
+        ])->assertExitCode(0);
+
+        $this->assertSame(0, $this->bucketQty($product->id, null), 'Baris RELAY palsu harus terhapus.');
+        $this->assertSame(5, $this->bucketQty($product->id, $rack->id), 'Stok rak tidak boleh berubah.');
+        $this->assertSame([], (new StockLedger())->diffs(), 'Buku besar harus tetap cocok setelah perbaikan.');
+    }
+
+    /** Baris RELAY yang benar-benar hasil penerimaan tanpa rak harus DIBIARKAN. */
+    public function test_real_relay_stock_is_not_touched(): void
+    {
+        $rack = Rack::factory()->create(['code' => 'E-05']);
+        $product = $this->receiveInto(null, 8);
+        Stock::create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 2]);
+
+        $bucket = (new StockRepairService())->relayBuckets($product->id)[0] ?? null;
+        $this->assertNotNull($bucket);
+        $this->assertSame('SAH', $bucket['verdict']);
+
+        $this->artisan('stocks:fix-phantom-relay', ['--apply' => true, '--reason' => 'coba hapus relay asli'])
+            ->expectsOutputToContain('Tidak ada baris RELAY palsu')
+            ->assertExitCode(0);
+
+        $this->assertSame(8, $this->bucketQty($product->id, null), 'RELAY asli tidak boleh dihapus.');
+    }
+
+    /** Baris RELAY qty 0 hanya dibersihkan kalau diminta eksplisit. */
+    public function test_clean_empty_removes_zero_qty_relay_rows(): void
+    {
+        $rack = Rack::factory()->create(['code' => 'F-06']);
+        $product = Product::factory()->create(['part_number' => 'RELAY-TEST-03']);
+        Stock::create(['product_id' => $product->id, 'rack_id' => null, 'quantity' => 0]);
+        Stock::create(['product_id' => $product->id, 'rack_id' => $rack->id, 'quantity' => 4]);
+
+        $this->artisan('stocks:fix-phantom-relay', ['--apply' => true, '--reason' => 'bersihkan relay kosong'])
+            ->assertExitCode(0);
+        $this->assertSame(1, Stock::where('product_id', $product->id)->whereNull('rack_id')->count(), 'Default tidak menyentuh baris 0 pcs.');
+
+        $this->artisan('stocks:fix-phantom-relay', [
+            '--clean-empty' => true,
+            '--reason' => 'bersihkan baris relay 0 pcs',
+            '--apply' => true,
+        ])->assertExitCode(0);
+
+        $this->assertSame(0, Stock::where('product_id', $product->id)->whereNull('rack_id')->count());
+        $this->assertSame(4, $this->bucketQty($product->id, $rack->id), 'Total stok tidak berubah.');
+    }
+
+    /** Kalau ada penyesuaian opname lanjutan, jangan dianggap PALSU — masuk PERIKSA. */
+    public function test_relay_with_extra_opname_adjustment_is_review_only(): void
+    {
+        $rack = Rack::factory()->create(['code' => 'G-07']);
+        $product = $this->receiveInto($rack->id, 5);
+
+        $this->applyOpname($product->part_number, '', 5);   // membuat baris RELAY 5 (dobel)
+        $this->applyOpname($product->part_number, '', 7);   // opname lanjutan → relay jadi 7
+
+        $this->assertSame(7, $this->bucketQty($product->id, null));
+
+        $bucket = (new StockRepairService())->relayBuckets($product->id)[0] ?? null;
+        $this->assertNotNull($bucket);
+        $this->assertSame('PERIKSA', $bucket['verdict'], 'Qty tidak sepenuhnya dijelaskan satu opname → jangan otomatis dihapus.');
+
+        $this->artisan('stocks:fix-phantom-relay', ['--apply' => true, '--reason' => 'coba hapus yang periksa'])
+            ->assertExitCode(0);
+
+        $this->assertSame(7, $this->bucketQty($product->id, null), 'Status PERIKSA tidak boleh disentuh tanpa --include-review.');
+    }
+
+    /** Terapkan opname lewat endpoint (persis alur aplikasi). */
+    private function applyOpname(string $partNumber, string $rackCode, int $actualQty): void
+    {
+        $user = \App\Models\User::factory()->create();
+        $user->givePermissionTo(\Spatie\Permission\Models\Permission::findOrCreate('stock opname'));
+
+        $this->actingAs($user)
+            ->postJson(route('stock-opname.apply'), [
+                'rows' => [['part_number' => $partNumber, 'rack_code' => $rackCode, 'actual_qty' => $actualQty]],
+            ])
+            ->assertOk();
+    }
 }

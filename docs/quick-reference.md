@@ -159,9 +159,16 @@ Saat upload opname, cek kolom "Keterangan"/pesan di pratinjau:
   (atau hapus baris itu dari file) lalu upload ulang.
 ```
 
-Perbaikan data (khusus admin/superadmin lewat VPS): `php artisan stocks:audit`
-untuk melihat, lalu `stocks:merge-duplicates` / `stocks:set-quantity`
-(lihat `docs/production-server-setup.md` §9.7).
+Perbaikan data (khusus admin/superadmin lewat VPS):
+
+```
+php artisan stocks:audit                 → daftar: mana RELAY yang PALSU (dobel) & mana yang SAH
+php artisan stocks:fix-phantom-relay     → pratinjau; tambah --apply untuk hapus baris RELAY palsu
+php artisan stocks:merge-duplicates      → kalau ada baris stok kembar di kunci yang sama
+```
+
+Baris RELAY yang **SAH** (memang pernah diterima tanpa rak) tidak akan disentuh
+oleh perintah itu. Detail: `docs/production-server-setup.md` §9.7.
 
 ---
 
