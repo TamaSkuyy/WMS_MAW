@@ -144,9 +144,22 @@ class StockOpnameController extends Controller
 
                 if ($existing) {
                     $stock = Stock::where('id', $existing->id)->lockForUpdate()->firstOrFail();
-                    $sapQty = (int) $stock->quantity;
+
+                    // Qty sistem = TOTAL bucket (kalau ada baris duplikat lama,
+                    // qty-nya dijumlahkan supaya preview & penerapan konsisten).
+                    $sapQty = (int) Stock::where('product_id', $stock->product_id)
+                        ->when($stock->rack_id === null, fn ($q) => $q->whereNull('rack_id'), fn ($q) => $q->where('rack_id', $stock->rack_id))
+                        ->sum('quantity');
+
                     $stock->quantity = $row['actual_qty'];
                     $stock->save();
+
+                    // Sekalian rapikan baris duplikat bucket ini (kalau ada) —
+                    // tanpa ini opname tidak akan pernah bisa "menyembuhkan" dobel.
+                    Stock::where('product_id', $stock->product_id)
+                        ->when($stock->rack_id === null, fn ($q) => $q->whereNull('rack_id'), fn ($q) => $q->where('rack_id', $stock->rack_id))
+                        ->where('id', '<>', $stock->id)
+                        ->delete();
                 } else {
                     // Barang ada di fisik (qty > 0) tapi belum ada baris stok → buat
                     $stock = Stock::create([
@@ -315,13 +328,29 @@ class StockOpnameController extends Controller
             // sini — relasi itu dulu memaksa Eloquent meng-eager-load belongsTo
             // untuk SELURUH baris stok produk terkait, sumber OOM di file besar).
             $stockRows = Stock::whereIn('product_id', $products->pluck('id'))
+                ->orderBy('id')
                 ->get(['id', 'product_id', 'rack_id', 'quantity']);
         }
-        $stocksByKey = $stockRows->keyBy(fn ($s) => $s->product_id . '|' . ($s->rack_id ?? 'null'));
 
-        $racksByCode = Rack::get(['id', 'code'])->mapWithKeys(
+        // Satu bucket = satu baris. Kalau ada baris duplikat (mungkin terjadi pada
+        // RELAY sebelum unique index NULL-safe ada), qty-nya dijumlahkan ke baris
+        // id terkecil supaya angka sistem & hasil opname tidak "sebagian".
+        $stocksByKey = [];
+        foreach ($stockRows as $stock) {
+            $key = $stock->product_id . '|' . ($stock->rack_id ?? 'null');
+
+            if (isset($stocksByKey[$key])) {
+                $stocksByKey[$key]->quantity = (int) $stocksByKey[$key]->quantity + (int) $stock->quantity;
+            } else {
+                $stocksByKey[$key] = $stock;
+            }
+        }
+
+        $racks = Rack::get(['id', 'code']);
+        $racksByCode = $racks->mapWithKeys(
             fn (Rack $r) => [strtoupper(trim($r->code)) => $r]
         );
+        $rackCodes = $racks->pluck('code', 'id');
 
         $result = [];
 
@@ -346,14 +375,14 @@ class StockOpnameController extends Controller
             }
 
             $key = $product->id . '|' . ($rack?->id ?? 'null');
-            $stock = $stocksByKey->get($key);
+            $stock = $stocksByKey[$key] ?? null;
 
             if (! $stock) {
                 if ($row['actual_qty'] === 0) {
                     // Tidak ada baris stok & hasil hitung 0 → tidak ada perubahan
                     $result[] = $this->rowOut($row, $product, null, 0, 'same', 'Tidak ada stok tercatat & opname 0 (dilewati)', true);
                 } else {
-                    $result[] = $this->rowOut($row, $product, null, 0, 'new', 'Ada di fisik tapi belum ada baris stok — akan dibuat');
+                    $result[] = $this->rowOut($row, $product, null, 0, 'new', $this->newRowMessage($row, $product, $rack, $stockRows, $rackCodes));
                 }
                 continue;
             }
@@ -372,6 +401,37 @@ class StockOpnameController extends Controller
         }
 
         return $result;
+    }
+
+    /**
+     * Pesan baris "new" (baris stok belum ada → akan dibuat).
+     *
+     * Kalau baris barunya RELAY padahal produk itu SUDAH punya stok di rak lain,
+     * peringatkan keras: ini sumber klasik "stok dobel" — file opname tanpa kolom
+     * RAK (atau kolom RAK kosong) membuat semua baris dianggap relay, sehingga
+     * baris stok baru dibuat berdampingan dengan baris rak yang sudah ada.
+     */
+    private function newRowMessage(array $row, Product $product, ?Rack $rack, $stockRows, $rackCodes): string
+    {
+        $base = 'Ada di fisik tapi belum ada baris stok — akan dibuat';
+
+        if ($rack !== null) {
+            return $base;
+        }
+
+        $others = $stockRows->where('product_id', $product->id);
+
+        if ($others->isEmpty()) {
+            return $base . ' di RELAY';
+        }
+
+        $detail = $others
+            ->map(fn (Stock $s) => ($s->rack_id === null ? 'RELAY' : ($rackCodes[$s->rack_id] ?? '#'.$s->rack_id)) . ':' . (int) $s->quantity)
+            ->unique()
+            ->take(5)
+            ->implode(', ');
+
+        return $base . " di RELAY ⚠ produk ini SUDAH punya stok di {$detail} — kalau barangnya sama, JANGAN diterapkan; isi kolom RAK dengan rak yang benar supaya stok tidak dobel.";
     }
 
     /**

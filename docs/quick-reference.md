@@ -135,6 +135,36 @@ Menu: Transactions > Stocks
 
 ---
 
+## ⚠️ RELAY & STOK DOBEL
+
+**RELAY** = barang sudah diterima tapi **belum ditempatkan di rak** (di tabel
+stok: kolom rak kosong). Di halaman **Transactions > Stocks** barisnya diberi
+badge `⚠ RELAY` dan berlatar kuning.
+
+```
+Kalau satu part muncul DUA baris (satu di rak, satu RELAY):
+→ berarti ada baris stok ganda. Jangan dikoreksi manual satu-satu:
+   lapor admin, jalankan:  php artisan stocks:audit
+```
+
+Penyebab paling sering: **file Stock Opname tanpa kolom/isi `RAK`**. Semua baris
+dianggap RELAY, jadi aplikasi membuat baris RELAY baru padahal stok part itu
+sudah ada di rak → totalnya jadi dobel.
+
+```
+Saat upload opname, cek kolom "Keterangan"/pesan di pratinjau:
+  "Ada di fisik tapi belum ada baris stok — akan dibuat di RELAY ⚠ produk ini
+   SUDAH punya stok di A1:50 ..."
+→ kalau barangnya SAMA, jangan diterapkan: isi kolom RAK dengan rak yang benar
+  (atau hapus baris itu dari file) lalu upload ulang.
+```
+
+Perbaikan data (khusus admin/superadmin lewat VPS): `php artisan stocks:audit`
+untuk melihat, lalu `stocks:merge-duplicates` / `stocks:set-quantity`
+(lihat `docs/production-server-setup.md` §9.7).
+
+---
+
 ## 📷 SCAN BARCODE
 
 Semua kolom pencarian (Produk, Stok, Rak, Lokasi, Shift, dll) punya tombol **📷**:
@@ -213,6 +243,8 @@ lewat halaman **Pemutihan Data** (superadmin):
 | Halaman error 502 (Bad Gateway) tiba-tiba | Catat halaman & jam kejadian, lapor admin → jalankan `./deploy-production.sh --diagnose` (lihat `docs/production-server-setup.md` §9.5) |
 | Export Excel/PDF: "Data terlalu besar untuk format X" | Persempit rentang tanggal, atau pakai **Export CSV** (tanpa batas, bisa untuk data setahun) |
 | Halaman error 500 "Allowed memory size ... exhausted" | Catat halaman apa yang dibuka lalu lapor admin (lihat `docs/production-server-setup.md` §9.4) |
+| Stok terlihat **dobel**, terutama baris **RELAY** | Lapor admin → `php artisan stocks:audit` lalu perbaiki (lihat §9.7 di `docs/production-server-setup.md`) |
+| Stock Opname bikin stok bertambah/dobel | File opname kehilangan isi kolom `RAK` → semua dianggap RELAY. Isi kolom RAK, upload ulang |
 
 ---
 

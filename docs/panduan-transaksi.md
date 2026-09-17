@@ -301,6 +301,29 @@ Halaman ini menampilkan semua stok di gudang:
 - **Info Rak** — lihat di rak mana barang disimpan
 - **Stok Rendah** — quantity kecil perlu restock
 
+### Baris RELAY (tanpa rak)
+
+Barang yang **sudah diterima tapi belum ditempatkan di rak** disimpan sebagai
+stok **RELAY** (kolom rak kosong) dan ditandai `⚠ RELAY` dengan latar kuning.
+Ini normal selama barang memang belum masuk rak.
+
+Yang **tidak normal**: satu part muncul sebagai **dua baris** — satu di rak, satu
+di RELAY dengan qty yang mirip. Itu tanda stok ganda, biasanya berasal dari
+**Stock Opname yang file-nya tidak memuat kolom `RAK`** (semua baris dianggap
+RELAY, sehingga dibuat baris RELAY baru padahal stok sudah ada di rak).
+
+Dalam pratinjau opname, baris semacam itu sekarang diberi peringatan:
+
+```
+Ada di fisik tapi belum ada baris stok — akan dibuat di RELAY ⚠ produk ini SUDAH
+punya stok di A1:50 — kalau barangnya sama, JANGAN diterapkan; isi kolom RAK
+dengan rak yang benar supaya stok tidak dobel.
+```
+
+Kalau barangnya sama: isi kolom `RAK` di file (atau hapus barisnya) lalu upload
+ulang. Perbaikan data yang telanjur dobel dilakukan admin lewat
+`php artisan stocks:audit` (lihat `docs/production-server-setup.md` §9.7).
+
 ---
 
 ## 4. Memantau Pengiriman (Delivery Monitor)

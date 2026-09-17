@@ -80,6 +80,7 @@ otomatis oleh harness, jadi jaga tetap ringkas. Detail panjang taruh di `docs/`.
     (`ExportManager::MAX_ROWS_IN_MEMORY` → `ExportException` + flash error);
     daftar panjang pakai pagination/`limit`. Test penjaga:
     `tests/Feature/MemoryBudgetTest.php`.
+
 14. **Toggle fitur (on/off)**: definisi di `config/features.php`, nilai efektif
     di tabel `settings` (`feature.<key>`) lewat `App\Support\Features`, diatur
     superadmin di `/settings` (menu Setup > Pengaturan, permission
@@ -87,6 +88,23 @@ otomatis oleh harness, jadi jaga tetap ringkas. Detail panjang taruh di `docs/`.
     `features.<key>` — halaman membacanya via `usePage().props.features`.
     Toggle pertama: `shopping_vehicle_model_column` (kolom Model & Suffix di form
     Shopping Create/Edit, default ON).
+
+15. **Stok = satu baris per bucket (produk × rak); `rack_id` NULL = RELAY**
+    (barang diterima tapi belum masuk rak). Jangan pernah membuat baris stok
+    kedua untuk bucket yang sama: sejak migrasi
+    `2026_09_18_000001_add_null_safe_unique_index_to_stocks` ada index unik
+    NULL-safe `(product_id, IFNULL(rack_id,0))` → insert duplikat DITOLAK MySQL.
+    Perbaikan data stok dilakukan lewat CLI, bukan tinker manual:
+    `stocks:audit` (read-only: duplikat, relay dobel, selisih vs buku besar —
+    `App\Services\Stock\StockLedger`), `stocks:merge-duplicates`,
+    `stocks:set-quantity` (`--qty`/`--move-to`/`--from-ledger`, dry-run default,
+    wajib `--reason` saat `--apply`). Penyesuaiannya dicatat sebagai baris
+    **stock opname** `FIX-…` (`StockRepairService::recordOpname()`) supaya
+    konsisten dengan buku besar & muncul di Riwayat Opname. Buku besar = Σ
+    `cycle_items.received_quantity` − Σ shopping terkirim + Σ diff opname
+    (koreksi cycle/shopping sudah termasuk di dua suku pertama; `receive_logs`
+    tidak dipakai karena baru ada sejak 2026-07-29). Test penjaga:
+    `tests/Feature/StockRepairTest.php`.
 
 ## Struktur
 

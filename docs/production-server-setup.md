@@ -739,6 +739,88 @@ menghapus `Vite::prefetch(concurrency: 3)` di `app/Providers/AppServiceProvider.
 
 ---
 
+### 9.7 Stok "dobel" — terutama baris RELAY (penting)
+
+**RELAY = baris stok dengan `rack_id` NULL** (barang sudah diterima tapi belum
+ditempatkan di rak). Di **Transactions > Stocks** baris ini diberi badge `⚠ RELAY`.
+
+Penyebab dobel yang sudah ditemukan:
+
+1. **Baris duplikat RELAY** — unique index lama `(product_id, rack_id)` tidak
+   menahan duplikat saat `rack_id` NULL (MySQL menganggap tiap NULL berbeda),
+   jadi satu produk/RELAY bisa punya beberapa baris stok dan qty-nya terlihat
+   dobel. Migrasi `2026_09_18_000001_add_null_safe_unique_index_to_stocks`
+   menggabungkan baris duplikat yang sudah ada **dan** membuat index unik
+   NULL-safe sehingga tidak bisa terjadi lagi (insert duplikat langsung ditolak).
+2. **Baris RELAY palsu dari Stock Opname** — kalau kolom `RAK` di file opname
+   kosong/hilang, semua baris dianggap RELAY; aplikasi lalu membuat baris stok
+   RELAY **baru** berdampingan dengan baris rak yang sudah ada ⇒ total seolah
+   dobel. Sekarang baris "new" seperti itu diberi peringatan tegas di pratinjau
+   (`⚠ produk ini SUDAH punya stok di <rak> — kalau barangnya sama, JANGAN
+   diterapkan`), dan penerapan opname ikut merapikan baris duplikat bucket itu.
+
+#### Langkah 1 — Audit dulu (read-only, aman, tidak mengubah data)
+
+```bash
+DC="docker compose -p wms-wma-prod -f docker-compose.prod.yml --env-file .env.prod"
+
+$DC exec -T app php artisan stocks:audit                          # ringkasan + 4 bagian
+$DC exec -T app php artisan stocks:audit --search=VISOR --limit=50 # fokus 1 produk/part
+$DC exec -T app php artisan stocks:audit --json > /tmp/audit-stok.json
+```
+
+Isi keluaran:
+
+| Bagian | Artinya |
+| --- | --- |
+| 1) Baris duplikat | produk + rak/RELAY yang sama muncul >1× (qty bisa terlihat dobel) |
+| 2) Kandidat dobel RELAY | produk punya qty di rak **dan** di RELAY — "KUAT" kalau qty relay = total rak |
+| 3) Baris RELAY dari opname | bukti baris RELAY baru dibuat oleh stock opname (qty sistem 0) |
+| 4) Selisih buku besar | stok sistem vs hitungan riwayat (terima − kirim ± opname ± perbaikan CLI) |
+
+#### Langkah 2 — Perbaiki (dry-run dulu, baru `--apply`)
+
+```bash
+# a) Gabungkan baris duplikat (kunci produk+rak/RELAY sama)
+$DC exec -T app php artisan stocks:merge-duplicates                    # pratinjau
+$DC exec -T app php artisan stocks:merge-duplicates --apply --reason="gabung baris relay duplikat"
+
+# b) Hapus baris RELAY palsu (barangnya sebenarnya ada di rak)
+$DC exec -T app php artisan stocks:set-quantity --product=P5162-0KA08 --rack=RELAY --qty=0 \
+     --reason="barang sudah tercatat di rak A1"
+$DC exec -T app php artisan stocks:set-quantity --product=P5162-0KA08 --rack=RELAY --qty=0 \
+     --reason="barang sudah tercatat di rak A1" --apply
+
+# c) Pindahkan isi RELAY ke rak aslinya (otomatis digabung kalau rak sudah ada isinya)
+$DC exec -T app php artisan stocks:set-quantity --product=123 --rack=RELAY --move-to=A1 \
+     --reason="pindah relay ke rak asli" --apply
+
+# d) Samakan satu bucket dengan buku besar transaksi
+$DC exec -T app php artisan stocks:set-quantity --product=123 --rack=RELAY --from-ledger \
+     --reason="samakan dengan riwayat transaksi" --apply
+```
+
+- Tanpa `--apply` = **DRY-RUN** (tidak ada yang berubah).
+- `--apply` wajib menyertakan `--reason` (min 5 karakter) dan di production
+  meminta konfirmasi ketik `YA`.
+- Setiap perbaikan dicatat sebagai baris **stock opname** `FIX-YYYYMMDD-NNN`
+  (alasan tersimpan di kolom `notes`), jadi muncul di **Riwayat Opname** aplikasi
+  dan tetap konsisten dengan buku besar.
+- `--product` menerima **ID** maupun **part number**.
+
+#### Langkah 3 — Verifikasi
+
+```bash
+$DC exec -T app php artisan stocks:audit
+# Bagian 1–3 harus "tidak ada ✓"; bagian 4 (selisih buku besar) harus kosong.
+```
+
+> **Catatan `--from-ledger`**: mengandalkan riwayat transaksi. Kalau pernah
+> memakai **Pemutihan Data** mode yang mempertahankan stok (`--keep-stock`),
+> buku besar tidak bisa dipakai (riwayat dihapus tapi stok disimpan).
+
+---
+
 ## 10. Quick Reference Card
 
 ```bash
@@ -756,6 +838,12 @@ docker compose -p wms-wma-prod -f docker-compose.prod.yml --env-file .env.prod p
 
 # Diagnosa error 502/500 (container, OOM, Redis, migrasi, log)
 ./deploy-production.sh --diagnose
+
+# Audit stok (read-only) — duplikat baris, RELAY dobel, selisih vs buku besar
+docker compose -p wms-wma-prod -f docker-compose.prod.yml --env-file .env.prod exec -T app php artisan stocks:audit
+
+# Perbaikan stok (dry-run dulu; tambahkan --apply --reason="..." untuk eksekusi)
+docker compose -p wms-wma-prod -f docker-compose.prod.yml --env-file .env.prod exec -T app php artisan stocks:merge-duplicates
 
 # View logs
 docker compose -p wms-wma-prod -f docker-compose.prod.yml --env-file .env.prod logs -f app
