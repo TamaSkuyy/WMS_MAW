@@ -297,9 +297,23 @@ Halaman ini menampilkan semua stok di gudang:
 └──────────────────────────────────────────────────────┘
 ```
 
-- **Search** — cari berdasarkan nama produk atau part number
+- **Pencarian** — ketik **beberapa kata** (dipisah spasi), semua kata harus
+  cocok. Yang dicari: part number, nama produk, deskripsi, **supplier**, **model
+  kendaraan**, **kode rak**, dan **zona**. Contoh: `visor avanza`,
+  `P5162`, `E04`, `Mitra Jaya`. Ketik `relay` untuk melihat stok yang belum
+  masuk rak. Tombol **📷** di samping kotak cari untuk scan barcode part.
+- **Filter** — Status (ada di rak / RELAY / qty 0 / stok menipis), Rak, Zona,
+  Supplier, dan pilihan **Urutkan** (qty, part number, nama, rak, terakhir
+  diubah). Semua filter bisa dikombinasikan; tombol **✕ Reset** mengembalikan
+  semuanya.
+- **Ringkasan di atas tabel** — jumlah baris, total qty, qty RELAY, dan jumlah
+  baris stok menipis menurut filter yang sedang aktif.
 - **Info Rak** — lihat di rak mana barang disimpan
-- **Stok Rendah** — quantity kecil perlu restock
+- **Stok Menipis** — badge merah kalau qty di bawah `Min Stok` produk (diatur di
+  Master Data > Produk)
+- **Lihat per produk** — klik nama produk, atau dari halaman Detail Produk pakai
+  tombol **📦 Lihat Stok** (halaman stok otomatis terfilter untuk produk itu)
+- **Baris per halaman** — 10 / 25 / 50 / 100 (default 25)
 
 ### Baris RELAY (tanpa rak)
 

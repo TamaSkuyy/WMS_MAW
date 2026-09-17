@@ -113,6 +113,19 @@ otomatis oleh harness, jadi jaga tetap ringkas. Detail panjang taruh di `docs/`.
     dua suku pertama; `receive_logs` tidak dipakai karena baru ada sejak
     2026-07-29). Test penjaga: `tests/Feature/StockRepairTest.php`.
 
+16. **Inventori Stok (`StockController::index`) — pencarian lengkap, jangan
+    dibalikin ke `like` sederhana.** Query yang dikenali: `search` (multi-kata
+    dipisah spasi = DAN; mencari part number, nama, deskripsi, supplier, model
+    kendaraan, kode rak, zona, plus kata `relay` → `whereNull('rack_id')`),
+    `rack_id`, `zone`, `supplier_id`, `status` (`rack|relay|low|zero|available`),
+    `sort` (`qty_desc|qty_asc|part_asc|name_asc|rack_asc|updated_desc`),
+    `product_id` (tombol "📦 Lihat Stok" di Detail Produk), `per_page`
+    (default 25). Ringkasan (`summary`) dihitung **di SQL** untuk seluruh hasil
+    filter, bukan dari koleksi (aturan 13). `Total Masuk` = Σ
+    `cycle_items.received_quantity` (> 0), `Total Keluar` = Σ
+    `shopping_items.quantity` untuk `StockLedger::OUT_STATUSES`. Test penjaga:
+    `tests/Feature/StockIndexSearchTest.php`.
+
 ## Struktur
 
 | Path | Isi |

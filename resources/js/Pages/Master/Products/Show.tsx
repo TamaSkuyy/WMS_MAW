@@ -9,6 +9,7 @@ import Button from '../../../Tailadmin/components/ui/button/Button';
 export default function Show({ product }: any) {
     const permissions = (usePage().props.auth as any)?.user?.permissions || [];
     const canEdit = permissions.includes('edit products');
+    const canViewStocks = permissions.includes('view stocks');
 
     return (
         <>
@@ -67,7 +68,12 @@ export default function Show({ product }: any) {
                             )}
                         </dl>
 
-                        <div className="mt-6 flex gap-2 pt-4 border-t border-[#F1F3F5]">
+                        <div className="mt-6 flex flex-wrap gap-2 pt-4 border-t border-[#F1F3F5]">
+                            {canViewStocks && (
+                                <Link href={route('stocks.index', { product_id: product.id })}>
+                                    <Button variant="outline" size="sm">📦 Lihat Stok</Button>
+                                </Link>
+                            )}
                             {canEdit && (
                                 <Link href={route('products.edit', product.id)}>
                                     <Button icon={<PencilIcon className="w-4 h-4" />} size="sm">Edit</Button>

@@ -127,11 +127,38 @@ Klik **[TV Mode]** + **[Rotate ON]** → layar auto-ganti supplier. Cocok untuk 
 
 ```
 Menu: Transactions > Stocks
-
-[Cari nama produk / part number...] 🔍
-→ Tampil: Part No, Nama, Rak, Qty
-→ Qty kecil ⚠️ = butuh restock
 ```
+
+Kotak cari menerima **beberapa kata** — semua kata harus cocok (DIPISAH SPASI):
+
+| Yang diketik | Yang dicari |
+| --- | --- |
+| `P5162-0KA08` | part number (boleh sebagian, mis. `0KA08`) |
+| `visor avanza` | nama produk + nama model kendaraan |
+| `E04` / `buffer` | kode rak / zona rak |
+| `Mitra Jaya` | nama supplier |
+| `relay` / `tanpa rak` | semua stok yang **belum masuk rak** |
+| `📷` di samping kotak cari | scan barcode part → langsung tercari |
+
+Filter & urutan (semua bisa dikombinasikan):
+
+```
+Status     : Semua stok / Ada di rak / ⚠ Relay / Qty > 0 / Qty 0 / ⚠ Stok menipis (< min)
+Rak        : pilih rak tertentu (bisa dicari)
+Zona       : pilih zona
+Supplier   : pilih supplier
+Urutkan    : Qty terbesar/terkecil, Part number A-Z, Nama A-Z, Kode rak A-Z, Terakhir diubah
+```
+
+- Di atas tabel ada **ringkasan**: jumlah baris, total qty, qty RELAY, dan jumlah
+  baris stok menipis — dihitung untuk **seluruh hasil filter**, bukan cuma
+  halaman yang tampil.
+- Tombol **✕ Reset (n)** muncul kalau ada filter aktif.
+- Tabel: baris **RELAY** berlatar kuning, **MENIPIS** diberi badge merah, nama
+  produk bisa diklik (kalau punya izin) untuk melihat detail produk.
+- Dari halaman Detail Produk, tombol "Lihat Stok" membuka halaman ini dengan
+  filter produk tersebut (`?product_id=...`).
+- Jumlah baris per halaman: 10 / 25 / 50 / 100 (default 25).
 
 ---
 
