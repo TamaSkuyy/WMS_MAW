@@ -27,6 +27,67 @@ warn()    { echo -e "${YELLOW}[WARN]${NC} $*"; }
 err()     { echo -e "${RED}[ERROR]${NC} $*"; }
 success() { echo -e "${GREEN}[✓]${NC} $*"; }
 
+# ── Kunci deploy: cegah DUA deploy jalan bersamaan ───────────────────────────
+# Dua deploy paralel membuat `docker cp config/.` saling menimpa di tengah jalan →
+# file kode/config bisa hilang sebagian → app gagal boot
+# ("Failed opening required '/var/www/html/config/cache.php'") → nginx 502.
+DEPLOY_LOCK_FILE="/tmp/wms-wma-deploy.lock"
+
+acquire_deploy_lock() {
+    exec 9>"${DEPLOY_LOCK_FILE}"
+    if ! flock -n 9; then
+        err "Deploy lain sedang berjalan (lock: ${DEPLOY_LOCK_FILE})."
+        warn "Tunggu sampai deploy sebelumnya selesai. Kalau prosesnya sudah mati: rm -f ${DEPLOY_LOCK_FILE}"
+        exit 1
+    fi
+    log "Deploy lock diperoleh ✓"
+}
+
+# ── Verifikasi file kode inti ada & terbaca di dalam container ───────────────
+# Dipakai setelah copy kode (--update) untuk memastikan copy tidak parsial.
+APP_CRITICAL_FILES=(
+    /var/www/html/bootstrap/app.php
+    /var/www/html/vendor/autoload.php
+    /var/www/html/public/index.php
+    /var/www/html/config/app.php
+    /var/www/html/config/cache.php
+    /var/www/html/config/database.php
+    /var/www/html/config/logging.php
+    /var/www/html/config/queue.php
+    /var/www/html/config/session.php
+    /var/www/html/config/filesystems.php
+    /var/www/html/config/octane.php
+)
+
+verify_app_files() {
+    local container="$1"
+    local missing=0
+
+    for f in "${APP_CRITICAL_FILES[@]}"; do
+        if ! ${RUNTIME} exec "$container" test -r "$f" >/dev/null 2>&1; then
+            err "  File hilang / tidak terbaca di container: ${f}"
+            missing=1
+        fi
+    done
+
+    return $missing
+}
+
+# ── Cek konfigurasi log ──────────────────────────────────────────────────────
+# LOG_CHANNEL kosong → "Log [] is not defined" dan error tidak tersimpan di log.
+check_log_config() {
+    local channel
+    channel="$(grep -E '^[[:space:]]*LOG_CHANNEL[[:space:]]*=' "${ENV_FILE}" 2>/dev/null \
+        | tail -1 | cut -d= -f2- | tr -d '"' | tr -d "'" | xargs 2>/dev/null || true)"
+
+    if [ -z "${channel}" ]; then
+        warn "LOG_CHANNEL kosong/tidak diset di ${ENV_FILE} → error tidak tercatat ('Log [] is not defined')."
+        warn "Tambahkan mis. LOG_CHANNEL=daily lalu deploy ulang."
+    else
+        log "Log channel: ${channel} ✓"
+    fi
+}
+
 # ── Cek konfigurasi queue ────────────────────────────────────────────────────
 # Import (shopping/cycle/master data) dijalankan sebagai job queue. Kalau
 # QUEUE_CONNECTION=sync, seluruh proses import dieksekusi DI DALAM request HTTP:
@@ -163,6 +224,11 @@ dc() {
     ${COMPOSE_CMD} -p "${PROJECT_NAME}" -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" "$@"
 }
 
+# Aksi yang mengubah container/file wajib lewat kunci ini (lihat acquire_deploy_lock).
+case "${ACTION}" in
+    update|rebuild|deploy) acquire_deploy_lock ;;
+esac
+
 clear_laravel_caches() {
     log "Clear cache aplikasi (optimize + Redis cache store)..."
     dc exec -T app php artisan optimize:clear
@@ -268,6 +334,9 @@ quick_update() {
         err "File ${ENV_FILE} tidak ditemukan!"
         exit 1
     fi
+
+    check_queue_config || exit 1
+    check_log_config
 
     # Cek container berjalan
     APP_CONTAINER=$(dc ps -q app 2>/dev/null | head -1)
@@ -385,6 +454,23 @@ quick_update() {
 
     # 5. Migrasi database
     log "5/7 Migrasi database..."
+    # Verifikasi dulu: kalau copy kode parsial, migrate/cache akan gagal dan app
+    # bangun dengan config rusak → 502. Lebih baik berhenti sekarang dengan pesan jelas.
+    log "  → Verifikasi file kode inti di container app..."
+    if ! verify_app_files "$APP_CONTAINER"; then
+        err "Copy kode TIDAK lengkap — aplikasi akan gagal boot (502)."
+        warn "Perbaiki dengan rebuild bersih: ./deploy-production.sh --rebuild"
+        dc exec -T app php artisan up 2>/dev/null || true
+        exit 1
+    fi
+    if ! dc exec -T app php artisan --version >/dev/null 2>&1; then
+        err "Aplikasi gagal boot setelah copy kode (php artisan tidak jalan)."
+        warn "Perbaiki dengan rebuild bersih: ./deploy-production.sh --rebuild"
+        dc exec -T app php artisan up 2>/dev/null || true
+        exit 1
+    fi
+    log "  File kode inti lengkap & aplikasi bisa boot ✓"
+
     dc exec -T app php artisan migrate --force
 
     # 6. Clear & rebuild semua cache
@@ -451,6 +537,7 @@ smart_rebuild() {
         fi
     done
     check_queue_config || exit 1
+    check_log_config
 
     # Build image DENGAN cache (jauh lebih cepat dari --no-cache)
     log "Build image (dengan layer cache)..."
@@ -631,8 +718,18 @@ if [ "${ACTION}" = "diagnose" ]; then
     docker inspect --format '{{.Name}} health={{if .State.Health}}{{.State.Health.Status}}{{else}}-{{end}} restarts={{.RestartCount}} started={{.State.StartedAt}}' $(dc ps -q 2>/dev/null) 2>/dev/null || true
     echo
 
-    echo "── 2) OOM / kill / restart dalam 6 jam terakhir (penyebab 502 paling umum) ──"
-    docker events --since 6h --until 0m 2>/dev/null | grep -iE "oom|kill|die|restart" | tail -20 || true
+    echo "── 2) OOM / kill / restart container 6 jam terakhir (penyebab 502 paling umum) ──"
+    # Catatan: event `container exec_die` (perintah exec selesai) BUKAN container mati —
+    # regex di bawah sengaja tidak menangkapnya supaya tidak jadi noise.
+    SIG_EVENTS=$(docker events --since 6h --until 0m 2>/dev/null \
+        | grep -E "container (oom|die|kill|destroy)" | tail -20 || true)
+    if [ -z "${SIG_EVENTS}" ]; then
+        success "Tidak ada OOM/kill/container mati dalam 6 jam terakhir ✓"
+    else
+        echo "${SIG_EVENTS}"
+    fi
+    START_EVENTS=$(docker events --since 6h --until 0m 2>/dev/null | grep -cE "container (start|restart)" || true)
+    echo "  container start/restart 6 jam terakhir: ${START_EVENTS} (banyak = deploy berulang / crash-loop)"
     dmesg -T 2>/dev/null | grep -i "killed process" | tail -5 || true
     free -h 2>/dev/null || true
     echo
@@ -649,6 +746,19 @@ if [ "${ACTION}" = "diagnose" ]; then
 
     echo "── 5) Migrasi: apakah sudah jalan? (kolom/tabel baru hilang = error 500) ──"
     dc exec -T app php artisan migrate:status 2>&1 | tail -12 || true
+    echo
+
+    echo "── 5b) File kode inti di container (rusak/parsial = app gagal boot = 502) ──"
+    APP_CID=$(dc ps -q app 2>/dev/null | head -1 || true)
+    if [ -n "${APP_CID}" ] && verify_app_files "${APP_CID}"; then
+        success "Semua file inti ada & terbaca ✓ (config/cache.php, logging.php, vendor/autoload.php, dst)"
+    else
+        err "ADA FILE HILANG/TIDAK TERBACA → ini penyebab app gagal boot (502)."
+        warn "Perbaiki dengan rebuild bersih: ./deploy-production.sh --rebuild"
+    fi
+    dc exec -T app php artisan --version >/dev/null 2>&1 \
+        && success "Aplikasi bisa boot (php artisan jalan) ✓" \
+        || err "Aplikasi TIDAK bisa boot di container app → cek bagian 6 (log) lalu jalankan --rebuild"
     echo
 
     echo "── 6) Error terakhir di log aplikasi ──"
@@ -710,6 +820,7 @@ done
 log "Environment file: ${ENV_FILE} ✓"
 log "Project name: ${PROJECT_NAME} (terpisah dari Sail)"
 check_queue_config || exit 1
+check_log_config
 
 # ── Build images ─────────────────────────────────────────────────────────────
 if [ "${FORCE_BUILD}" = true ]; then
