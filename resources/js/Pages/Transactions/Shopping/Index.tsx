@@ -56,6 +56,18 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
     const [submitting, setSubmitting] = useState(false);
     const selectedIds = selected.map((d) => d.id);
 
+    // Jumlah frame draft bisa berubah setelah kirim massal (reload partial).
+    useEffect(() => {
+        setFramesTotal(draftFrameCount || 0);
+    }, [draftFrameCount]);
+
+    // Mode "Kirim Semua": satu klik untuk seluruh frame draft (setelah import).
+    const [shipMode, setShipMode] = useState<'all' | 'pick'>('all');
+    const [preview, setPreview] = useState<any>(null);
+    const [previewLoading, setPreviewLoading] = useState(false);
+    const [shipResult, setShipResult] = useState<any>(null);
+    const [showBlocked, setShowBlocked] = useState(false);
+
     // Tutup/refresh: buang ?import=items supaya modal tidak terbuka lagi
     // saat halaman di-refresh setelah import selesai.
     const closeItemImport = () => {
@@ -190,34 +202,96 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
         setScanMsg({ type: 'ok', text: `✓ ${match.frame_number} ditambahkan` });
     };
 
-    const handleBulkShip = () => {
-        if (submitting || selectedIds.length === 0) return;
-        const msg = `Kirim ${selectedIds.length} shopping? Lokasi kosong akan diisi "${bulkLocationId ? 'lokasi terpilih' : 'tetap kosong'}" lalu semua diproses.`;
-        if (!confirm(msg)) return;
+    const handleBulkShip = async () => {
+        if (submitting) return;
+        if (shipMode === 'pick' && selectedIds.length === 0) return;
+
+        const label = shipMode === 'all'
+            ? `Kirim SEMUA frame draft yang stoknya cukup?`
+            : `Kirim ${selectedIds.length} shopping terpilih?`;
+        if (!confirm(`${label}\n\nLokasi kosong akan diisi "${bulkLocationId ? 'lokasi terpilih' : 'tetap kosong'}".`)) return;
+
         setSubmitting(true);
-        router.post(
-            route('shoppings.bulk-ship'),
-            {
-                ids: selectedIds,
-                shopping_location_id: bulkLocationId || null,
-            },
-            {
-                preserveScroll: true,
-                onSuccess: () => {
-                    // Tandai frame yang baru dikirim supaya tidak bisa discan ulang
-                    // sebelum daftar draft ter-refresh.
-                    setShippedFrames((prev) => [
-                        ...prev,
-                        ...selected.map((d) => d.frame_number.toLowerCase()),
-                    ]);
-                    setBulkShipOpen(false);
-                    setSelected([]);
-                    setFrameSearch('');
+        setShipResult(null);
+
+        try {
+            const res = await fetch(route('shoppings.bulk-ship'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
                 },
-                onFinish: () => setSubmitting(false),
+                body: JSON.stringify(
+                    shipMode === 'all'
+                        ? { all: true, only_ready: true, shopping_location_id: bulkLocationId || null }
+                        : { ids: selectedIds, shopping_location_id: bulkLocationId || null }
+                ),
+            });
+
+            const data = await res.json().catch(() => ({}));
+
+            if (!res.ok) {
+                setShipResult({ ok: false, message: data?.message || `Gagal mengirim (HTTP ${res.status})` });
+                return;
             }
-        );
+
+            // Tandai frame yang baru dikirim supaya tidak bisa discan ulang.
+            setShippedFrames((prev) => [
+                ...prev,
+                ...selected.map((d) => d.frame_number.toLowerCase()),
+                ...(data.ready || []).map((r: any) => String(r.frame_number).toLowerCase()),
+            ]);
+            setShipResult(data);
+            setSelected([]);
+            router.reload({ only: ['shoppings', 'draftFrameCount'] });
+        } catch (err: any) {
+            setShipResult({ ok: false, message: err?.message || 'Gagal mengirim.' });
+        } finally {
+            setSubmitting(false);
+        }
     };
+
+    /** Pratinjau: lookup & matching stok untuk semua frame (atau yang terpilih). */
+    const fetchPreview = useCallback(async (mode: 'all' | 'pick', ids: number[]) => {
+        setPreviewLoading(true);
+        try {
+            const res = await fetch(route('shoppings.bulk-ship.preview'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify(mode === 'all' ? { all: true } : { ids }),
+            });
+            const data = await res.json().catch(() => ({}));
+            setPreview(res.ok ? data : { ok: false, message: data?.message || `HTTP ${res.status}` });
+        } catch {
+            setPreview({ ok: false, message: 'Gagal memuat pratinjau stok.' });
+        } finally {
+            setPreviewLoading(false);
+        }
+    }, []);
+
+    // Saat modal dibuka: default mode "Kirim Semua" + langsung minta pratinjau.
+    useEffect(() => {
+        if (!bulkShipOpen) return;
+        setShipResult(null);
+        setShowBlocked(false);
+        setShipMode('all');
+        void fetchPreview('all', []);
+    }, [bulkShipOpen, fetchPreview]);
+
+    // Mode "pilih/scan": pratinjau mengikuti frame yang dipilih.
+    useEffect(() => {
+        if (!bulkShipOpen || shipMode !== 'pick') return;
+        const timer = setTimeout(() => void fetchPreview('pick', selectedIds), 400);
+        return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [bulkShipOpen, shipMode, selectedIds.join(',')]);
 
     const handleDelete = (id: number) => {
         if (confirm('Hapus shopping ini?')) {
@@ -248,9 +322,18 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
             )}
 
             <div className="mb-4 rounded-xl border border-brand-200 bg-brand-50 p-4 text-sm text-brand-700 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300">
-                Alur 2 langkah: <strong>1. Input Header</strong> (line &amp; frame number) →{' '}
-                <strong>2. Import Barang</strong> (part number &amp; qty untuk frame yang sudah terdaftar).{' '}
-                Frame draft saat ini: <strong>{framesTotal}</strong>.
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        Alur 2 langkah: <strong>1. Input Header</strong> (line &amp; frame number) →{' '}
+                        <strong>2. Import Barang</strong> (part number &amp; qty untuk frame yang sudah terdaftar).{' '}
+                        Frame draft saat ini: <strong>{framesTotal}</strong>.
+                    </div>
+                    {canShip && framesTotal > 0 && (
+                        <Button onClick={() => setBulkShipOpen(true)}>
+                            🚀 Kirim Semua ({framesTotal} frame)
+                        </Button>
+                    )}
+                </div>
             </div>
             <ComponentCard title="Daftar Shopping">
                 <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
@@ -517,131 +600,318 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
 
             {/* ── Modal Kirim Massal ─────────────────────────────────────── */}
             {bulkShipOpen && (
-                <div className="fixed inset-0 z-99999 flex items-center justify-center bg-black/50">
-                    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+                <div className="fixed inset-0 z-99999 flex items-center justify-center bg-black/50 p-4">
+                    <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl bg-white shadow-xl dark:bg-gray-900">
                         <div className="p-6">
-                            <div className="flex justify-between items-center mb-4">
+                            <div className="mb-4 flex items-center justify-between">
                                 <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">🚚 Kirim Massal</h2>
                                 <button onClick={() => setBulkShipOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                                     ✕
                                 </button>
                             </div>
 
-                            {/* Pilih lokasi tujuan (opsional — mengisi lokasi kosong) */}
-                            <div className="mb-4">
-                                <Label>Lokasi Tujuan (opsional)</Label>
-                                <SearchableSelect
-                                    options={shoppingLocations.map((l: any) => ({ value: l.id, label: l.name }))}
-                                    value={bulkLocationId}
-                                    onChange={(v) => setBulkLocationId(v as string)}
-                                    placeholder="Isi otomatis lokasi kosong..."
-                                />
-                                <p className="mt-1 text-xs text-gray-400">
-                                    Shopping terpilih yang lokasinya kosong (dari import TAM) akan diisi lokasi ini sebelum dikirim.
-                                </p>
-                            </div>
-
-                            {/* Cari frame + scan */}
-                            <div className="mb-3">
-                                <Label>Pilih Frame (search / scan)</Label>
-                                <div className="flex gap-2">
-                                    <div className="flex-1">
-                                        <Input
-                                            type="text"
-                                            value={frameSearch}
-                                            onChange={(e) => setFrameSearch(e.target.value)}
-                                            placeholder="Cari frame number..."
-                                        />
+                            {shipResult ? (
+                                /* ── Hasil pengiriman ── */
+                                <div>
+                                    <div className={`mb-4 rounded-lg p-4 ${shipResult.ok ? 'bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-300' : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300'}`}>
+                                        <p className="font-semibold">{shipResult.ok ? '✅ Pengiriman diproses' : 'Gagal mengirim'}</p>
+                                        <p className="mt-1 text-sm">{shipResult.message}</p>
                                     </div>
-                                    <Button type="button" variant="outline" size="sm" onClick={() => setScannerOpen(true)} title="Scan barcode frame">
-                                        📷
-                                    </Button>
-                                </div>
-                            </div>
 
-                            {scanMsg && (
-                                <p className={`mb-2 text-xs ${scanMsg.type === 'ok' ? 'text-green-600' : 'text-red-500'}`}>
-                                    {scanMsg.text}
-                                </p>
-                            )}
+                                    {shipResult.ok && (
+                                        <div className="mb-4 grid grid-cols-3 gap-3 text-center">
+                                            <div className="rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-900/40 dark:bg-green-900/10">
+                                                <div className="text-2xl font-bold text-green-700 dark:text-green-400">{shipResult.shipped ?? 0}</div>
+                                                <div className="text-[11px] font-medium uppercase text-green-700 dark:text-green-400">Terkirim</div>
+                                            </div>
+                                            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/40 dark:bg-amber-900/10">
+                                                <div className="text-2xl font-bold text-amber-700 dark:text-amber-400">{shipResult.skipped ?? 0}</div>
+                                                <div className="text-[11px] font-medium uppercase text-amber-700 dark:text-amber-400">Dilewati</div>
+                                            </div>
+                                            <div className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900/40 dark:bg-red-900/10">
+                                                <div className="text-2xl font-bold text-red-700 dark:text-red-400">{shipResult.failed ?? 0}</div>
+                                                <div className="text-[11px] font-medium uppercase text-red-700 dark:text-red-400">Gagal</div>
+                                            </div>
+                                        </div>
+                                    )}
 
-                            {/* Hasil pencarian frame (klik untuk pilih) — dari server, berlimit */}
-                            <div className="mb-3 border border-gray-200 dark:border-gray-700 rounded-lg max-h-40 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800">
-                                {framesLoading ? (
-                                    <p className="px-3 py-2 text-xs text-gray-400">Memuat frame...</p>
-                                ) : frames.length === 0 ? (
-                                    <p className="px-3 py-2 text-xs text-gray-400">
-                                        {frameSearch.trim() !== '' ? 'Tidak ada frame ditemukan' : 'Belum ada frame draft'}
-                                    </p>
-                                ) : (
-                                    <>
-                                        {frames.map((d) => (
-                                            <button
-                                                key={d.id}
-                                                type="button"
-                                                onClick={() => addSelected(d)}
-                                                disabled={selectedIds.includes(d.id)}
-                                                className={`w-full text-left px-3 py-2 text-sm flex justify-between gap-2 ${
-                                                    selectedIds.includes(d.id)
-                                                        ? 'opacity-50 cursor-not-allowed bg-gray-50 dark:bg-gray-800/60'
-                                                        : 'hover:bg-gray-50 dark:hover:bg-gray-800'
-                                                }`}
-                                            >
-                                                <span className="font-mono">{d.frame_number}</span>
-                                                <span className="text-xs text-gray-400">
-                                                    {selectedIds.includes(d.id)
-                                                        ? '✓ sudah discan'
-                                                        : (d.shopping_location?.name || '—')}
-                                                    {d.is_cripple ? ' ⚠️' : ''}
-                                                </span>
-                                            </button>
-                                        ))}
-                                        {framesHasMore && (
-                                            <p className="px-3 py-2 text-xs text-gray-400">
-                                                Menampilkan 30 frame pertama — ketik / scan untuk mempersempit.
-                                            </p>
-                                        )}
-                                    </>
-                                )}
-                            </div>
-
-                            {/* Daftar terpilih */}
-                            <div className="mb-4">
-                                <Label>Terpilih ({selected.length})</Label>
-                                <div className="border border-gray-200 dark:border-gray-700 rounded-lg divide-y divide-gray-100 dark:divide-gray-800 max-h-44 overflow-y-auto">
-                                    {selected.length === 0 ? (
-                                        <p className="px-3 py-3 text-xs text-gray-400">
-                                            Belum ada frame dipilih — cari di atas atau scan barcode frame.
+                                    {(shipResult.remaining ?? 0) > 0 && (
+                                        <p className="mb-3 rounded-lg bg-amber-50 p-3 text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+                                            Masih ada <strong>{shipResult.remaining}</strong> frame yang belum diproses (batas per sekali kirim).
+                                            Klik <strong>Kirim Lagi</strong> untuk melanjutkan sisanya.
                                         </p>
-                                    ) : (
-                                        selected.map((d) => (
-                                            <div key={d.id} className="flex justify-between items-center gap-2 px-3 py-2">
-                                                <div className="min-w-0">
-                                                    <div className="text-sm font-mono truncate">{d.frame_number}</div>
-                                                    <div className="text-xs text-gray-400">
-                                                        {d.shopping_location?.name || 'lokasi kosong'}
-                                                        {d.is_cripple ? ' · ⚠️ cripple' : ''}
+                                    )}
+
+                                    {(shipResult.blocked || []).length > 0 && (
+                                        <div className="mb-4 rounded-lg border border-amber-200 dark:border-amber-900/40">
+                                            <div className="border-b border-amber-200 px-3 py-2 text-xs font-semibold text-amber-700 dark:border-amber-900/40 dark:text-amber-300">
+                                                Frame dilewati — barangnya masih DRAFT, bukan hilang:
+                                            </div>
+                                            <div className="max-h-44 overflow-y-auto divide-y divide-amber-100 dark:divide-amber-900/30">
+                                                {(shipResult.blocked || []).map((b: any) => (
+                                                    <div key={b.id} className="px-3 py-2 text-xs">
+                                                        <span className="font-mono font-medium text-gray-700 dark:text-gray-200">{b.frame_number}</span>
+                                                        <span className="text-gray-400"> · {b.items} item / {b.quantity} pcs</span>
+                                                        <ul className="mt-1 list-disc pl-4 text-red-500">
+                                                            {(b.issues || []).map((issue: string, i: number) => <li key={i}>{issue}</li>)}
+                                                        </ul>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {(shipResult.failures || []).length > 0 && (
+                                        <div className="mb-4 rounded-lg border border-red-200 dark:border-red-900/40">
+                                            <div className="border-b border-red-200 px-3 py-2 text-xs font-semibold text-red-700 dark:border-red-900/40 dark:text-red-300">
+                                                Gagal diproses:
+                                            </div>
+                                            <div className="max-h-44 overflow-y-auto divide-y divide-red-100 dark:divide-red-900/30">
+                                                {(shipResult.failures || []).map((f: any, i: number) => (
+                                                    <div key={i} className="px-3 py-2 text-xs">
+                                                        <span className="font-mono font-medium text-gray-700 dark:text-gray-200">{f.frame || '#' + f.id}</span>
+                                                        <span className="text-red-500"> — {f.reason}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex justify-end gap-3">
+                                        <Button variant="outline" onClick={() => setShipResult(null)}>Kirim Lagi</Button>
+                                        <Button onClick={() => { setBulkShipOpen(false); setFrameSearch(''); }}>
+                                            Tutup &amp; Lihat Daftar
+                                        </Button>
+                                    </div>
+                                </div>
+                            ) : (
+                                /* ── Persiapan pengiriman ── */
+                                <div>
+                                    {/* Mode: semua draft (1 klik) atau pilih/scan frame */}
+                                    <div className="mb-4 grid grid-cols-1 gap-2 rounded-lg bg-gray-100 p-1 sm:grid-cols-2 dark:bg-gray-800">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShipMode('all')}
+                                            className={`rounded-md px-3 py-2 text-sm font-medium transition ${shipMode === 'all' ? 'bg-white text-brand-700 shadow-sm dark:bg-gray-900 dark:text-brand-300' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+                                        >
+                                            🚀 Kirim Semua Draft ({framesTotal})
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShipMode('pick')}
+                                            className={`rounded-md px-3 py-2 text-sm font-medium transition ${shipMode === 'pick' ? 'bg-white text-brand-700 shadow-sm dark:bg-gray-900 dark:text-brand-300' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+                                        >
+                                            🎯 Pilih / Scan Frame
+                                        </button>
+                                    </div>
+
+                                    {shipMode === 'all' && (
+                                        <p className="mb-3 rounded-lg bg-brand-50 p-3 text-xs text-brand-700 dark:bg-brand-500/10 dark:text-brand-300">
+                                            Sistem mengecek dulu ketersediaan stok untuk <strong>seluruh frame</strong> (lookup &amp; matching),
+                                            lalu mengirim semuanya sekaligus. Frame yang stoknya kurang <strong>dilewati</strong> dan dilaporkan — tidak menggagalkan yang lain.
+                                        </p>
+                                    )}
+
+                                    {/* Lokasi tujuan (opsional — mengisi lokasi kosong) */}
+                                    <div className="mb-4">
+                                        <Label>Lokasi Tujuan (opsional)</Label>
+                                        <SearchableSelect
+                                            options={shoppingLocations.map((l: any) => ({ value: l.id, label: l.name }))}
+                                            value={bulkLocationId}
+                                            onChange={(v) => setBulkLocationId(v as string)}
+                                            placeholder="Isi otomatis lokasi kosong..."
+                                        />
+                                        <p className="mt-1 text-xs text-gray-400">
+                                            Shopping yang lokasinya kosong (dari import TAM) akan diisi lokasi ini sebelum dikirim.
+                                        </p>
+                                    </div>
+
+                                    {/* Pratinjau kecocokan stok */}
+                                    <div className="mb-4 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+                                        <div className="mb-2 flex items-center justify-between">
+                                            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                                Pratinjau stok {shipMode === 'all' ? '(semua frame draft)' : '(frame terpilih)'}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                className="text-xs text-brand-600 hover:underline"
+                                                onClick={() => void fetchPreview(shipMode, selectedIds)}
+                                            >
+                                                ⟳ hitung ulang
+                                            </button>
+                                        </div>
+
+                                        {previewLoading ? (
+                                            <p className="text-xs text-gray-400">Menghitung kecocokan stok...</p>
+                                        ) : !preview?.ok ? (
+                                            <p className="text-xs text-red-500">{preview?.message || 'Belum ada data.'}</p>
+                                        ) : (
+                                            <>
+                                                <div className="grid grid-cols-3 gap-2 text-center">
+                                                    <div className="rounded-lg bg-green-50 p-2 dark:bg-green-900/10">
+                                                        <div className="text-lg font-bold text-green-700 dark:text-green-400">{preview.summary.ready}</div>
+                                                        <div className="text-[10px] uppercase text-green-700 dark:text-green-400">Siap kirim</div>
+                                                    </div>
+                                                    <div className="rounded-lg bg-amber-50 p-2 dark:bg-amber-900/10">
+                                                        <div className="text-lg font-bold text-amber-700 dark:text-amber-400">{preview.summary.blocked}</div>
+                                                        <div className="text-[10px] uppercase text-amber-700 dark:text-amber-400">Dilewati</div>
+                                                    </div>
+                                                    <div className="rounded-lg bg-gray-50 p-2 dark:bg-gray-800">
+                                                        <div className="text-lg font-bold text-gray-700 dark:text-gray-200">{preview.summary.quantity}</div>
+                                                        <div className="text-[10px] uppercase text-gray-500">Total pcs</div>
                                                     </div>
                                                 </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => removeSelected(d.id)}
-                                                    className="text-red-400 hover:text-red-600 text-sm shrink-0"
-                                                >
-                                                    ✕
-                                                </button>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            </div>
 
-                            <div className="flex justify-end gap-3">
-                                <Button variant="outline" onClick={() => setBulkShipOpen(false)}>Batal</Button>
-                                <Button onClick={handleBulkShip} disabled={selectedIds.length === 0 || submitting}>
-                                    {submitting ? 'Mengirim...' : `Kirim ${selected.length} Shopping`}
-                                </Button>
-                            </div>
+                                                <p className="mt-2 text-[11px] text-gray-500">
+                                                    {preview.summary.items} item di {preview.summary.total} frame
+                                                    {preview.summary.blocked > 0 ? ` · ${preview.summary.blocked_quantity} pcs ada di frame yang dilewati` : ''}
+                                                </p>
+
+                                                {preview.summary.blocked > 0 && (
+                                                    <div className="mt-2">
+                                                        <button
+                                                            type="button"
+                                                            className="text-xs font-medium text-amber-700 hover:underline dark:text-amber-400"
+                                                            onClick={() => setShowBlocked((v) => !v)}
+                                                        >
+                                                            {showBlocked ? '▾' : '▸'} Lihat {preview.summary.blocked} frame yang dilewati &amp; alasannya
+                                                        </button>
+                                                        {showBlocked && (
+                                                            <div className="mt-2 max-h-44 overflow-y-auto divide-y divide-gray-100 rounded-lg border border-gray-200 dark:divide-gray-800 dark:border-gray-700">
+                                                                {(preview.blocked || []).map((b: any) => (
+                                                                    <div key={b.id} className="px-3 py-2 text-xs">
+                                                                        <span className="font-mono font-medium text-gray-700 dark:text-gray-200">{b.frame_number}</span>
+                                                                        <span className="text-gray-400"> · {b.items} item / {b.quantity} pcs</span>
+                                                                        <ul className="mt-1 list-disc pl-4 text-red-500">
+                                                                            {(b.issues || []).map((issue: string, i: number) => <li key={i}>{issue}</li>)}
+                                                                        </ul>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+
+                                    {/* Mode pilih/scan frame */}
+                                    {shipMode === 'pick' && (
+                                        <>
+                                            <div className="mb-3">
+                                                <Label>Pilih Frame (search / scan)</Label>
+                                                <div className="flex gap-2">
+                                                    <div className="flex-1">
+                                                        <Input
+                                                            type="text"
+                                                            value={frameSearch}
+                                                            onChange={(e) => setFrameSearch(e.target.value)}
+                                                            placeholder="Cari frame number..."
+                                                        />
+                                                    </div>
+                                                    <Button type="button" variant="outline" size="sm" onClick={() => setScannerOpen(true)} title="Scan barcode frame">
+                                                        📷
+                                                    </Button>
+                                                </div>
+                                            </div>
+
+                                            {scanMsg && (
+                                                <p className={`mb-2 text-xs ${scanMsg.type === 'ok' ? 'text-green-600' : 'text-red-500'}`}>
+                                                    {scanMsg.text}
+                                                </p>
+                                            )}
+
+                                            <div className="mb-3 max-h-40 divide-y divide-gray-100 overflow-y-auto rounded-lg border border-gray-200 dark:divide-gray-800 dark:border-gray-700">
+                                                {framesLoading ? (
+                                                    <p className="px-3 py-2 text-xs text-gray-400">Memuat frame...</p>
+                                                ) : frames.length === 0 ? (
+                                                    <p className="px-3 py-2 text-xs text-gray-400">
+                                                        {frameSearch.trim() !== '' ? 'Tidak ada frame ditemukan' : 'Belum ada frame draft'}
+                                                    </p>
+                                                ) : (
+                                                    <>
+                                                        {frames.map((d) => (
+                                                            <button
+                                                                key={d.id}
+                                                                type="button"
+                                                                onClick={() => addSelected(d)}
+                                                                disabled={selectedIds.includes(d.id)}
+                                                                className={`flex w-full justify-between gap-2 px-3 py-2 text-left text-sm ${
+                                                                    selectedIds.includes(d.id)
+                                                                        ? 'cursor-not-allowed bg-gray-50 opacity-50 dark:bg-gray-800/60'
+                                                                        : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                                                                }`}
+                                                            >
+                                                                <span className="font-mono">{d.frame_number}</span>
+                                                                <span className="text-xs text-gray-400">
+                                                                    {selectedIds.includes(d.id)
+                                                                        ? '✓ sudah discan'
+                                                                        : (d.shopping_location?.name || '—')}
+                                                                    {d.is_cripple ? ' ⚠️' : ''}
+                                                                </span>
+                                                            </button>
+                                                        ))}
+                                                        {framesHasMore && (
+                                                            <p className="px-3 py-2 text-xs text-gray-400">
+                                                                Menampilkan 30 frame pertama — ketik / scan untuk mempersempit.
+                                                            </p>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </div>
+
+                                            <div className="mb-4">
+                                                <Label>Terpilih ({selected.length})</Label>
+                                                <div className="max-h-44 divide-y divide-gray-100 overflow-y-auto rounded-lg border border-gray-200 dark:divide-gray-800 dark:border-gray-700">
+                                                    {selected.length === 0 ? (
+                                                        <p className="px-3 py-3 text-xs text-gray-400">
+                                                            Belum ada frame dipilih — cari di atas atau scan barcode frame.
+                                                        </p>
+                                                    ) : (
+                                                        selected.map((d) => (
+                                                            <div key={d.id} className="flex items-center justify-between gap-2 px-3 py-2">
+                                                                <div className="min-w-0">
+                                                                    <div className="truncate font-mono text-sm">{d.frame_number}</div>
+                                                                    <div className="text-xs text-gray-400">
+                                                                        {d.shopping_location?.name || 'lokasi kosong'}
+                                                                        {d.is_cripple ? ' · ⚠️ cripple' : ''}
+                                                                    </div>
+                                                                </div>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => removeSelected(d.id)}
+                                                                    className="shrink-0 text-sm text-red-400 hover:text-red-600"
+                                                                >
+                                                                    ✕
+                                                                </button>
+                                                            </div>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+
+                                    <div className="flex flex-wrap justify-end gap-3">
+                                        <Button variant="outline" onClick={() => setBulkShipOpen(false)}>Batal</Button>
+                                        <Button
+                                            onClick={handleBulkShip}
+                                            disabled={
+                                                submitting ||
+                                                (shipMode === 'all'
+                                                    ? !preview?.ok || (preview?.summary?.ready ?? 0) === 0
+                                                    : selectedIds.length === 0)
+                                            }
+                                        >
+                                            {submitting
+                                                ? 'Mengirim...'
+                                                : shipMode === 'all'
+                                                    ? `🚀 Kirim Semua (${preview?.summary?.ready ?? 0} frame)`
+                                                    : `Kirim ${selected.length} Shopping`}
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

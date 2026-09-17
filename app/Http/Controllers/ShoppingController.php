@@ -9,6 +9,7 @@ use App\Services\ImportExport\Imports\ShoppingHeaderImporter;
 use App\Services\ImportExport\Imports\ShoppingImporter;
 use App\Services\ImportExport\Imports\ShoppingItemImporter;
 use App\Services\ImportExport\Managers\ImportManager;
+use App\Services\Shopping\BulkShipPlanner;
 use App\Models\Rack;
 use App\Models\Shopping;
 use App\Models\ShoppingLocation;
@@ -699,43 +700,127 @@ class ShoppingController extends Controller
     }
 
     /**
-     * Bulk ship — proses banyak shopping draft sekaligus.
-     * Body: { ids: int[], shopping_location_id?: int|null }
-     * Lokasi yang dipilih otomatis mengisi shopping yang lokasinya masih kosong
-     * (data import dari TAM), lalu semua diproses.
+     * Pratinjau "Kirim Massal" — LOOKUP & MATCHING stok untuk semua frame draft
+     * sebelum apa pun dikirim.
+     *
+     * Body: { ids?: int[], all?: bool }
+     * Balasan: ringkasan + daftar frame siap kirim & frame yang tidak siap
+     * (beserta alasannya: stok kurang berapa, atau barang belum diimport).
+     *
+     * Leader memakai ini untuk memastikan sekali klik "Kirim Semua" hasilnya
+     * sesuai harapan — bukan menebak.
+     */
+    public function bulkShipPreview(Request $request)
+    {
+        abort_unless(auth()->user()->can('ship shoppings'), 403);
+
+        $validated = $request->validate([
+            'ids' => 'nullable|array|max:1000',
+            'ids.*' => 'integer',
+            'all' => 'nullable|boolean',
+        ]);
+
+        $all = (bool) ($validated['all'] ?? false);
+        $ids = $all ? null : array_map('intval', $validated['ids'] ?? []);
+
+        if (! $all && empty($ids)) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Pilih minimal satu frame dulu (atau pakai mode "Kirim Semua Draft").',
+            ], 422);
+        }
+
+        $plan = (new BulkShipPlanner())->plan($ids, $all);
+
+        return response()->json([
+            'ok' => true,
+            'all' => $all,
+            'summary' => $plan['summary'],
+            'ready' => array_slice($plan['ready'], 0, 200),
+            'blocked' => array_slice($plan['blocked'], 0, 200),
+            'max_apply' => BulkShipPlanner::MAX_APPLY,
+        ]);
+    }
+
+    /**
+     * Bulk ship — kirim banyak shopping draft sekaligus.
+     *
+     * Body: { ids?: int[], all?: bool, only_ready?: bool, shopping_location_id?: int|null }
+     *
+     * Dua mode:
+     *  - `ids: [...]` → frame yang dipilih/discan (alur lama; semua tetap dicoba).
+     *  - `all: true`  → SELURUH shopping draft; planner mensimulasikan stok dulu
+     *    sehingga inilah mode "sekali klik setelah import semua jadi shipped".
+     *
+     * `only_ready` (default: sama dengan `all`) membuat frame yang stoknya kurang
+     * DILEWATI dan dilaporkan, bukan dicoba lalu gagal satu-satu.
+     * Lokasi yang dipilih mengisi shopping yang lokasinya masih kosong (data TAM).
      */
     public function bulkShip(Request $request)
     {
         abort_unless(auth()->user()->can('ship shoppings'), 403);
 
         $validated = $request->validate([
-            'ids' => 'required|array|min:1',
-            'ids.*' => 'required|exists:shoppings,id',
+            'ids' => 'nullable|array|max:1000',
+            'ids.*' => 'integer|exists:shoppings,id',
+            'all' => 'nullable|boolean',
+            'only_ready' => 'nullable|boolean',
             'shopping_location_id' => 'nullable|exists:shopping_locations,id',
         ]);
 
+        $all = (bool) ($validated['all'] ?? false);
+        $onlyReady = (bool) ($validated['only_ready'] ?? $all);
+        $ids = $all ? null : array_map('intval', $validated['ids'] ?? []);
         $locationId = $validated['shopping_location_id'] ?? null;
-        $success = 0;
-        $failures = [];
 
-        foreach ($validated['ids'] as $id) {
-            $shopping = Shopping::find($id);
+        if (! $all && empty($ids)) {
+            return $this->bulkShipResponse($request, [
+                'ok' => false,
+                'message' => 'Pilih minimal satu frame untuk dikirim.',
+                'shipped' => 0,
+                'skipped' => 0,
+                'failed' => 0,
+                'remaining' => 0,
+                'failures' => [],
+                'blocked' => [],
+            ], 422);
+        }
+
+        $plan = (new BulkShipPlanner())->plan($ids, $all);
+
+        // Mode "semua": frame yang tidak siap dilewati (dilaporkan), bukan dipaksa.
+        $targets = $onlyReady
+            ? $plan['ready']
+            : array_merge($plan['ready'], $plan['blocked']);
+
+        $startedAt = microtime(true);
+        $success = 0;
+        $processed = 0;
+        $failures = [];
+        $stopped = false;
+
+        foreach ($targets as $row) {
+            if ($processed >= BulkShipPlanner::MAX_APPLY || (microtime(true) - $startedAt) > 200) {
+                $stopped = true;
+                break;
+            }
+
+            $shopping = Shopping::find($row['id']);
 
             if (! $shopping) {
-                $failures[] = ['id' => $id, 'reason' => 'Shopping tidak ditemukan.'];
-
                 continue;
             }
 
             $result = $this->shipSingle($shopping, $locationId);
+            $processed++;
 
             if ($result['ok']) {
                 $success++;
             } else {
                 $failures[] = [
-                    'id' => $id,
-                    'frame' => $shopping->frame_number,
-                    'reason' => $result['error'],
+                    'id' => $row['id'],
+                    'frame' => $row['frame_number'],
+                    'reason' => $result['error'] ?? 'Gagal diproses.',
                 ];
             }
         }
@@ -748,16 +833,58 @@ class ShoppingController extends Controller
             }
         }
 
+        $skipped = $onlyReady ? $plan['summary']['blocked'] : 0;
+        $remaining = max(0, count($targets) - $processed);
+
         $msg = "{$success} shopping berhasil dikirim.";
+
+        if ($skipped > 0) {
+            $msg .= " {$skipped} dilewati karena stok belum cukup / barang belum lengkap.";
+        }
 
         if (! empty($failures)) {
             $detail = collect($failures)
+                ->take(10)
                 ->map(fn ($f) => ($f['frame'] ?? '#' . $f['id']) . ' — ' . $f['reason'])
                 ->implode('; ');
             $msg .= ' Gagal (' . count($failures) . '): ' . $detail;
+
+            if (count($failures) > 10) {
+                $msg .= '; …dan ' . (count($failures) - 10) . ' lainnya.';
+            }
         }
 
-        return redirect()->route('shoppings.index')->with('success', $msg);
+        if ($remaining > 0 || $stopped) {
+            $msg .= " Sisa {$remaining} frame belum diproses (batas " . BulkShipPlanner::MAX_APPLY
+                . ' per sekali kirim) — klik "Kirim Semua" lagi untuk melanjutkan.';
+        }
+
+        return $this->bulkShipResponse($request, [
+            'ok' => true,
+            'message' => $msg,
+            'shipped' => $success,
+            'skipped' => $skipped,
+            'failed' => count($failures),
+            'remaining' => $remaining,
+            'failures' => array_slice($failures, 0, 50),
+            'blocked' => array_slice($plan['blocked'], 0, 50),
+            'ready' => array_slice($plan['ready'], 0, 50),
+            'summary' => $plan['summary'],
+        ]);
+    }
+
+    /**
+     * Balasan bulk ship: JSON untuk UI baru (fetch), redirect+flash untuk
+     * pemakaian lama (form biasa / script).
+     */
+    private function bulkShipResponse(Request $request, array $payload, int $status = 200)
+    {
+        if ($request->expectsJson()) {
+            return response()->json($payload, $status);
+        }
+
+        return redirect()->route('shoppings.index')
+            ->with($payload['ok'] ? 'success' : 'error', $payload['message']);
     }
 
     /**

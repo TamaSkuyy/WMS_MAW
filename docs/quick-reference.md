@@ -71,10 +71,22 @@ LANGKAH 2 — Import BARANG (part + qty)
 1. Tombol "2. Import Barang" (atau tombol "Lanjut: Import Barang")
 2. Pilih file Excel/CSV: kolom Frame Number | Part Number | Quantity
 3. [Start Import] → tunggu sampai "Import selesai"
+
+LANGKAH 3 — KIRIM SEMUA (tugas Leader, sekali klik)
+1. Tombol "🚀 Kirim Semua (N frame)" di banner atas, atau tombol "🚚 Kirim Massal"
+2. Sistem otomatis lookup & matching stok untuk SEMUA frame:
+      Siap kirim: N frame   |   Dilewati: M frame   |   Total: Q pcs
+   (kalau ada yang kurang stok, klik "Lihat M frame yang dilewati & alasannya")
+3. Isi "Lokasi Tujuan" HANYA kalau mau mengisi lokasi yang masih kosong
+4. [🚀 Kirim Semua (N frame)] → semua transaksi langsung otomatis SHIPPED
+5. Muncul ringkasan: Terkirim / Dilewati / Gagal + daftar alasannya
 ```
 > ⚠️ Kalau file barang memuat frame yang **belum** diinput header-nya, baris itu
 > ditolak dengan pesan "Frame ... belum terdaftar di WMS". Input header dulu, atau
 > centang **"Buat frame otomatis"** di modal import (untuk kondisi mendadak).
+> ✅ **Frame yang stoknya kurang TIDAK menggagalkan yang lain** — dia dilewati,
+> tetap berstatus Draft, dan dilaporkan alasannya (stok kurang berapa).
+> Kalau frame lebih dari 500, kirim sekali lagi untuk sisanya (tombol "Kirim Lagi").
 
 ### Alur lama (satu file gabungan)
 ```
@@ -86,6 +98,12 @@ LANGKAH 2 — Import BARANG (part + qty)
 > ℹ️ Dua alur di atas sama-sama aktif. Kalau pusat/TAM mengubah urutan kerja,
 > tidak perlu hapus alur yang lain — cukup pakai tombol yang sesuai.
 > ⚠️ Pastikan stok cukup! Sistem menolak jika stok kurang.
+
+### Kirim Massal mode "Pilih / Scan Frame"
+Kalau hanya sebagian frame yang mau dikirim: buka "🚚 Kirim Massal" → tab
+**🎯 Pilih / Scan Frame** → cari/scan frame satu-satu (bisa juga scan barcode),
+lihat pratinjau stoknya, lalu kirim. Berguna untuk mengirim ulang frame yang
+tadi dilewati setelah stoknya datang.
 
 ---
 

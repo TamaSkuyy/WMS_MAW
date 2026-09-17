@@ -445,6 +445,7 @@ Route::middleware('auth')->group(function () {
     // Bulk ship (static path — wajib sebelum shoppings/{shopping})
     Route::middleware(PermissionMiddleware::using('ship shoppings'))->group(function () {
         Route::post('shoppings/bulk-ship', [ShoppingController::class, 'bulkShip'])->name('shoppings.bulk-ship');
+        Route::post('shoppings/bulk-ship/preview', [ShoppingController::class, 'bulkShipPreview'])->name('shoppings.bulk-ship.preview');
     });
 
     // View (parameterized — must come AFTER static routes)

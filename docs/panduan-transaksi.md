@@ -273,6 +273,33 @@ Saat barang siap dikirim:
 - ✅ Stok berkurang sesuai jumlah yang dikirim
 - ✅ Tercatat tanggal pengiriman
 
+### B2. Kirim Massal — tugas Leader (setelah import, sekali klik)
+
+Setelah header + barang diimport, seluruh frame sudah "matching". Leader tidak
+perlu membuka frame satu per satu:
+
+```
+1. Di halaman Shopping, klik "🚀 Kirim Semua (N frame)" pada banner atas
+   (atau tombol "🚚 Kirim Massal" → tab "🚀 Kirim Semua Draft")
+2. Sistem menampilkan hasil LOOKUP & MATCHING stok semua frame:
+      Siap kirim: 120 frame   |   Dilewati: 8 frame   |   Total: 1.240 pcs
+      ▸ Lihat 8 frame yang dilewati & alasannya
+        mis. FRM-0917 — Stok kurang: P5162-0KA08 di rak A-01 — butuh 20, tersedia 5 (kurang 15)
+3. (Opsional) pilih "Lokasi Tujuan" untuk mengisi frame yang lokasinya kosong
+4. Klik "🚀 Kirim Semua (120 frame)" → sekali proses, semua jadi SHIPPED
+5. Ringkasan hasil muncul: Terkirim / Dilewati / Gagal + daftar alasannya
+```
+
+Yang perlu diketahui:
+
+- **Stok dicek berurutan untuk semua frame**, jadi dua frame yang masing-masing
+  butuh 60 pcs dari stok 100 pcs: satu dikirim, satu dilewati (bukan dua-duanya
+  "kelihatan cukup").
+- Frame yang dilewati **tetap Draft** dan bisa dikirim lagi setelah stok datang
+  (tab "🎯 Pilih / Scan Frame", atau klik "🚀 Kirim Semua" lagi).
+- Kirim per sekali proses dibatasi 500 frame; kalau lebih, klik "Kirim Lagi".
+- Semua pengiriman tercatat: status, pengirim (`shipped_by`), dan tanggal kirim.
+
 > ⚠️ **Perhatian:** Pastikan stok mencukupi. Sistem akan menolak jika jumlah dikirim melebihi stok tersedia.
 
 ---

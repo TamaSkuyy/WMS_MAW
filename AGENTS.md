@@ -51,6 +51,18 @@ otomatis oleh harness, jadi jaga tetap ringkas. Detail panjang taruh di `docs/`.
    - **Import gabungan** lama (`shoppings/import` → `ShoppingImporter`) tetap ada.
    - **Import file header** (`shoppings/import-headers` → `ShoppingHeaderImporter`)
      backend siap, tombol UI disembunyikan (`SHOW_HEADER_IMPORT` di `Headers.tsx`).
+   - **Kirim massal** (`shoppings/bulk-ship`, permission `ship shoppings`): mode
+     `all: true` = kirim SELURUH draft sekali klik (tugas Leader setelah import,
+     tombol "🚀 Kirim Semua" di banner). Kesiapan stok dihitung dulu oleh
+     `App\Services\Shopping\BulkShipPlanner` (`bulk-ship/preview` →
+     `ShoppingController::bulkShipPreview()`): simulasi berurutan urut id,
+     jadi stok yang dipakai bersama antar frame tidak "kelihatan cukup" dua kali.
+     `only_ready` (default = `all`) melewati frame yang stoknya kurang; frame itu
+     tetap draft & dilaporkan alasannya. Batas `BulkShipPlanner::MAX_APPLY` (500)
+     per permintaan + guard 200 detik → sisa dilaporkan sebagai `remaining`.
+     Mode `ids: [...]` (pilih/scan frame) tetap ada. Balasan JSON hanya kalau
+     `Accept: application/json`; kalau tidak, tetap redirect+flash (kompatibel
+     dengan form/script lama & test lama).
    - Catatan **Model Kendaraan + Suffix** di form Shopping = combobox OPSIONAL yang
      bisa dicari (`Components/SearchableInput.tsx`): pilihannya dari master
      `vehicle_models` + nilai yang pernah diinput, dihitung oleh
@@ -134,7 +146,7 @@ otomatis oleh harness, jadi jaga tetap ringkas. Detail panjang taruh di `docs/`.
 | `app/Http/Controllers/` | Controller per modul (Cycle, Shopping, StockOpname, DeliveryMonitor, …) |
 | `app/Services/DataOrder/` | Import file Data Order lebar → cycle draft |
 | `app/Services/ImportExport/` | Sistem import/export generik (`Base/`, `Imports/`, `Jobs/ProcessImport.php`, `Support/RawFileImport.php`) |
-| `app/Services/{StockOpname,DeliveryMonitor,DataReset}/` | Logika domain terkait |
+| `app/Services/{Shopping,Stock,StockOpname,DeliveryMonitor,DataReset}/` | Logika domain terkait (`BulkShipPlanner`, `StockLedger`, `StockRepairService`, …) |
 | `resources/js/Pages/Transactions/` | Halaman Inertia (Cycles, Shopping, StockOpname, Stocks) |
 | `resources/js/Components/` | Komponen bersama (`ImportExport/`, `Cycles/`, Tailadmin) |
 | `docs/` | Manual & spec; sebagian historis — verifikasi ke kode |
