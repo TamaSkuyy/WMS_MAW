@@ -57,13 +57,35 @@ class ShoppingController extends Controller
         abort_unless(auth()->user()->can('create shoppings'), 403);
 
         return Inertia::render('Transactions/Shopping/Create', [
-            'products'           => Product::with(['vehicleModel', 'stocks', 'supplier'])->where('is_active', true)->orderBy('name')->get(),
+            'products'           => $this->productsForPicker(),
             'racks'              => Rack::orderBy('zone')->orderBy('code')->get(),
             'shoppingLocations'  => ShoppingLocation::orderBy('name')->get(),
             // Pilihan combobox Model Kendaraan/Suffix (master + yang pernah diinput).
             'vehicleModelOptions' => $this->vehicleModelOptions(),
             'vehicleSuffixOptions' => $this->vehicleSuffixOptions(),
         ]);
+    }
+
+    /**
+     * Produk untuk pemilih barang di form Shopping.
+     *
+     * Sengaja hanya memilih kolom yang dipakai halaman (id/part/name/supplier/
+     * vehicle_model + baris stok: rack_id & quantity). Memuat semua kolom untuk
+     * seluruh produk × baris stok membuat payload/memori membengkak dan bisa
+     * mematikan worker Octane (502) di katalog besar.
+     */
+    private function productsForPicker(): \Illuminate\Support\Collection
+    {
+        return Product::query()
+            ->select(['id', 'part_number', 'name', 'vehicle_model_id', 'supplier_id'])
+            ->with([
+                'vehicleModel:id,brand,name,suffix',
+                'supplier:id,name',
+                'stocks:id,product_id,rack_id,quantity',
+            ])
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
     }
 
     /**
@@ -81,13 +103,7 @@ class ShoppingController extends Controller
             ->get(['brand', 'name'])
             ->map(fn (VehicleModel $model) => trim($model->brand . ' ' . $model->name));
 
-        $used = Shopping::query()
-            ->whereNotNull('vehicle_model_label')
-            ->where('vehicle_model_label', '!=', '')
-            ->distinct()
-            ->orderBy('vehicle_model_label')
-            ->limit(300)
-            ->pluck('vehicle_model_label');
+        $used = $this->usedVehicleValues('vehicle_model_label', 300);
 
         return $master->merge($used)
             ->map(fn ($value) => trim((string) $value))
@@ -108,13 +124,7 @@ class ShoppingController extends Controller
             ->orderBy('suffix')
             ->pluck('suffix');
 
-        $used = Shopping::query()
-            ->whereNotNull('vehicle_suffix')
-            ->where('vehicle_suffix', '!=', '')
-            ->distinct()
-            ->orderBy('vehicle_suffix')
-            ->limit(200)
-            ->pluck('vehicle_suffix');
+        $used = $this->usedVehicleValues('vehicle_suffix', 200);
 
         return $master->merge($used)
             ->map(fn ($value) => trim((string) $value))
@@ -123,6 +133,34 @@ class ShoppingController extends Controller
             ->sort()
             ->values()
             ->all();
+    }
+
+    /**
+     * Nilai catatan model/suffix yang pernah diinput operator (untuk pilihan combobox).
+     *
+     * Dibungkus try/catch: kalau kolomnya belum ada (migrasi belum jalan) atau DB
+     * sedang bermasalah, form Shopping tetap terbuka — pilihannya jatuh ke master
+     * Model Kendaraan saja, bukan error 500.
+     *
+     * @return \Illuminate\Support\Collection<int, string>
+     */
+    private function usedVehicleValues(string $column, int $limit): \Illuminate\Support\Collection
+    {
+        try {
+            return Shopping::query()
+                ->whereNotNull($column)
+                ->where($column, '!=', '')
+                ->distinct()
+                ->orderBy($column)
+                ->limit($limit)
+                ->pluck($column);
+        } catch (\Throwable $e) {
+            logger()->warning("Gagal memuat pilihan {$column} untuk form Shopping.", [
+                'exception' => $e->getMessage(),
+            ]);
+
+            return collect();
+        }
     }
 
     public function importPreview(Request $request)
@@ -495,7 +533,7 @@ class ShoppingController extends Controller
 
         return Inertia::render('Transactions/Shopping/Edit', [
             'shopping'           => $shopping->load('items.product.vehicleModel', 'shoppingLocation'),
-            'products'           => Product::with(['vehicleModel', 'stocks', 'supplier'])->where('is_active', true)->orderBy('name')->get(),
+            'products'           => $this->productsForPicker(),
             'racks'              => Rack::orderBy('zone')->orderBy('code')->get(),
             'shoppingLocations'  => ShoppingLocation::orderBy('name')->get(),
             'correction'         => $correction,

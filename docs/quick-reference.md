@@ -210,7 +210,7 @@ lewat halaman **Pemutihan Data** (superadmin):
 | Import Barang: "Frame ... belum terdaftar di WMS" | Input header dulu (tombol "1. Input Header"), atau centang "Buat frame otomatis" saat import |
 | Import Barang: "Part Number ... tidak ditemukan" | Produk belum ada di Master Data > Products |
 | Import jalan lama / progress diam di "Menunggu antrian" | Queue worker belum jalan → lapor admin (`./deploy-production.sh --check-queue`) |
-| Halaman error 502 setelah import selesai | Refresh sekali lagi; kalau berulang lapor admin (lihat `docs/production-server-setup.md` §9.2) |
+| Halaman error 502 (Bad Gateway) tiba-tiba | Catat halaman & jam kejadian, lapor admin → jalankan `./deploy-production.sh --diagnose` (lihat `docs/production-server-setup.md` §9.5) |
 | Export Excel/PDF: "Data terlalu besar untuk format X" | Persempit rentang tanggal, atau pakai **Export CSV** (tanpa batas, bisa untuk data setahun) |
 | Halaman error 500 "Allowed memory size ... exhausted" | Catat halaman apa yang dibuka lalu lapor admin (lihat `docs/production-server-setup.md` §9.4) |
 

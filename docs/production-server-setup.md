@@ -589,6 +589,39 @@ docker compose -p wms-wma-prod -f docker-compose.prod.yml logs app --since 30m \
 Kalau RAM VPS terbatas, tambah swap (§1.4) dulu sebelum menaikkan limit — limit
 besar tanpa RAM/swap cukup hanya memindahkan OOM dari PHP ke kernel.
 
+### 9.5 502 mendadak saat memakai halaman transaksi — diagnosa cepat
+
+502 = nginx tidak dapat respons valid dari container `app` (worker Octane mati,
+container restart, atau request menggantung). **Redis jarang jadi penyebab 502
+langsung** — kalau Redis/CACHE mati, gejalanya biasanya error 500 di semua
+halaman. Tapi kalau `CACHE_STORE`/`SESSION_DRIVER=redis` sementara Redis tidak
+sehat, aplikasi bisa error di setiap request dan ikut memicu worker bermasalah —
+karena itu pembacaan pengaturan/fitur (`Features`/`Setting`) sekarang tahan cache
+mati (fallback DB → default config), dan pilihan combobox Shopping tahan kolom
+yang belum ada (fallback ke master).
+
+Jalankan diagnosa sekali jalan:
+
+```bash
+./deploy-production.sh --diagnose
+```
+
+Yang dilaporkan (berurutan): status/health/restart container → event OOM/kill →
+`memory_limit` + extension redis yang aktif di container → ping Redis + config
+cache/session/queue → status migrasi → error terakhir di log app + Laravel →
+log 502 nginx → daftar job gagal.
+
+Cara membaca hasilnya:
+
+| Temuan | Artinya | Tindakan |
+| --- | --- | --- |
+| `memory_limit=128M` | Image/container lama (batas 512M belum terpakai) | `./deploy-production.sh --update` (container dibuat ulang dengan mount `docker/php/zz-wms.ini`), atau `--rebuild` |
+| Ada `oom`/`killed process` container app | Request terlalu berat (mis. katalog produk besar) | Update ke versi terbaru (payload produk sudah dipersempit) + naikkan `memory_limit` di `docker/php/zz-wms.ini` |
+| `migrate:status` masih `Pending` | Kolom/tabel baru belum ada → error 500 di form/laporan | `./deploy-production.sh --update` (otomatis migrate) atau `docker compose ... exec app php artisan migrate --force` |
+| `redis-cli ping` gagal | Redis tidak sehat | `docker compose -p wms-wma-prod -f docker-compose.prod.yml restart redis`; kalau tetap gagal pertimbangkan `CACHE_STORE=database` + `SESSION_DRIVER=database` di `.env.prod` |
+| restart count container naik terus | Container crash-loop | Lihat bagian 6/7 output (error asli) — jangan hanya restart berulang |
+| Tidak ada temuan | 502 hanya transient (deploy/restart) | Ulangi akses; kalau berulang kirim output diagnosa |
+
 ---
 
 ## 10. Quick Reference Card
@@ -605,6 +638,9 @@ docker compose -p wms-wma-prod -f docker-compose.prod.yml --env-file .env.prod p
 
 # Diagnosa queue worker (status, restart count, job backlog, log)
 ./deploy-production.sh --check-queue
+
+# Diagnosa error 502/500 (container, OOM, Redis, migrasi, log)
+./deploy-production.sh --diagnose
 
 # View logs
 docker compose -p wms-wma-prod -f docker-compose.prod.yml --env-file .env.prod logs -f app

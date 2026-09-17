@@ -112,6 +112,7 @@ for arg in "$@"; do
         --seed-storage)   ACTION="seed-storage" ;;
         --check-storage)  ACTION="check-storage" ;;
         --check-queue)    ACTION="check-queue" ;;
+        --diagnose)       ACTION="diagnose" ;;
         --backup-storage) ACTION="backup-storage" ;;
         --help|-h)
             echo ""
@@ -131,6 +132,7 @@ for arg in "$@"; do
             echo -e "  --seed-storage    Copy ./storage dari host ke Docker volume (one-time)"
             echo -e "  --check-storage   Cek isi & status storage volume"
             echo -e "  --check-queue     Cek status & kesehatan queue worker (jalankan jika queue error)"
+            echo -e "  ${GREEN}--diagnose${NC}        🔎 Cek penyebab error 502/500: container, OOM, Redis, migrasi, log"
             echo -e "  --backup-storage  Backup storage volume ke ./backups/"
             echo ""
             echo -e "${CYAN}Kapan pakai apa:${NC}"
@@ -614,6 +616,58 @@ if [ "${ACTION}" = "check-queue" ]; then
     fi
     echo
     exit 1
+fi
+
+# ── Diagnose action: cari penyebab 502/500 ────────────────────────────────────
+if [ "${ACTION}" = "diagnose" ]; then
+    echo -e "${CYAN}"
+    echo "========================================"
+    echo "  WMS WMA – Diagnosa Error 502/500"
+    echo "========================================"
+    echo -e "${NC}"
+
+    echo "── 1) Status container (health & restart count) ──"
+    dc ps 2>&1 || warn "Stack belum jalan?"
+    docker inspect --format '{{.Name}} health={{if .State.Health}}{{.State.Health.Status}}{{else}}-{{end}} restarts={{.RestartCount}} started={{.State.StartedAt}}' $(dc ps -q 2>/dev/null) 2>/dev/null || true
+    echo
+
+    echo "── 2) OOM / kill / restart dalam 6 jam terakhir (penyebab 502 paling umum) ──"
+    docker events --since 6h --until 0m 2>/dev/null | grep -iE "oom|kill|die|restart" | tail -20 || true
+    dmesg -T 2>/dev/null | grep -i "killed process" | tail -5 || true
+    free -h 2>/dev/null || true
+    echo
+
+    echo "── 3) Batas PHP yang BENAR-BENAR aktif di container app ──"
+    dc exec -T app php -r 'echo "memory_limit=", ini_get("memory_limit"), " upload=", ini_get("upload_max_filesize"), " post=", ini_get("post_max_size"), PHP_EOL;' 2>&1 || warn "Tidak bisa cek php.ini (app mati?)"
+    dc exec -T app php -m 2>/dev/null | grep -iE "^redis$" || warn "Extension redis TIDAK ada di container app"
+    echo
+
+    echo "── 4) Redis (cache/session/queue kalau dipakai) ──"
+    dc exec -T redis redis-cli ping 2>&1 || warn "Redis tidak merespons (cek service redis)"
+    dc exec -T app php -r 'require "vendor/autoload.php"; $app = require "bootstrap/app.php"; $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); try { echo "cache=", config("cache.default"), " session=", config("session.driver"), " queue=", config("queue.default"), PHP_EOL; echo "redis ping: ", Illuminate\Support\Facades\Redis::connection()->ping() ? "OK" : "GAGAL", PHP_EOL; } catch (Throwable $e) { echo "REDIS ERROR: ", $e->getMessage(), PHP_EOL; }' 2>&1 || warn "Gagal cek koneksi Redis dari app"
+    echo
+
+    echo "── 5) Migrasi: apakah sudah jalan? (kolom/tabel baru hilang = error 500) ──"
+    dc exec -T app php artisan migrate:status 2>&1 | tail -12 || true
+    echo
+
+    echo "── 6) Error terakhir di log aplikasi ──"
+    dc logs app --since 60m 2>&1 | grep -iE "error|exception|fatal|memory size|redis|connection refused|gone away" | tail -25 || true
+    echo "  (log Laravel)"
+    dc exec -T app sh -c 'tail -80 storage/logs/laravel.log 2>/dev/null | grep -iE "ERROR|CRITICAL|EMERGENCY|memory size" | tail -20' 2>&1 || true
+    echo
+
+    echo "── 7) Log nginx docker (cari 502/upstream) ──"
+    dc logs nginx --since 60m 2>&1 | grep -iE "502|upstream|error" | tail -20 || true
+    echo "  Kalau pakai nginx host (SSL), cek juga: sudo tail -50 /var/log/nginx/error.log"
+    echo
+
+    echo "── 8) Job queue yang gagal (kalau ada) ──"
+    dc exec -T app php artisan queue:failed 2>&1 | tail -10 || true
+    echo
+
+    log "Selesai. Kirim potongan output di atas (bagian 2, 4, 5, 6) untuk analisa lanjutan."
+    exit 0
 fi
 
 # ── Quick Update action ───────────────────────────────────────────────────────

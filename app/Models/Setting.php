@@ -18,12 +18,41 @@ class Setting extends Model
 
     private const CACHE_KEY = 'settings:all';
 
-    /** @return array<string, string|null> */
+    /** Log kegagalan cache cukup sekali per proses (tidak membanjiri log). */
+    private static bool $cacheFailureLogged = false;
+
+    /**
+     * Semua pengaturan (key => value).
+     *
+     * PENTING: pembacaan ini jalan di SETIAP request (lewat shared prop
+     * `features`). Kalau cache store (mis. Redis) sedang bermasalah, exception
+     * tidak boleh dibiarkan naik — kalau naik, SEMUA halaman ikut error.
+     * Karena itu: fallback ke baca DB langsung, lalu ke array kosong
+     * (fitur memakai nilai default di config/features.php).
+     *
+     * @return array<string, string|null>
+     */
     public static function allValues(): array
     {
-        return Cache::rememberForever(self::CACHE_KEY, function () {
-            return static::query()->pluck('value', 'key')->all();
-        });
+        try {
+            return Cache::rememberForever(self::CACHE_KEY, function () {
+                return static::query()->pluck('value', 'key')->all();
+            });
+        } catch (\Throwable $e) {
+            if (! self::$cacheFailureLogged) {
+                self::$cacheFailureLogged = true;
+                logger()->warning('Cache pengaturan tidak bisa dibaca — memakai fallback database.', [
+                    'exception' => $e->getMessage(),
+                ]);
+            }
+
+            try {
+                return static::query()->pluck('value', 'key')->all();
+            } catch (\Throwable) {
+                // Tabel settings belum ada / DB bermasalah → pakai default config.
+                return [];
+            }
+        }
     }
 
     public static function getValue(string $key, mixed $default = null): mixed
@@ -52,6 +81,13 @@ class Setting extends Model
 
         static::updateOrCreate(['key' => $key], ['value' => $value === null ? null : (string) $value]);
 
-        Cache::forget(self::CACHE_KEY);
+        // Kalau cache sedang bermasalah, jangan sampai penyimpanan pengaturan gagal.
+        try {
+            Cache::forget(self::CACHE_KEY);
+        } catch (\Throwable $e) {
+            logger()->warning('Gagal membersihkan cache pengaturan setelah menyimpan.', [
+                'exception' => $e->getMessage(),
+            ]);
+        }
     }
 }
