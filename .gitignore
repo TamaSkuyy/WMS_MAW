@@ -15,6 +15,7 @@
 /storage/framework/sessions/
 /storage/framework/testing/
 /storage/framework/views/
+/storage/framework/lsp-*.php
 /storage/logs/
 /storage/pail/
 *.log

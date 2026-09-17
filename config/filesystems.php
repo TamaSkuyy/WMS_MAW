@@ -40,9 +40,12 @@ return [
 
         // Backup DB (spatie/laravel-backup) — root = folder host terpisah
         // yang di-bind-mount ke /backups di container (lihat docker-compose.prod.yml).
+        // BACKUP_DB_PATH dipakai dev/test supaya disk ini juga resolve di luar
+        // container (di VPS biarkan default /backups). Kalau root-nya tidak bisa
+        // dibuat, Laravel melempar UnableToCreateDirectory saat disk dipakai.
         'backup-db' => [
             'driver' => 'local',
-            'root' => '/backups',
+            'root' => env('BACKUP_DB_PATH', '/backups'),
             'throw' => false,
             'report' => false,
         ],

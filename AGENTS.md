@@ -59,6 +59,12 @@ otomatis oleh harness, jadi jaga tetap ringkas. Detail panjang taruh di `docs/`.
     dan kegagalan notifikasi tidak boleh menggagalkan import.
 11. Batas runtime PHP/nginx di `Dockerfile` (`zz-wms.ini`) & `docker/nginx/default.conf`
     (`client_max_body_size 12M`) — perubahan infra butuh `--rebuild`.
+12. **Health check** (`AppServiceProvider::backupsCheck()`): `BackupsCheck` wajib
+    `onDisk('backup-db')` + `locatedAt(config('backup.backup.name'))` — tanpa itu
+    `File::glob('')` → `The file "" does not exist` tiap 10 menit. Disk backup
+    di-resolve saat boot, jadi `BACKUP_DB_PATH` (default `/backups`) dipakai
+    dev/test; `backup:run` berjalan di container **scheduler** yang ikut mount
+    `./backups/db`.
 
 ## Struktur
 

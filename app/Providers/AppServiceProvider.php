@@ -52,8 +52,22 @@ class AppServiceProvider extends ServiceProvider
             EnvironmentCheck::new()->expectEnvironment('production'),
             QueueCheck::new(),
             ScheduleCheck::new(),
-            BackupsCheck::new(),
+            // WAJIB pakai onDisk() + locatedAt(): tanpa keduanya check memanggil
+            // File::glob(''), lalu `new SymfonyFile('')` melempar
+            // "The file "" does not exist" → CheckDidNotComplete di log tiap
+            // health:check (setiap 10 menit). Backup ditulis ke disk `backup-db`
+            // (root /backups, lihat config/filesystems.php + docker-compose.prod.yml)
+            // di dalam folder senama config('backup.backup.name').
+            $this->backupsCheck(),
         ]);
+
+        // Notifikasi health default aktif, tapi alamat emailnya default kosong
+        // (HEALTH_TO_ADDRESS). Kirim notifikasi ke alamat kosong tidak ada
+        // gunanya dan berisiko melempar exception saat ada check gagal →
+        // matikan otomatis sampai alamatnya diisi di .env.prod.
+        if (blank(config('health.notifications.mail.to'))) {
+            config(['health.notifications.enabled' => false]);
+        }
 
         if (config('app.force_https') || $this->app->environment('production')) {
             URL::forceScheme('https');
@@ -68,5 +82,31 @@ class AppServiceProvider extends ServiceProvider
         Paginator::currentPathResolver(function () {
             return '/' . ltrim(request()->path(), '/');
         });
+    }
+
+    /**
+     * Check backup untuk dashboard/health:check (Spatie Health).
+     *
+     * Penting: `onDisk()` di-resolve SAAT BOOT, jadi folder backup yang tidak
+     * bisa dibuat (mis. dev lokal tanpa mount /backups) melempar
+     * UnableToCreateDirectory. Kalau tidak ditangani, exception saat boot ini
+     * membuat SEMUA request 500. Fallback-nya tetap aman karena `locatedAt()`
+     * sudah diisi (tidak memanggil File::glob('') yang bikin Symfony File dari
+     * path kosong).
+     */
+    private function backupsCheck(): BackupsCheck
+    {
+        $check = BackupsCheck::new()
+            ->locatedAt((string) config('backup.backup.name'));
+
+        try {
+            $check->onDisk('backup-db');
+        } catch (\Throwable $e) {
+            logger()->warning('Health check Backups: disk backup-db tidak bisa dipakai, check berjalan tanpa disk.', [
+                'exception' => $e->getMessage(),
+            ]);
+        }
+
+        return $check;
     }
 }

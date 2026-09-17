@@ -471,6 +471,61 @@ docker compose -p wms-wma-prod -f docker-compose.prod.yml --env-file .env.prod \
 > Catatan: perubahan `Dockerfile` (batas PHP) dan `docker/nginx/default.conf`
 > butuh `./deploy-production.sh --rebuild --with-assets` agar berlaku di VPS.
 
+### 9.3 `CheckDidNotComplete ... The file "" does not exist` (health check Backups)
+
+Log yang muncul (biasanya tiap 10 menit, dari container **scheduler**):
+
+```
+Spatie\Health\Exceptions\CheckDidNotComplete
+The check named `Backups` did not complete. An exception was thrown with this
+message: Symfony\...\FileNotFoundException: The file "" does not exist
+```
+
+**Ini bukan penyebab 502/500 di browser.** `health:check` menangkap exception
+per-check (`report($exception)` + status `crashed` di hasil health), jadi operator
+tidak melihat error — efeknya hanya log kotor + check Backups selalu merah.
+
+Penyebabnya: `BackupsCheck::new()` didaftarkan **tanpa** `locatedAt()`/`onDisk()`,
+sehingga check memanggil `File::glob('')`; hasilnya `false` di container PHP →
+`new SymfonyFile('')` → exception. Sudah diperbaiki di
+`app/Providers/AppServiceProvider.php`:
+
+```php
+BackupsCheck::new()
+    ->onDisk('backup-db')                        // root /backups
+    ->locatedAt(config('backup.backup.name'));   // folder "WMS MAW"
+```
+
+Sekarang hasilnya normal, mis. `Failed: No backups found` (bukan crash) kalau
+belum ada file backup.
+
+**Temuan penting**: `backup:run --only-db` (jadwal 02:00) dijalankan dari
+container **scheduler**, yang dulu **tidak** me-mount `./backups/db:/backups`.
+Akibatnya file backup ditulis ke filesystem container scheduler dan **hilang**
+saat container dibuat ulang, sementara check membaca folder yang berbeda.
+Sudah diperbaiki di `docker-compose.prod.yml` (service `scheduler` ikut mount
+`./backups/db:/backups:rw`). Verifikasi setelah deploy:
+
+```bash
+# 1) Folder backup = bind mount, bukan filesystem container
+docker compose -p wms-wma-prod -f docker-compose.prod.yml --env-file .env.prod \
+  exec scheduler sh -c "mount | grep /backups; ls -lah /backups"
+
+# 2) Backup manual + cek hasilnya terlihat oleh app
+docker compose -p wms-wma-prod -f docker-compose.prod.yml --env-file .env.prod \
+  exec scheduler php artisan backup:run --only-db
+ls -lah ./backups/db/"WMS MAW"
+
+# 3) Hasil health check (Backups tidak lagi "did not complete")
+docker compose -p wms-wma-prod -f docker-compose.prod.yml --env-file .env.prod \
+  exec app php artisan health:check
+```
+
+> Di dev lokal/CI, disk `backup-db` diarahkan lewat `BACKUP_DB_PATH`
+> (default produksi `/backups`) supaya check tetap bisa jalan tanpa mount.
+> Notifikasi health otomatis dimatikan selama `HEALTH_TO_ADDRESS` kosong —
+> isi alamat email dulu kalau ingin notifikasi check gagal.
+
 ---
 
 ## 10. Quick Reference Card

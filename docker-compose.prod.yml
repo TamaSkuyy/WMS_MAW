@@ -88,6 +88,11 @@ services:
       - .env.prod
     volumes:
       - storage-vol:/var/www/html/storage
+      # WAJIB: `backup:run --only-db` / `backup:clean` / `backup:monitor` dan
+      # health check `Backups` dijalankan dari container INI. Tanpa mount ini
+      # backup ditulis ke filesystem container scheduler (hilang saat container
+      # dibuat ulang) dan check Backups selalu "No backups found".
+      - ./backups/db:/backups:rw
     depends_on:
       - redis
       - mysql

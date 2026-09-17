@@ -36,5 +36,8 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <!-- Disk backup DB: default produksi /backups tidak ada di mesin dev/CI,
+             dan disk di-resolve saat boot (health check Backups). -->
+        <env name="BACKUP_DB_PATH" value="storage/framework/testing/backups"/>
     </php>
 </phpunit>
