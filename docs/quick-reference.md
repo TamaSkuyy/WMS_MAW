@@ -238,13 +238,17 @@ berlaku untuk semua user.
 
 | Fitur | Fungsi | Default |
 | --- | --- | --- |
-| **Kolom Model Kendaraan & Suffix — form Shopping** | Menampilkan kolom **Model** dan **Suffix** di daftar produk, kartu HP, dan daftar **Barang Dipilih** saat Tambah/Edit Shopping (fitur versi lama). Filter combobox **Model Kendaraan + Suffix** tetap ada di kartu Informasi Shopping walau switch ini mati. | ON |
+| **Kolom Model Kendaraan & Suffix — form Shopping** | Menampilkan kolom **Model** dan **Suffix** di daftar produk saat Tambah/Edit Shopping (fitur versi lama). Input **Model Kendaraan (opsional)** + **Suffix (opsional)** di kartu Informasi Shopping tetap ada walau switch ini mati. | ON |
 
-> ℹ️ **Model & Suffix tidak disimpan di transaksi Shopping** (begitu juga di versi lama) —
-> itu atribut **produk**, jadi combobox berfungsi sebagai filter pencarian. Karena itu
-> Model & Suffix **selalu tampil otomatis** di **Detail Shopping** dan
-> **Reports > Shopping (tabel + Export)**, diturunkan dari produk tiap item.
-> Satu frame boleh berisi part beberapa model — semuanya tampil apa adanya.
+> ℹ️ **Model Kendaraan + Suffix di form Shopping = combobox OPSIONAL yang bisa dicari**
+> (boleh dikosongkan). Pilihannya diambil dari **Master Data > Model Kendaraan** *dan* nilai
+> yang pernah diinput operator, jadi user tidak perlu hafal — ketik `for` lalu pilih
+> `Toyota Fortuner`. Nilai baru tetap boleh diketik.
+> Fungsinya dua: (1) menyaring daftar produk (cocok sebagian, tanpa peduli huruf besar/kecil),
+> dan (2) **ikut tersimpan** di transaksi (`shoppings.vehicle_model_label` + `vehicle_suffix`),
+> tampil di **Detail Shopping**.
+> Di **Detail** dan **Reports > Shopping (tabel + Export)** juga ada kolom Model & Suffix
+> **per item** yang diturunkan dari produk — jadi satu frame boleh berisi part beberapa model.
 
 Cara pakai: geser switch → **Simpan Pengaturan**. Perubahan langsung terlihat
 setelah halaman di-refresh. Kalau bingung kenapa kolom hilang/muncul, cek halaman

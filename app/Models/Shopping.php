@@ -17,7 +17,7 @@ class Shopping extends Model
     use LogsActivity;
     use AuditableBy;
 
-    protected $fillable = ['shopping_location_id', 'shopping_date', 'status', 'is_cripple', 'notes', 'frame_number', 'shipped_by', 'shipped_at', 'created_by', 'updated_by'];
+    protected $fillable = ['shopping_location_id', 'shopping_date', 'status', 'is_cripple', 'notes', 'frame_number', 'vehicle_model_label', 'vehicle_suffix', 'shipped_by', 'shipped_at', 'created_by', 'updated_by'];
 
     protected function casts(): array
     {
@@ -31,7 +31,7 @@ class Shopping extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['shopping_location_id', 'shopping_date', 'status', 'is_cripple', 'notes', 'frame_number', 'shipped_by', 'shipped_at'])
+            ->logOnly(['shopping_location_id', 'shopping_date', 'status', 'is_cripple', 'notes', 'frame_number', 'vehicle_model_label', 'vehicle_suffix', 'shipped_by', 'shipped_at'])
             ->logOnlyDirty()
             ->dontLogEmptyChanges();
     }

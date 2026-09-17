@@ -8,6 +8,7 @@ import Button from '../../../Tailadmin/components/ui/button/Button';
 import Input from '../../../Tailadmin/components/form/input/InputField';
 import Label from '../../../Tailadmin/components/form/Label';
 import SearchableSelect from '../../../Tailadmin/components/form/select/SearchableSelect';
+import SearchableInput from '../../../Components/SearchableInput';
 import QrScanner from '../../../Components/QrScanner';
 import Badge from '../../../Tailadmin/components/ui/badge/Badge';
 import Alert from '../../../Tailadmin/components/ui/alert/Alert';
@@ -47,7 +48,7 @@ function toLocalDateTimeInput(date: Date): string {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-export default function Edit({ shopping, products, racks, shoppingLocations, correction = false }: any) {
+export default function Edit({ shopping, products, racks, shoppingLocations, correction = false, vehicleModelOptions = [], vehicleSuffixOptions = [] }: any) {
     const { errors = {}, flash = {}, features = {} } = usePage().props as any;
 
     // Fitur versi lama (on/off dari halaman Pengaturan): kolom Model Kendaraan
@@ -77,49 +78,43 @@ export default function Edit({ shopping, products, racks, shoppingLocations, cor
 
     const [searchQuery, setSearchQuery] = useState('');
     const [filterSupplierId, setFilterSupplierId] = useState('');
-    // Fitur lama dikembalikan: pilih Tipe Mobil (unit) + Suffix → part otomatis difilter untuk mobil tsb
-    const [unitFilter, setUnitFilter] = useState('');
-    const [suffixFilter, setSuffixFilter] = useState('');
+    // Model Kendaraan + Suffix: input TEKS OPSIONAL (boleh kosong) — menyaring
+    // daftar produk sekaligus tersimpan sebagai catatan transaksi. Terisi
+    // otomatis dari data yang sudah tersimpan saat halaman dibuka.
+    const [vehicleModelInput, setVehicleModelInput] = useState(shopping?.vehicle_model_label || '');
+    const [vehicleSuffixInput, setVehicleSuffixInput] = useState(shopping?.vehicle_suffix || '');
 
-    const { suppliers, units } = useMemo(() => {
+    const { suppliers } = useMemo(() => {
         const sMap = new Map<number, { id: number; name: string }>();
-        const uMap = new Map<string, string>();
         products.forEach((p: any) => {
             if (p.supplier && !sMap.has(p.supplier.id)) sMap.set(p.supplier.id, p.supplier);
-            if (p.vehicle_model) {
-                const vm = p.vehicle_model;
-                uMap.set(`${vm.brand} ${vm.name}`, `${vm.brand} ${vm.name}`);
-            }
         });
         return {
             suppliers: Array.from(sMap.values()).sort((a, b) => a.name.localeCompare(b.name)),
-            units: Array.from(uMap.values()).sort((a, b) => a.localeCompare(b)),
         };
     }, [products]);
 
-    // Suffix yang tersedia untuk tipe mobil terpilih (kosong = "Standar")
-    const unitSuffixes = useMemo(() => {
-        if (!unitFilter) return [];
-        const set = new Set<string>();
-        products.forEach((p: any) => {
-            const vm = p.vehicle_model;
-            if (vm && `${vm.brand} ${vm.name}` === unitFilter) set.add(vm.suffix || '');
-        });
-        return Array.from(set).sort((a, b) => a.localeCompare(b));
-    }, [products, unitFilter]);
-
-    // Scope filter: hanya part milik tipe mobil (unit) terpilih (+ suffix bila dipilih)
+    // Scope filter: model/suffix dicocokkan sebagian (case-insensitive).
     const scopedModelIds = useMemo<Set<number> | null>(() => {
-        if (!unitFilter) return null;
+        const model = vehicleModelInput.trim().toLowerCase();
+        const suffix = vehicleSuffixInput.trim().toLowerCase();
+
+        if (model === '' && suffix === '') return null;
+
         const ids = new Set<number>();
         products.forEach((p: any) => {
             const vm = p.vehicle_model;
-            if (vm && `${vm.brand} ${vm.name}` === unitFilter && (!suffixFilter || (vm.suffix || '') === suffixFilter)) {
-                ids.add(vm.id);
-            }
+            if (!vm) return;
+
+            const label = `${vm.brand} ${vm.name}`.toLowerCase();
+            if (model !== '' && !label.includes(model)) return;
+            if (suffix !== '' && !(vm.suffix || '').toLowerCase().includes(suffix)) return;
+
+            ids.add(vm.id);
         });
+
         return ids;
-    }, [products, unitFilter, suffixFilter]);
+    }, [products, vehicleModelInput, vehicleSuffixInput]);
 
     const savedItemsMap = useMemo<Record<number, { qty: number; rack_id: string }>>(() =>
         Object.fromEntries(
@@ -260,6 +255,9 @@ export default function Edit({ shopping, products, racks, shoppingLocations, cor
         shopping_date: shoppingDate,
         notes,
         frame_number: frameNumber || null,
+        // Catatan opsional — boleh kosong.
+        vehicle_model_label: vehicleModelInput.trim() || null,
+        vehicle_suffix: vehicleSuffixInput.trim() || null,
         is_cripple: isCripple,
         items: activeItems.map(i => ({ product_id: i.product_id, rack_id: i.rack_id || null, quantity: i.quantity })),
     });
@@ -389,30 +387,34 @@ export default function Edit({ shopping, products, racks, shoppingLocations, cor
                             {/* Model Kendaraan + Suffix — input (combobox) untuk menyaring
                                 daftar produk di kartu "Cari Produk" (dulu "Unit/Model" +
                                 "Suffix" di versi lama). */}
+                            {/* Model Kendaraan + Suffix — combobox OPSIONAL yang bisa DICARI
+                                (pilihan dari master + nilai yang pernah diinput), tetap boleh
+                                ketik baru. Menyaring daftar produk & tersimpan di transaksi. */}
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <div>
-                                    <Label>Model Kendaraan</Label>
-                                    <SearchableSelect
-                                        options={units.map((u: string) => ({ value: u, label: u }))}
-                                        value={unitFilter}
-                                        onChange={(v) => { setUnitFilter(v as string); setSuffixFilter(''); }}
-                                        placeholder="Semua model kendaraan"
+                                    <Label>Model Kendaraan (opsional)</Label>
+                                    <SearchableInput
+                                        value={vehicleModelInput}
+                                        onChange={setVehicleModelInput}
+                                        options={vehicleModelOptions}
+                                        placeholder="Ketik untuk cari, cth: fortuner"
                                     />
                                 </div>
                                 <div>
-                                    <Label>Suffix</Label>
-                                    <SearchableSelect
-                                        options={unitSuffixes.map((s: string) => ({ value: s, label: s || 'Standar' }))}
-                                        value={suffixFilter}
-                                        onChange={(v) => setSuffixFilter(v as string)}
-                                        placeholder={unitFilter ? 'Semua suffix' : 'Pilih model dulu'}
+                                    <Label>Suffix (opsional)</Label>
+                                    <SearchableInput
+                                        value={vehicleSuffixInput}
+                                        onChange={setVehicleSuffixInput}
+                                        options={vehicleSuffixOptions}
+                                        placeholder="Ketik untuk cari, cth: VRZ"
                                     />
                                 </div>
                             </div>
 
-                            {(unitFilter || suffixFilter) && (
+                            {(vehicleModelInput.trim() || vehicleSuffixInput.trim()) && (
                                 <p className="text-xs font-medium text-brand-600">
-                                    🚗 Daftar produk difilter untuk {unitFilter || 'semua model'}{suffixFilter ? ` ${suffixFilter}` : ''}
+                                    🚗 Daftar produk difilter: {vehicleModelInput.trim() || 'semua model'}{vehicleSuffixInput.trim() ? ` ${vehicleSuffixInput.trim()}` : ''}
+                                    {' '}— isian ini tersimpan di transaksi.
                                 </p>
                             )}
 
@@ -471,12 +473,6 @@ export default function Edit({ shopping, products, racks, shoppingLocations, cor
                                     <thead className="bg-gray-50 sticky top-0">
                                         <tr>
                                             <th className="px-4 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Produk</th>
-                                            {showVehicleColumns && (
-                                                <>
-                                                    <th className="px-4 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Model</th>
-                                                    <th className="px-4 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Suffix</th>
-                                                </>
-                                            )}
                                             <th className="px-4 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Rak</th>
                                             <th className="px-4 py-2 text-center text-[11px] font-medium text-gray-500 uppercase tracking-wider w-48">Qty</th>
                                             <th className="px-4 py-2 w-8"></th>
@@ -578,17 +574,17 @@ export default function Edit({ shopping, products, racks, shoppingLocations, cor
                                         options={suppliers.map((s: any) => ({ value: s.id, label: s.name }))}
                                         value={filterSupplierId} onChange={(v) => setFilterSupplierId(v as string)} placeholder="Semua supplier" />
                                 </div>
-                                {(searchQuery || filterSupplierId || unitFilter || suffixFilter) && (
-                                    <button type="button" onClick={() => { setSearchQuery(''); setFilterSupplierId(''); setUnitFilter(''); setSuffixFilter(''); }} className="mb-1 text-sm text-red-500 hover:text-red-700">✕ Reset</button>
+                                {(searchQuery || filterSupplierId || vehicleModelInput || vehicleSuffixInput) && (
+                                    <button type="button" onClick={() => { setSearchQuery(''); setFilterSupplierId(''); setVehicleModelInput(''); setVehicleSuffixInput(''); }} className="mb-1 text-sm text-red-500 hover:text-red-700">✕ Reset</button>
                                 )}
                             </div>
-                            {scopedModelIds && unitFilter && (
+                            {scopedModelIds && (
                                 <p className="text-xs font-medium text-brand-600">
-                                    🚗 Menampilkan part khusus {unitFilter}{suffixFilter ? ` ${suffixFilter}` : ''}
+                                    🚗 Menampilkan part khusus {vehicleModelInput.trim() || 'semua model'}{vehicleSuffixInput.trim() ? ` ${vehicleSuffixInput.trim()}` : ''}
                                 </p>
                             )}
                         </div>
-                        {(!searchQuery && !filterSupplierId && !unitFilter && !suffixFilter) ? (
+                        {(!searchQuery && !filterSupplierId && !vehicleModelInput.trim() && !vehicleSuffixInput.trim()) ? (
                             <p className="text-sm text-gray-400 py-4 text-center">🔍 Gunakan filter di atas untuk mencari produk</p>
                         ) : filteredItems.length === 0 ? (
                             <p className="text-sm text-gray-400 py-4 text-center">Tidak ada produk ditemukan</p>

@@ -51,6 +51,14 @@ otomatis oleh harness, jadi jaga tetap ringkas. Detail panjang taruh di `docs/`.
    - **Import gabungan** lama (`shoppings/import` → `ShoppingImporter`) tetap ada.
    - **Import file header** (`shoppings/import-headers` → `ShoppingHeaderImporter`)
      backend siap, tombol UI disembunyikan (`SHOW_HEADER_IMPORT` di `Headers.tsx`).
+   - Catatan **Model Kendaraan + Suffix** di form Shopping = combobox OPSIONAL yang
+     bisa dicari (`Components/SearchableInput.tsx`): pilihannya dari master
+     `vehicle_models` + nilai yang pernah diinput, dihitung oleh
+     `ShoppingController::vehicleModelOptions()/vehicleSuffixOptions()`, tapi tetap
+     boleh diketik baru. Menyaring daftar produk sekaligus tersimpan di
+     `shoppings.vehicle_model_label` + `vehicle_suffix`, tampil di Detail. Kolom
+     Model/Suffix **per item** di Detail & Reports/Export diturunkan dari
+     `product.vehicleModel` (bukan data header).
 9. **Payload index harus tetap kecil**: jangan kirim daftar draft/large list utuh
    ke Inertia (dulu penyebab 502 setelah import). Pakai endpoint pencarian seperti
    `shoppings/draft-frames` (`?search=&frame=&limit=`).

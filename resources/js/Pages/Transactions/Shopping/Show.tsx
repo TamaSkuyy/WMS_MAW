@@ -57,6 +57,16 @@ export default function Show({ shopping, corrections = [], canCorrect = false }:
                             {shopping.shipped_at && <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Dikirim</dt><dd className="text-sm text-[#1A1D23]">{shopping.shippedBy?.name || '—'} — {new Date(shopping.shipped_at).toLocaleString('id-ID', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'})}</dd></div>}
                             {shopping.notes && <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Catatan</dt><dd className="text-sm text-[#1A1D23]">{shopping.notes}</dd></div>}
                             <div><dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Frame #</dt><dd className="text-sm text-[#1A1D23] font-mono">{shopping.frame_number || '—'}</dd></div>
+                            {/* Catatan opsional yang diisi operator saat membuat/mengedit */}
+                            {(shopping.vehicle_model_label || shopping.vehicle_suffix) && (
+                                <div>
+                                    <dt className="text-xs font-medium text-[#6C757D] uppercase tracking-wider mb-1">Model Kendaraan (catatan)</dt>
+                                    <dd className="text-sm text-[#1A1D23]">
+                                        {shopping.vehicle_model_label || '—'}
+                                        {shopping.vehicle_suffix ? ` ${shopping.vehicle_suffix}` : ''}
+                                    </dd>
+                                </div>
+                            )}
                         </dl>
                         <div className="mt-6 flex gap-2 pt-4 border-t border-[#F1F3F5] flex-wrap items-center">
                             {shopping.status === 'draft' && (

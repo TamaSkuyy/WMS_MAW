@@ -13,6 +13,7 @@ use App\Models\Rack;
 use App\Models\Shopping;
 use App\Models\ShoppingLocation;
 use App\Models\Stock;
+use App\Models\VehicleModel;
 use App\Http\Controllers\Concerns\AdjustsStock;
 use App\Http\Controllers\Concerns\HasPagination;
 use Illuminate\Http\Request;
@@ -59,7 +60,69 @@ class ShoppingController extends Controller
             'products'           => Product::with(['vehicleModel', 'stocks', 'supplier'])->where('is_active', true)->orderBy('name')->get(),
             'racks'              => Rack::orderBy('zone')->orderBy('code')->get(),
             'shoppingLocations'  => ShoppingLocation::orderBy('name')->get(),
+            // Pilihan combobox Model Kendaraan/Suffix (master + yang pernah diinput).
+            'vehicleModelOptions' => $this->vehicleModelOptions(),
+            'vehicleSuffixOptions' => $this->vehicleSuffixOptions(),
         ]);
+    }
+
+    /**
+     * Pilihan combobox "Model Kendaraan": gabungan master data Model Kendaraan
+     * (brand + name) dengan nilai yang pernah diinput operator di shopping.
+     *
+     * Tujuannya supaya user tidak perlu hafal nama model — tinggal cari/pilih,
+     * tapi tetap boleh mengetik nilai baru (kolomnya teks bebas).
+     */
+    private function vehicleModelOptions(): array
+    {
+        $master = VehicleModel::query()
+            ->orderBy('brand')
+            ->orderBy('name')
+            ->get(['brand', 'name'])
+            ->map(fn (VehicleModel $model) => trim($model->brand . ' ' . $model->name));
+
+        $used = Shopping::query()
+            ->whereNotNull('vehicle_model_label')
+            ->where('vehicle_model_label', '!=', '')
+            ->distinct()
+            ->orderBy('vehicle_model_label')
+            ->limit(300)
+            ->pluck('vehicle_model_label');
+
+        return $master->merge($used)
+            ->map(fn ($value) => trim((string) $value))
+            ->filter()
+            ->unique(fn (string $value) => mb_strtolower($value))
+            ->sort()
+            ->values()
+            ->all();
+    }
+
+    /** Pilihan combobox "Suffix": master + nilai yang pernah diinput operator. */
+    private function vehicleSuffixOptions(): array
+    {
+        $master = VehicleModel::query()
+            ->whereNotNull('suffix')
+            ->where('suffix', '!=', '')
+            ->distinct()
+            ->orderBy('suffix')
+            ->pluck('suffix');
+
+        $used = Shopping::query()
+            ->whereNotNull('vehicle_suffix')
+            ->where('vehicle_suffix', '!=', '')
+            ->distinct()
+            ->orderBy('vehicle_suffix')
+            ->limit(200)
+            ->pluck('vehicle_suffix');
+
+        return $master->merge($used)
+            ->map(fn ($value) => trim((string) $value))
+            ->filter()
+            ->unique(fn (string $value) => mb_strtoupper($value))
+            ->sort()
+            ->values()
+            ->all();
     }
 
     public function importPreview(Request $request)
@@ -375,6 +438,9 @@ class ShoppingController extends Controller
             'shopping_date' => 'required|date',
             'notes' => 'nullable|string|max:500',
             'frame_number' => 'nullable|string|max:100',
+            // Catatan model kendaraan — OPSIONAL, teks bebas (bukan relasi ke master).
+            'vehicle_model_label' => 'nullable|string|max:100',
+            'vehicle_suffix' => 'nullable|string|max:50',
             'is_cripple' => 'nullable|boolean',
             'items' => 'nullable|array',
             'items.*.product_id' => 'required|exists:products,id',
@@ -389,6 +455,8 @@ class ShoppingController extends Controller
             'is_cripple' => (bool) ($validated['is_cripple'] ?? false),
             'notes' => $validated['notes'] ?? null,
             'frame_number' => $validated['frame_number'] ?? null,
+            'vehicle_model_label' => $validated['vehicle_model_label'] ?? null,
+            'vehicle_suffix' => $validated['vehicle_suffix'] ?? null,
         ]);
 
         if (!empty($validated['items'])) {
@@ -431,6 +499,8 @@ class ShoppingController extends Controller
             'racks'              => Rack::orderBy('zone')->orderBy('code')->get(),
             'shoppingLocations'  => ShoppingLocation::orderBy('name')->get(),
             'correction'         => $correction,
+            'vehicleModelOptions' => $this->vehicleModelOptions(),
+            'vehicleSuffixOptions' => $this->vehicleSuffixOptions(),
         ]);
     }
 
@@ -447,6 +517,9 @@ class ShoppingController extends Controller
             'shopping_date' => 'required|date',
             'notes' => 'nullable|string|max:500',
             'frame_number' => 'nullable|string|max:100',
+            // Catatan model kendaraan — OPSIONAL (lihat store()).
+            'vehicle_model_label' => 'nullable|string|max:100',
+            'vehicle_suffix' => 'nullable|string|max:50',
             'is_cripple' => 'nullable|boolean',
             'items' => 'nullable|array',
             'items.*.product_id' => 'required|exists:products,id',
@@ -460,6 +533,8 @@ class ShoppingController extends Controller
             'is_cripple' => (bool) ($validated['is_cripple'] ?? false),
             'notes' => $validated['notes'] ?? null,
             'frame_number' => $validated['frame_number'] ?? null,
+            'vehicle_model_label' => $validated['vehicle_model_label'] ?? null,
+            'vehicle_suffix' => $validated['vehicle_suffix'] ?? null,
         ]);
 
         $shopping->items()->delete();

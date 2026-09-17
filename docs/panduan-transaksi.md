@@ -227,6 +227,13 @@ ada akan dilewati dan dilaporkan (tidak dobel).
 
 ### A. Membuat Shopping Baru
 
+> ℹ️ Di form Tambah/Edit Shopping ada combobox **Model Kendaraan (opsional)** dan
+> **Suffix (opsional)** — bisa dicari, pilihannya dari **Master Data > Model Kendaraan**
+> plus nilai yang pernah diinput (jadi tidak perlu hafal). Boleh dikosongkan; nilai baru
+> juga boleh diketik.
+> Isian itu menyaring daftar produk (mis. ketik `fortuner` → hanya part Fortuner yang
+> tampil) **dan** tersimpan sebagai catatan transaksi (tampil di Detail Shopping).
+
 ```
 1. Buka menu: Transactions > Shopping
 2. Klik "Tambah Shopping"
