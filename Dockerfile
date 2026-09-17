@@ -19,6 +19,20 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends default-mysql-client \
     && rm -rf /var/lib/apt/lists/*
 
+# Batas PHP untuk import & halaman besar.
+# - memory_limit 512M: default image 128M → worker Octane mati (OOM) saat
+#   memuat daftar/payload besar atau parsing Excel, dan nginx membalas 502.
+# - upload/post 12-13M: sejalan dengan client_max_body_size di nginx dan
+#   validasi max:10240 pada controller import.
+RUN printf '%s\n' \
+    'memory_limit=512M' \
+    'upload_max_filesize=12M' \
+    'post_max_size=13M' \
+    'max_execution_time=300' \
+    'max_input_time=300' \
+    'max_input_vars=5000' \
+    > /usr/local/etc/php/conf.d/zz-wms.ini
+
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 

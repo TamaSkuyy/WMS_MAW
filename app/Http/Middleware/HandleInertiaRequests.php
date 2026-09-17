@@ -67,6 +67,14 @@ class HandleInertiaRequests extends Middleware
                 ]) : null,
             ],
             'menus' => $menus,
+            // Pesan flash dipakai banyak halaman (mis. Shopping/Show, Cycles/Show)
+            // tapi sebelumnya tidak pernah dibagikan → alert sukses/gagal tidak
+            // muncul. Dibagikan di sini sebagai closure (lazy).
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+                'warning' => fn () => $request->session()->get('warning'),
+            ],
         ];
     }
 }

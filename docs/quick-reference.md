@@ -59,12 +59,32 @@ RECEIVE (saat barang datang):
 
 ## 📤 KIRIM BARANG (SHOPPING)
 
+### Alur 2 langkah (dari TAM / pusat)
 ```
-1. Menu: Transactions > Shopping > "Tambah Shopping"
-2. Pilih Partner + item (qty rencana)
+LANGKAH 1 — Input HEADER (line + frame number)
+1. Menu: Transactions > Shopping > tombol "1. Input Header"
+2. Isi Line/Lokasi Tujuan + Frame Number (bisa banyak baris sekaligus:
+   tombol "+ 5 Baris", atau tempel/Ctrl+V beberapa frame — satu per baris)
+3. [Simpan Header] → tersimpan sebagai DRAFT (belum ada barang)
+
+LANGKAH 2 — Import BARANG (part + qty)
+1. Tombol "2. Import Barang" (atau tombol "Lanjut: Import Barang")
+2. Pilih file Excel/CSV: kolom Frame Number | Part Number | Quantity
+3. [Start Import] → tunggu sampai "Import selesai"
+```
+> ⚠️ Kalau file barang memuat frame yang **belum** diinput header-nya, baris itu
+> ditolak dengan pesan "Frame ... belum terdaftar di WMS". Input header dulu, atau
+> centang **"Buat frame otomatis"** di modal import (untuk kondisi mendadak).
+
+### Alur lama (satu file gabungan)
+```
+1. Tombol "Import Gabungan" → file berisi Frame Number + Part + Qty sekaligus
+2. Atau input manual: "Tambah Shopping"
 3. Simpan → "Draft"
 4. Klik [Ship] → input qty dikirim → [Konfirmasi]
 ```
+> ℹ️ Dua alur di atas sama-sama aktif. Kalau pusat/TAM mengubah urutan kerja,
+> tidak perlu hapus alur yang lain — cukup pakai tombol yang sesuai.
 > ⚠️ Pastikan stok cukup! Sistem menolak jika stok kurang.
 
 ---
@@ -187,6 +207,10 @@ lewat halaman **Pemutihan Data** (superadmin):
 | Salah input jumlah | ❌ Tidak bisa di-undo → lapor admin |
 | Nama supplier tidak ada di dropdown | Tambah dulu di Master Data > Suppliers |
 | Produk tidak ada | Tambah dulu di Master Data > Products |
+| Import Barang: "Frame ... belum terdaftar di WMS" | Input header dulu (tombol "1. Input Header"), atau centang "Buat frame otomatis" saat import |
+| Import Barang: "Part Number ... tidak ditemukan" | Produk belum ada di Master Data > Products |
+| Import jalan lama / progress diam di "Menunggu antrian" | Queue worker belum jalan → lapor admin (`./deploy-production.sh --check-queue`) |
+| Halaman error 502 setelah import selesai | Refresh sekali lagi; kalau berulang lapor admin (lihat `docs/production-server-setup.md` §9.2) |
 
 ---
 

@@ -424,6 +424,21 @@ Route::middleware('auth')->group(function () {
         Route::post('shoppings/import/preview', [ShoppingController::class, 'importPreview'])->name('shoppings.import.preview');
         Route::post('shoppings/import', [ShoppingController::class, 'import'])->name('shoppings.import');
         Route::get('shoppings/import-template', [ShoppingController::class, 'importTemplate'])->name('shoppings.import-template');
+
+        // ── Alur 2 langkah: header dulu, barang kemudian ────────────────
+        // Langkah 1: input line + frame number (manual, tanpa file).
+        Route::get('shoppings/headers/create', [ShoppingController::class, 'headerCreate'])->name('shoppings.headers.create');
+        Route::post('shoppings/headers', [ShoppingController::class, 'headerStore'])->name('shoppings.headers.store');
+
+        // Langkah 2: import barang (Part No + Qty) untuk frame yang sudah ada.
+        Route::post('shoppings/import-items/preview', [ShoppingController::class, 'itemImportPreview'])->name('shoppings.import-items.preview');
+        Route::post('shoppings/import-items', [ShoppingController::class, 'itemImport'])->name('shoppings.import-items');
+        Route::get('shoppings/import-items-template', [ShoppingController::class, 'itemImportTemplate'])->name('shoppings.import-items-template');
+
+        // Import file header (Line + Frame Number) — disiapkan, tombol UI disembunyikan.
+        Route::post('shoppings/import-headers/preview', [ShoppingController::class, 'headerImportPreview'])->name('shoppings.import-headers.preview');
+        Route::post('shoppings/import-headers', [ShoppingController::class, 'headerImport'])->name('shoppings.import-headers');
+        Route::get('shoppings/import-headers-template', [ShoppingController::class, 'headerImportTemplate'])->name('shoppings.import-headers-template');
     });
 
     // Bulk ship (static path — wajib sebelum shoppings/{shopping})
@@ -434,6 +449,8 @@ Route::middleware('auth')->group(function () {
     // View (parameterized — must come AFTER static routes)
     Route::middleware(PermissionMiddleware::using('view shoppings'))->group(function () {
         Route::get('shoppings', [ShoppingController::class, 'index'])->name('shoppings.index');
+        // Pencarian frame draft untuk modal Kirim Massal (server-side, berlimit).
+        Route::get('shoppings/draft-frames', [ShoppingController::class, 'draftFrames'])->name('shoppings.draft-frames');
         Route::get('shoppings/{shopping}', [ShoppingController::class, 'show'])->name('shoppings.show');
     });
 

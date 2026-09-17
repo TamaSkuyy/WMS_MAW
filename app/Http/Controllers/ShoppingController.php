@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Events\StockChanged;
 use App\Models\Product;
 use App\Services\ImportExport\Enums\ImportFormat;
+use App\Services\ImportExport\Imports\ShoppingHeaderImporter;
 use App\Services\ImportExport\Imports\ShoppingImporter;
+use App\Services\ImportExport\Imports\ShoppingItemImporter;
 use App\Services\ImportExport\Managers\ImportManager;
 use App\Models\Rack;
 use App\Models\Shopping;
@@ -14,6 +16,7 @@ use App\Models\Stock;
 use App\Http\Controllers\Concerns\AdjustsStock;
 use App\Http\Controllers\Concerns\HasPagination;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -37,12 +40,12 @@ class ShoppingController extends Controller
             'shoppings' => $shoppings,
             'filters' => $request->only(['status', 'search']),
             'shoppingLocations' => ShoppingLocation::orderBy('name')->get(),
-            // Daftar shopping draft (untuk modal Kirim Massal — multi pilih frame)
-            'draftShoppings' => Shopping::where('status', 'draft')
-                ->whereNotNull('frame_number')
-                ->with('shoppingLocation:id,name')
-                ->orderBy('frame_number')
-                ->get(['id', 'frame_number', 'shopping_location_id', 'is_cripple']),
+            // Daftar frame draft TIDAK lagi dikirim utuh ke browser: setelah import
+            // besar (ribuan frame) payload ini bisa puluhan MB → worker Octane
+            // kehabisan memori → 502 saat halaman di-refresh. Modal "Kirim Massal"
+            // mencari frame lewat endpoint shoppings/draft-frames (server-side).
+            'draftFrameCount' => Shopping::where('status', 'draft')->whereNotNull('frame_number')->count(),
+            'openItemImport' => $request->query('import') === 'items',
         ]);
     }
 
@@ -107,6 +110,244 @@ class ShoppingController extends Controller
         $format = ImportFormat::from($request->query('format', 'xlsx'));
 
         return (new ShoppingImporter(0))->downloadTemplate($format);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Alur 2 langkah: (1) input HEADER line + frame number, (2) import BARANG.
+    // Alur import gabungan lama di atas TETAP ADA — pusat/TAM bisa mengubah
+    // urutan kapan saja, jadi jangan hapus salah satu alur.
+    // ─────────────────────────────────────────────────────────────────────
+
+    /** Langkah 1 — halaman input header (line + frame number) tanpa item. */
+    public function headerCreate()
+    {
+        abort_unless(auth()->user()->can('create shoppings'), 403);
+
+        return Inertia::render('Transactions/Shopping/Headers', [
+            'shoppingLocations' => ShoppingLocation::orderBy('name')->get(['id', 'name', 'barcode']),
+            'draftFrameCount' => Shopping::where('status', 'draft')->whereNotNull('frame_number')->count(),
+        ]);
+    }
+
+    /**
+     * Langkah 1 — simpan banyak header sekaligus (input cepat, tanpa file).
+     * Frame yang sudah ada di sistem dilewati dan dilaporkan, bukan error 500.
+     */
+    public function headerStore(Request $request)
+    {
+        abort_unless(auth()->user()->can('create shoppings'), 403);
+
+        // Baris kosong (sisa form) diabaikan supaya operator tidak perlu
+        // menghapus baris yang tidak terpakai satu per satu.
+        $rows = collect($request->input('rows', []))
+            ->filter(fn ($row) => trim((string) ($row['frame_number'] ?? '')) !== '')
+            ->values()
+            ->all();
+
+        $request->merge(['rows' => $rows]);
+
+        $validated = $request->validate([
+            'shopping_date' => 'nullable|date',
+            'rows' => 'required|array|min:1|max:500',
+            'rows.*.frame_number' => 'required|string|max:100',
+            'rows.*.shopping_location_id' => 'nullable|exists:shopping_locations,id',
+            'rows.*.is_cripple' => 'nullable|boolean',
+        ], [], [
+            'rows' => 'baris',
+            'rows.*.frame_number' => 'frame number',
+            'rows.*.shopping_location_id' => 'line/lokasi',
+        ]);
+
+        $date = isset($validated['shopping_date']) ? Carbon::parse($validated['shopping_date']) : now();
+        $created = 0;
+        $duplicates = [];
+        $seen = [];
+
+        DB::transaction(function () use ($validated, $date, &$created, &$duplicates, &$seen) {
+            foreach ($validated['rows'] as $row) {
+                $frame = trim((string) $row['frame_number']);
+                $key = mb_strtoupper($frame);
+
+                // Duplikat di dalam form atau sudah ada di DB → dilewati.
+                $exists = isset($seen[$key])
+                    || Shopping::where('frame_number', $frame)
+                        ->orWhereRaw('UPPER(frame_number) = ?', [$key])
+                        ->exists();
+
+                if ($exists) {
+                    $duplicates[] = $frame;
+                    continue;
+                }
+
+                Shopping::create([
+                    'shopping_location_id' => $row['shopping_location_id'] ?? null,
+                    'shopping_date' => $date,
+                    'status' => 'draft',
+                    'is_cripple' => (bool) ($row['is_cripple'] ?? false),
+                    'frame_number' => $frame,
+                    'created_by' => auth()->id(),
+                    'updated_by' => auth()->id(),
+                ]);
+
+                $seen[$key] = true;
+                $created++;
+            }
+        });
+
+        $message = "{$created} header frame ditambahkan (draft, belum ada barang).";
+        if ($duplicates !== []) {
+            $shown = array_slice($duplicates, 0, 10);
+            $message .= ' Dilewati karena sudah ada (' . count($duplicates) . '): ' . implode(', ', $shown);
+            if (count($duplicates) > count($shown)) {
+                $message .= ', …';
+            }
+        }
+
+        return redirect()
+            ->route('shoppings.headers.create')
+            ->with($created > 0 ? 'success' : 'warning', $message);
+    }
+
+    /** Langkah 2 — preview file barang (Frame Number + Part Number + Quantity). */
+    public function itemImportPreview(Request $request)
+    {
+        abort_unless(auth()->user()->can('create shoppings'), 403);
+
+        $validated = $request->validate([
+            'shopping_location_id' => 'nullable|exists:shopping_locations,id',
+            'auto_create_frame' => 'nullable|boolean',
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+        ]);
+
+        $result = app(ImportManager::class)->preview(
+            $this->itemImporter($validated),
+            $request->file('file')
+        );
+
+        return response()->json($result);
+    }
+
+    /** Langkah 2 — jalankan import barang (job queue). */
+    public function itemImport(Request $request)
+    {
+        abort_unless(auth()->user()->can('create shoppings'), 403);
+
+        $validated = $request->validate([
+            'shopping_location_id' => 'nullable|exists:shopping_locations,id',
+            'auto_create_frame' => 'nullable|boolean',
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+            'column_mapping' => 'required|array',
+        ]);
+
+        $importLog = app(ImportManager::class)->start(
+            $this->itemImporter($validated),
+            $request->file('file'),
+            $request->input('column_mapping'),
+            auth()->id(),
+        );
+
+        return response()->json([
+            'import_log_id' => $importLog->id,
+            'status' => $importLog->status,
+        ]);
+    }
+
+    public function itemImportTemplate(Request $request)
+    {
+        abort_unless(auth()->user()->can('create shoppings'), 403);
+
+        $format = ImportFormat::from($request->query('format', 'xlsx'));
+
+        return (new ShoppingItemImporter())->downloadTemplate($format);
+    }
+
+    /**
+     * Import file HEADER (Line + Frame Number) — DISIAPKAN tapi tombolnya masih
+     * disembunyikan di UI (lihat SHOW_HEADER_IMPORT pada halaman Headers).
+     * Dipakai kalau pusat/TAM memutuskan mengirim file header, bukan input manual.
+     */
+    public function headerImportPreview(Request $request)
+    {
+        abort_unless(auth()->user()->can('create shoppings'), 403);
+
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+        ]);
+
+        return response()->json(
+            app(ImportManager::class)->preview(new ShoppingHeaderImporter(), $request->file('file'))
+        );
+    }
+
+    public function headerImport(Request $request)
+    {
+        abort_unless(auth()->user()->can('create shoppings'), 403);
+
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+            'column_mapping' => 'required|array',
+        ]);
+
+        $importLog = app(ImportManager::class)->start(
+            new ShoppingHeaderImporter(),
+            $request->file('file'),
+            $request->input('column_mapping'),
+            auth()->id(),
+        );
+
+        return response()->json([
+            'import_log_id' => $importLog->id,
+            'status' => $importLog->status,
+        ]);
+    }
+
+    public function headerImportTemplate(Request $request)
+    {
+        abort_unless(auth()->user()->can('create shoppings'), 403);
+
+        $format = ImportFormat::from($request->query('format', 'xlsx'));
+
+        return (new ShoppingHeaderImporter())->downloadTemplate($format);
+    }
+
+    private function itemImporter(array $validated): ShoppingItemImporter
+    {
+        return new ShoppingItemImporter(
+            isset($validated['shopping_location_id']) ? (int) $validated['shopping_location_id'] : null,
+            (bool) ($validated['auto_create_frame'] ?? false),
+        );
+    }
+
+    /**
+     * Pencarian frame draft untuk modal "Kirim Massal" (search/scan).
+     * Server-side + limit → payload halaman index tetap kecil walau draft
+     * sudah puluhan ribu frame.
+     */
+    public function draftFrames(Request $request)
+    {
+        abort_unless(auth()->user()->can('view shoppings'), 403);
+
+        $search = trim((string) $request->query('search', ''));
+        $frame = trim((string) $request->query('frame', ''));
+        $limit = min(max((int) $request->query('limit', 30), 1), 100);
+
+        $base = Shopping::query()->where('status', 'draft')->whereNotNull('frame_number');
+
+        $query = (clone $base)->with('shoppingLocation:id,name')->orderBy('frame_number');
+
+        if ($frame !== '') {
+            $query->where('frame_number', $frame);
+        } elseif ($search !== '') {
+            $query->where('frame_number', 'like', '%' . $search . '%');
+        }
+
+        $rows = $query->limit($limit + 1)->get(['id', 'frame_number', 'shopping_location_id', 'is_cripple']);
+
+        return response()->json([
+            'data' => $rows->take($limit)->values(),
+            'has_more' => $rows->count() > $limit,
+            'total' => (clone $base)->count(),
+        ]);
     }
 
     private function mergeDuplicateItems(array $items): array

@@ -414,6 +414,63 @@ sudo tail -100 /var/log/nginx/error.log
 Kalau ternyata OOM: batasi worker (`--workers=2` sudah dipakai), tambah RAM/swap
 VPS, atau pisahkan MySQL keluar dari VPS yang sama.
 
+### 9.2 502 Bad Gateway saat / setelah import (penting)
+
+Gejala: operator klik **Close & Refresh** setelah import (shopping/cycle/master
+data) lalu halaman blank dengan **502 Bad Gateway** — kadang impor sendiri
+kelihatan berhasil.
+
+Penyebab yang sudah diperbaiki di kode (rilis 2026-09-16):
+
+1. **Payload halaman index terlalu besar.** Halaman Shopping dulu mengirim
+   **seluruh** daftar frame draft ke browser (untuk modal Kirim Massal). Setelah
+   import ribuan frame, payload puluhan MB → worker Octane kehabisan memori →
+   502 tepat saat halaman di-refresh. Sekarang daftar draft dicari lewat endpoint
+   `shoppings/draft-frames` (server-side, berlimit 30 + pencarian/scan).
+2. **`memory_limit` PHP default image = 128M.** Sekarang
+   `/usr/local/etc/php/conf.d/zz-wms.ini` di image menetapkan 512M,
+   upload 12M / post 13M, `max_input_vars=5000`, `max_execution_time=300`.
+3. **`client_max_body_size` nginx** sebelumnya default **1 MB** → file import
+   >1 MB ditolak sebelum sampai Laravel. Sekarang 12M di
+   `docker/nginx/default.conf`. **Host nginx (SSL) juga harus** punya
+   `client_max_body_size 20M;` (lihat §4.5).
+4. **Notifikasi import bisa menggagalkan job.** `ImportCompletedNotification`
+   memakai channel broadcast; kalau Reverb mati, job dianggap gagal lalu di-retry
+   3x padahal data sudah masuk. Sekarang kegagalan notifikasi hanya dicatat log.
+5. **Daftar error dibatasi 200 baris** per import (`ProcessImport::MAX_STORED_ERRORS`).
+   File yang hampir semua barisnya gagal tidak lagi membengkakkan kolom JSON dan
+   endpoint status yang di-polling UI.
+6. **`QUEUE_CONNECTION=sync` dilarang.** Dengan `sync`, seluruh import berjalan di
+   dalam request HTTP → request timeout → 502. `deploy-production.sh` sekarang
+   menolak deploy kalau nilainya `sync`/`null` (harus `database` atau `redis`).
+
+Cek cepat kalau masih terjadi:
+
+```bash
+# 1) Konfigurasi queue di container (harus database/redis, BUKAN sync)
+docker compose -p wms-wma-prod -f docker-compose.prod.yml --env-file .env.prod \
+  exec app php artisan tinker --execute="echo config('queue.default');"
+
+# 2) Batas PHP yang aktif di container
+docker compose -p wms-wma-prod -f docker-compose.prod.yml --env-file .env.prod \
+  exec app php -i | grep -E "memory_limit|upload_max_filesize|post_max_size|max_input_vars"
+
+# 3) Ada OOM-kill saat import?
+docker events --since 2h --until 0m | grep -iE "oom|kill|die" | tail -20
+dmesg -T | grep -i "killed process" | tail -5
+
+# 4) Error asli di app (bukan hanya 502 nginx)
+docker compose logs app --since 1h | grep -iE "Allowed memory|Fatal|Exception" | tail -20
+cat storage/logs/laravel.log | tail -50
+
+# 5) Import yang gagal/macet
+docker compose -p wms-wma-prod -f docker-compose.prod.yml --env-file .env.prod \
+  exec app php artisan queue:failed | tail -20
+```
+
+> Catatan: perubahan `Dockerfile` (batas PHP) dan `docker/nginx/default.conf`
+> butuh `./deploy-production.sh --rebuild --with-assets` agar berlaku di VPS.
+
 ---
 
 ## 10. Quick Reference Card

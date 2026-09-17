@@ -42,6 +42,23 @@ otomatis oleh harness, jadi jaga tetap ringkas. Detail panjang taruh di `docs/`.
 7. **Hapus massal transaksi** (`shoppings/bulk-delete`, `cycles/bulk-delete`) hanya
    superadmin & semua status; stok dikoreksi lewat trait `AdjustsStock` (dijepit 0,
    `stock_shortage` dilaporkan).
+8. **Shopping punya 3 alur — jangan hapus salah satu** (pusat/TAM bisa mengubah
+   urutan kerja kapan saja):
+   - **2 langkah**: (1) input header `shoppings/headers/create` (line + frame
+     number, banyak baris sekaligus, `headerStore`), (2) import barang
+     `shoppings/import-items` → `ShoppingItemImporter` (`requireExistingFrame`,
+     frame tak dikenal = baris error kecuali opsi `auto_create_frame`).
+   - **Import gabungan** lama (`shoppings/import` → `ShoppingImporter`) tetap ada.
+   - **Import file header** (`shoppings/import-headers` → `ShoppingHeaderImporter`)
+     backend siap, tombol UI disembunyikan (`SHOW_HEADER_IMPORT` di `Headers.tsx`).
+9. **Payload index harus tetap kecil**: jangan kirim daftar draft/large list utuh
+   ke Inertia (dulu penyebab 502 setelah import). Pakai endpoint pencarian seperti
+   `shoppings/draft-frames` (`?search=&frame=&limit=`).
+10. **Import = job queue**. `QUEUE_CONNECTION` tidak boleh `sync` (deploy script
+    menolaknya). `ProcessImport` membatasi error tersimpan (`MAX_STORED_ERRORS`),
+    dan kegagalan notifikasi tidak boleh menggagalkan import.
+11. Batas runtime PHP/nginx di `Dockerfile` (`zz-wms.ini`) & `docker/nginx/default.conf`
+    (`client_max_body_size 12M`) — perubahan infra butuh `--rebuild`.
 
 ## Struktur
 

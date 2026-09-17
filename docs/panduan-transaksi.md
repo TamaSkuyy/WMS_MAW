@@ -10,6 +10,9 @@
    - [A. Quick Receive — Terima Langsung](#a-quick-receive--terima-langsung)
    - [B. Cycle — Terima Terencana](#b-cycle--terima-terencana)
 2. [Pengeluaran Barang (Shopping)](#2-pengeluaran-barang-shopping)
+   - [A0. Alur Import 2 Langkah (header dulu, barang kemudian)](#a0-alur-import-2-langkah-header-dulu-barang-kemudian)
+   - [A. Membuat Shopping Baru](#a-membuat-shopping-baru)
+   - [B. Proses Pengiriman (Ship)](#b-proses-pengiriman-ship)
 3. [Melihat & Mencari Stok](#3-melihat--mencari-stok)
 4. [Memantau Pengiriman (Delivery Monitor)](#4-memantau-pengiriman-delivery-monitor)
 5. [Tips & Troubleshooting](#5-tips--troubleshooting)
@@ -168,6 +171,59 @@ Saat barang benar-benar datang:
 ## 2. Pengeluaran Barang (Shopping)
 
 Shopping digunakan untuk mencatat barang yang keluar dari gudang.
+
+### A0. Alur Import 2 Langkah (header dulu, barang kemudian)
+
+Alur ini dipakai kalau data dari pusat/TAM datang bertahap: **line + frame number
+dulu**, lalu **daftar barang + qty**. Dua langkah ini dipisah supaya frame yang
+dikirim bisa dicek lebih dulu sebelum barangnya diisi.
+
+**Langkah 1 — Input Header (line + frame number)**
+
+```
+1. Buka menu: Transactions > Shopping
+2. Klik tombol "1. Input Header"
+3. Isi tabel:
+   ┌────┬──────────────────────┬─────────────────────┬─────────┐
+   │ #  │ Line / Lokasi Tujuan │ Frame Number        │ Cripple │
+   ├────┼──────────────────────┼─────────────────────┼─────────┤
+   │ 1  │ LINE A               │ FR-00123            │  [ ]    │
+   │ 2  │ LINE A               │ FR-00124            │  [ ]    │
+   └────┴──────────────────────┴─────────────────────┴─────────┘
+   • "+ 1 Baris" / "+ 5 Baris" untuk menambah baris
+   • Tempel (Ctrl+V) beberapa frame sekaligus: satu frame per baris
+   • Tekan Enter di baris terakhir untuk menambah baris baru
+4. Klik "Simpan Header"
+```
+
+Hasil: frame tersimpan sebagai **Draft tanpa barang**. Frame yang nomornya sudah
+ada akan dilewati dan dilaporkan (tidak dobel).
+
+**Langkah 2 — Import Barang (part number + qty)**
+
+```
+1. Klik tombol "2. Import Barang" (atau "Lanjut: Import Barang" dari langkah 1)
+2. Pilih file Excel/CSV dengan kolom:
+   ┌──────────────┬─────────────┬──────────┐
+   │ Frame Number │ Part Number │ Quantity │
+   ├──────────────┼─────────────┼──────────┤
+   │ FR-00123     │ P-5188      │ 10       │
+   │ FR-00124     │ P-5190      │ 4        │
+   └──────────────┴─────────────┴──────────┘
+3. Cocokkan kolom (biasanya sudah otomatis) → "Start Import"
+4. Tunggu sampai muncul "Import selesai"
+```
+
+- Barang masuk ke frame yang **sudah terdaftar** hasil Langkah 1.
+- Frame yang belum terdaftar → baris ditolak dengan pesan
+  `Frame "..." belum terdaftar di WMS`. Centang **"Buat frame otomatis"** di modal
+  import kalau ingin sistem membuat frame baru sendiri (dipakai kalau alur dari
+  pusat/TAM berubah mendadak).
+- Bagian **Confirmed**, **Cripple**, **Modify Date** opsional.
+
+> ℹ️ Alur **Import Gabungan** (satu file berisi frame + barang + qty sekaligus)
+> dan input manual **"Tambah Shopping"** tetap tersedia. Kalau pusat/TAM mengubah
+> lagi urutan kerjanya, tidak ada alur yang perlu dihapus.
 
 ### A. Membuat Shopping Baru
 

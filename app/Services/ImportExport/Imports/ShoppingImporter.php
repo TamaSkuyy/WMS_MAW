@@ -16,16 +16,35 @@ class ShoppingImporter extends BaseImporter implements Importable
     private ?int $shoppingLocationId = null;
     private bool $canMerge = false;
 
+    /**
+     * Alur 2 langkah (header dulu, barang kemudian):
+     * - requireExistingFrame = true  → frame harus sudah ada (hasil input header).
+     * - autoCreateFrame      = false → frame tak dikenal dijadikan error baris,
+     *   bukan otomatis dibuat. `true` = perilaku import gabungan lama.
+     */
+    private bool $requireExistingFrame = false;
+    private bool $autoCreateFrame = true;
+
+    /** Cache lookup frame per import — file ribuan baris tidak menembak DB berulang. */
+    private array $frameCache = [];
+
     /** Job ProcessImport menginstansiasi ulang importer tanpa argumen — lokasi & izin diinjeksi via setContext(). */
-    public function __construct(?int $shoppingLocationId = null)
-    {
+    public function __construct(
+        ?int $shoppingLocationId = null,
+        bool $requireExistingFrame = false,
+        bool $autoCreateFrame = true,
+    ) {
         $this->shoppingLocationId = $shoppingLocationId;
+        $this->requireExistingFrame = $requireExistingFrame;
+        $this->autoCreateFrame = $autoCreateFrame;
     }
 
     public function setContext(array $params): void
     {
         $this->shoppingLocationId = (int) ($params['shopping_location_id'] ?? 0) ?: null;
         $this->canMerge = (bool) ($params['can_merge'] ?? false);
+        $this->requireExistingFrame = (bool) ($params['require_existing_frame'] ?? false);
+        $this->autoCreateFrame = (bool) ($params['auto_create_frame'] ?? true);
     }
 
     public function contextParams(): array
@@ -34,7 +53,24 @@ class ShoppingImporter extends BaseImporter implements Importable
             'shopping_location_id' => $this->shoppingLocationId ?? 0,
             // Merge ke draft yang sudah ada = aksi edit — hanya untuk user dengan izin edit shoppings.
             'can_merge' => auth()->check() && auth()->user()->can('edit shoppings') ? 1 : 0,
+            'require_existing_frame' => $this->requireExistingFrame ? 1 : 0,
+            'auto_create_frame' => $this->autoCreateFrame ? 1 : 0,
         ];
+    }
+
+    /**
+     * Cari shopping berdasarkan frame number — di-cache selama job berjalan.
+     * Data import TAM sering mengulang frame yang sama di banyak baris.
+     */
+    protected function lookupFrame(string $frame): ?Shopping
+    {
+        if (! array_key_exists($frame, $this->frameCache)) {
+            $this->frameCache[$frame] = Shopping::where('frame_number', $frame)
+                ->orderByDesc('id')
+                ->first();
+        }
+
+        return $this->frameCache[$frame];
     }
 
     public function modelType(): string
@@ -94,13 +130,23 @@ class ShoppingImporter extends BaseImporter implements Importable
             : in_array(strtolower(trim((string) $rawCripple)), ['yes', 'ya', 'y', 'true', '1'], true);
 
         // Frame sudah ada di sistem
-        $frame = (string) ($mapped['frame_number'] ?? '');
+        $frame = trim((string) ($mapped['frame_number'] ?? ''));
+        $mapped['frame_number'] = $frame;
         if ($frame !== '') {
-            $existing = Shopping::where('frame_number', $frame)->first();
+            $existing = $this->lookupFrame($frame);
 
             // Draft yang sudah ada → merge, butuh izin edit.
             if ($existing && $existing->status === 'draft' && ! $this->canMerge) {
                 throw new RowTransformException("Frame {$frame} sudah ada (draft) — tidak punya izin edit untuk menggabung.");
+            }
+
+            // Alur "import barang": header wajib sudah diinput lebih dulu.
+            // Kalau frame belum terdaftar & auto-create dimatikan → baris error.
+            if (! $existing && $this->requireExistingFrame && ! $this->autoCreateFrame) {
+                throw new RowTransformException(
+                    "Frame \"{$frame}\" belum terdaftar di WMS. Input header (line & frame number) dulu, "
+                    . 'atau aktifkan opsi "Buat frame otomatis".'
+                );
             }
 
             // Frame non-draft (shipped/cripple) dianggap pesanan baru:
@@ -164,7 +210,7 @@ class ShoppingImporter extends BaseImporter implements Importable
         }
 
         // Merge ke frame draft yang sudah ada: part duplikat di-skip
-        $existing = Shopping::where('frame_number', $frame)->first();
+        $existing = $this->lookupFrame($frame);
         if ($existing && $existing->status === 'draft'
             && $existing->items()->where('product_id', $data['product_id'])->exists()) {
             return true;
@@ -178,7 +224,14 @@ class ShoppingImporter extends BaseImporter implements Importable
         $frame = (string) $data['frame_number'];
 
         if ($frame !== $this->currentFrameNumber) {
-            $existing = Shopping::where('frame_number', $frame)->first();
+            $existing = $this->lookupFrame($frame);
+
+            // Penjaga tambahan: mode "header wajib ada" tanpa auto-create tidak
+            // boleh membuat shopping baru (transformRow sudah memberi error).
+            if (! $existing && $this->requireExistingFrame && ! $this->autoCreateFrame) {
+                return;
+            }
+
             if ($existing && $existing->status === 'draft') {
                 $this->currentShopping = $existing; // merge ke draft yang sudah ada
             } else {
@@ -205,6 +258,10 @@ class ShoppingImporter extends BaseImporter implements Importable
                     'updated_by' => $data['updated_by'] ?? null,
                 ]);
             }
+
+            // Simpan ke cache supaya baris berikutnya memakai shopping yang sama
+            // (kalau tidak, frame baru akan dibuat berkali-kali).
+            $this->frameCache[$frame] = $this->currentShopping;
             $this->currentFrameNumber = $frame;
         }
 

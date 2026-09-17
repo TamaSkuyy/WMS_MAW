@@ -27,6 +27,28 @@ warn()    { echo -e "${YELLOW}[WARN]${NC} $*"; }
 err()     { echo -e "${RED}[ERROR]${NC} $*"; }
 success() { echo -e "${GREEN}[✓]${NC} $*"; }
 
+# ── Cek konfigurasi queue ────────────────────────────────────────────────────
+# Import (shopping/cycle/master data) dijalankan sebagai job queue. Kalau
+# QUEUE_CONNECTION=sync, seluruh proses import dieksekusi DI DALAM request HTTP:
+# request menggantung sampai habis timeout lalu operator melihat 502 Bad Gateway
+# padahal datanya belum tentu masuk. Cek ini mencegah salah setting .env.prod.
+check_queue_config() {
+    local conn
+    conn="$(grep -E '^[[:space:]]*QUEUE_CONNECTION[[:space:]]*=' "${ENV_FILE}" 2>/dev/null \
+        | tail -1 | cut -d= -f2- | tr -d '"' | tr -d "'" | xargs 2>/dev/null || true)"
+    conn="${conn:-database}"
+
+    if [ "${conn}" = "sync" ] || [ "${conn}" = "null" ]; then
+        err "QUEUE_CONNECTION=${conn} di ${ENV_FILE}!"
+        warn "Import akan berjalan di dalam request HTTP → request timeout → 502 Bad Gateway."
+        warn "Set QUEUE_CONNECTION=database (atau redis), pastikan service 'queue' jalan, lalu deploy ulang."
+        return 1
+    fi
+
+    log "Queue connection: ${conn} ✓"
+    return 0
+}
+
 # ── Copy dir ke container: docker cp dulu, fallback tar pipe ─────────────────
 copy_dir_to_container() {
     local SRC="$1"
@@ -426,6 +448,7 @@ smart_rebuild() {
             exit 1
         fi
     done
+    check_queue_config || exit 1
 
     # Build image DENGAN cache (jauh lebih cepat dari --no-cache)
     log "Build image (dengan layer cache)..."
@@ -632,6 +655,7 @@ done
 
 log "Environment file: ${ENV_FILE} ✓"
 log "Project name: ${PROJECT_NAME} (terpisah dari Sail)"
+check_queue_config || exit 1
 
 # ── Build images ─────────────────────────────────────────────────────────────
 if [ "${FORCE_BUILD}" = true ]; then

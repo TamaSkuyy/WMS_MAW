@@ -19,6 +19,9 @@ class ProcessImport implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    /** Batas jumlah error yang disimpan per import (lihat pushError()). */
+    private const MAX_STORED_ERRORS = 200;
+
     /**
      * Import Excel besar (ribuan baris, grouping frame, validasi per-baris)
      * bisa berjalan >10 menit. Nilai ini menang atas flag --timeout worker
@@ -48,6 +51,7 @@ class ProcessImport implements ShouldQueue
         $fixedFields = $importer->fixedFields($importLog->user_id);
 
         $errors = [];
+        $errorTotal = 0;
         $processed = 0;
         $skipped = 0;
 
@@ -109,11 +113,11 @@ class ProcessImport implements ShouldQueue
                 try {
                     $transformed = $importer->transformRow($mapped);
                 } catch (RowTransformException $e) {
-                    $errors[] = [
+                    $this->pushError($errors, $errorTotal, [
                         'row' => $rowNumber,
                         'field' => 'system',
                         'message' => $e->getMessage(),
-                    ];
+                    ]);
                     $rowsSinceProgress++;
                     if ($rowsSinceProgress >= 100) {
                         $this->reportProgress($importLog, $processed, $skipped);
@@ -127,11 +131,11 @@ class ProcessImport implements ShouldQueue
                 if ($validator->fails()) {
                     foreach ($validator->errors()->toArray() as $field => $msgs) {
                         foreach ($msgs as $msg) {
-                            $errors[] = [
+                            $this->pushError($errors, $errorTotal, [
                                 'row' => $rowNumber,
                                 'field' => $field,
                                 'message' => $msg,
-                            ];
+                            ]);
                         }
                     }
                     $rowsSinceProgress++;
@@ -163,6 +167,19 @@ class ProcessImport implements ShouldQueue
             $this->reportProgress($importLog, $processed, $skipped);
         }
 
+        // Daftar error dipangkas: file besar yang hampir semua barisnya gagal
+        // (mis. salah pilih kolom mapping) bisa menghasilkan puluhan ribu error.
+        // Menyimpannya utuh membuat kolom JSON membengkak dan endpoint status
+        // yang di-polling UI mengirim payload raksasa → halaman terasa 500/502.
+        if ($errorTotal > self::MAX_STORED_ERRORS) {
+            $errors[] = [
+                'row' => 0,
+                'field' => 'system',
+                'message' => ($errorTotal - self::MAX_STORED_ERRORS)
+                    . ' error lain tidak ditampilkan (file terlalu banyak baris bermasalah). Perbaiki file lalu import ulang.',
+            ];
+        }
+
         $importLog->update([
             'status' => ImportStatus::Completed->value,
             'processed_rows' => $processed,
@@ -171,9 +188,16 @@ class ProcessImport implements ShouldQueue
         ]);
 
         if ($importLog->user) {
-            $importLog->user->notify(
-                new \App\Notifications\ImportCompletedNotification($importLog)
-            );
+            // Notifikasi TIDAK boleh menggagalkan import yang sudah selesai: kalau
+            // channel broadcast (Reverb) mati, job dianggap gagal lalu di-retry 3x
+            // padahal datanya sudah masuk. Kegagalan notifikasi cukup dicatat log.
+            try {
+                $importLog->user->notify(
+                    new \App\Notifications\ImportCompletedNotification($importLog)
+                );
+            } catch (\Throwable $e) {
+                report($e);
+            }
         }
     }
 
@@ -212,5 +236,19 @@ class ProcessImport implements ShouldQueue
             }
         }
         return $mapped;
+    }
+
+    /**
+     * Simpan error baris, tapi batasi jumlah yang ditahan di memori/kolom JSON
+     * (MAX_STORED_ERRORS). $errorTotal tetap menghitung semuanya supaya UI bisa
+     * melaporkan berapa error yang tidak ditampilkan.
+     */
+    private function pushError(array &$errors, int &$errorTotal, array $error): void
+    {
+        $errorTotal++;
+
+        if (count($errors) < self::MAX_STORED_ERRORS) {
+            $errors[] = $error;
+        }
     }
 }

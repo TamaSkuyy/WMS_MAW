@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import AppLayout from '../../../Tailadmin/layout/AppLayout';
 import ImportModal from '../../../Components/ImportExport/ImportModal';
 import QrScanner from '../../../Components/QrScanner';
@@ -14,6 +14,8 @@ import TableActions from '../../../Tailadmin/components/common/TableActions';
 import EmptyState from '../../../Tailadmin/components/common/EmptyState';
 import Label from '../../../Tailadmin/components/form/Label';
 import Pagination from '../../../Tailadmin/components/common/Pagination';
+import Alert from '../../../Tailadmin/components/ui/alert/Alert';
+import Checkbox from '../../../Tailadmin/components/form/input/Checkbox';
 
 interface DraftShopping {
     id: number;
@@ -23,26 +25,52 @@ interface DraftShopping {
     shopping_location?: { id: number; name: string } | null;
 }
 
-export default function Index({ shoppings, filters, shoppingLocations = [], draftShoppings = [] }: any) {
+export default function Index({ shoppings, filters, shoppingLocations = [], draftFrameCount = 0, openItemImport = false }: any) {
     const permissions = (usePage().props.auth as any)?.user?.permissions || [];
     const canCreate = permissions.includes('create shoppings');
     const canEdit = permissions.includes('edit shoppings');
     const canDelete = permissions.includes('delete shoppings');
     const canShip = permissions.includes('ship shoppings');
+    const { flash = {} } = usePage().props as any;
 
     const [importModalOpen, setImportModalOpen] = useState(false);
+    // Import BARANG (langkah 2): frame harus sudah terdaftar di WMS.
+    const [itemImportOpen, setItemImportOpen] = useState(!!openItemImport);
+    const [itemAutoCreate, setItemAutoCreate] = useState(false);
+    const [itemLocationId, setItemLocationId] = useState('');
 
     // ── Bulk Ship state ─────────────────────────────────────────────
     const [bulkShipOpen, setBulkShipOpen] = useState(false);
     const [bulkLocationId, setBulkLocationId] = useState('');
-    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [selected, setSelected] = useState<DraftShopping[]>([]);
     const [frameSearch, setFrameSearch] = useState('');
+    const [frames, setFrames] = useState<DraftShopping[]>([]);
+    const [framesTotal, setFramesTotal] = useState<number>(draftFrameCount || 0);
+    const [framesHasMore, setFramesHasMore] = useState(false);
+    const [framesLoading, setFramesLoading] = useState(false);
     const [scannerOpen, setScannerOpen] = useState(false);
     const [scanMsg, setScanMsg] = useState<{ type: 'ok' | 'error'; text: string } | null>(null);
     // Frame yang baru saja dikirim di sesi ini — dicegah discan ulang sebelum
     // daftar draft ter-refresh dari server.
     const [shippedFrames, setShippedFrames] = useState<string[]>([]);
     const [submitting, setSubmitting] = useState(false);
+    const selectedIds = selected.map((d) => d.id);
+
+    // Tutup/refresh: buang ?import=items supaya modal tidak terbuka lagi
+    // saat halaman di-refresh setelah import selesai.
+    const closeItemImport = () => {
+        setItemImportOpen(false);
+        if (openItemImport) {
+            router.get(route('shoppings.index'), {}, { preserveState: true, preserveScroll: true, replace: true });
+        }
+    };
+    const refreshAfterItemImport = () => {
+        if (openItemImport) {
+            router.get(route('shoppings.index'), {}, { preserveScroll: true });
+        } else {
+            window.location.reload();
+        }
+    };
 
     // Hapus massal (superadmin)
     const isSuperadmin = ((usePage().props.auth as any)?.user?.roles || []).includes('superadmin');
@@ -85,41 +113,69 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
         }
     };
 
-    const draftMap = useMemo(() => {
-        const m = new Map<number, DraftShopping>();
-        (draftShoppings as DraftShopping[]).forEach((d) => m.set(d.id, d));
-        return m;
-    }, [draftShoppings]);
+    // ── Pencarian frame draft (server-side) ────────────────────────────
+    // Daftar draft TIDAK lagi dimuat seluruhnya ke browser: setelah import
+    // ribuan frame, payload raksasa membuat worker Octane kehabisan memori →
+    // 502 tepat setelah import selesai & halaman di-refresh.
+    const fetchFrames = useCallback(async (search: string, exact = false): Promise<DraftShopping[]> => {
+        setFramesLoading(true);
+        try {
+            const params = new URLSearchParams(
+                exact ? { frame: search, limit: '5' } : { limit: '30' }
+            );
+            if (!exact && search.trim() !== '') params.set('search', search.trim());
 
-    const filteredDrafts = useMemo(() => {
-        const q = frameSearch.trim().toLowerCase();
-        const list = draftShoppings as DraftShopping[];
-        if (!q) return list;
-        return list.filter((d) => d.frame_number.toLowerCase().includes(q));
-    }, [draftShoppings, frameSearch]);
+            const res = await fetch(`${route('shoppings.draft-frames')}?${params.toString()}`, {
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-    const selectedDrafts = selectedIds.map((id) => draftMap.get(id)).filter(Boolean) as DraftShopping[];
+            const data = await res.json();
+            const rows: DraftShopping[] = data.data || [];
+            setFrames(rows);
+            setFramesHasMore(!!data.has_more);
+            if (typeof data.total === 'number') setFramesTotal(data.total);
+            return rows;
+        } catch {
+            setFrames([]);
+            setFramesHasMore(false);
+            return [];
+        } finally {
+            setFramesLoading(false);
+        }
+    }, []);
 
-    const addSelected = (id: number) => {
-        setSelectedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    useEffect(() => {
+        if (!bulkShipOpen) return;
+        const timer = setTimeout(() => { void fetchFrames(frameSearch); }, 300);
+        return () => clearTimeout(timer);
+    }, [bulkShipOpen, frameSearch, fetchFrames]);
+
+    const addSelected = (frame: DraftShopping) => {
+        setSelected((prev) => (prev.some((d) => d.id === frame.id) ? prev : [...prev, frame]));
     };
 
     const removeSelected = (id: number) => {
-        setSelectedIds((prev) => prev.filter((x) => x !== id));
+        setSelected((prev) => prev.filter((x) => x.id !== id));
     };
 
-    const handleScan = (code: string) => {
+    const handleScan = async (code: string) => {
         const scanned = code.trim().toLowerCase();
-        const match = (draftShoppings as DraftShopping[]).find(
-            (d) => d.frame_number.toLowerCase() === scanned
-        );
+        let match = frames.find((d) => d.frame_number.toLowerCase() === scanned);
+
+        if (!match) {
+            // Frame di luar 30 hasil yang tampil → tanya server langsung.
+            const found = await fetchFrames(code.trim(), true);
+            match = found.find((d) => d.frame_number.toLowerCase() === scanned) ?? found[0];
+        }
+
         if (!match) {
             setScanMsg({ type: 'error', text: `"${code}" tidak ditemukan di shopping draft` });
             return;
         }
 
         // Frame yang sudah discan/dipilih tidak boleh discan ulang.
-        if (selectedIds.includes(match.id)) {
+        if (selected.some((d) => d.id === match!.id)) {
             setScanMsg({ type: 'error', text: `Frame ${match.frame_number} sudah discan — tidak perlu diulang` });
             return;
         }
@@ -130,7 +186,7 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
             return;
         }
 
-        addSelected(match.id);
+        addSelected(match);
         setScanMsg({ type: 'ok', text: `✓ ${match.frame_number} ditambahkan` });
     };
 
@@ -149,13 +205,13 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
                 preserveScroll: true,
                 onSuccess: () => {
                     // Tandai frame yang baru dikirim supaya tidak bisa discan ulang
-                    // sebelum props draftShoppings ter-refresh.
+                    // sebelum daftar draft ter-refresh.
                     setShippedFrames((prev) => [
                         ...prev,
-                        ...selectedDrafts.map((d) => d.frame_number.toLowerCase()),
+                        ...selected.map((d) => d.frame_number.toLowerCase()),
                     ]);
                     setBulkShipOpen(false);
-                    setSelectedIds([]);
+                    setSelected([]);
                     setFrameSearch('');
                 },
                 onFinish: () => setSubmitting(false),
@@ -180,6 +236,22 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
         <>
             <Head title="Shopping" />
             <PageBreadcrumb pageTitle="Shopping" />
+
+            {flash?.success && (
+                <div className="mb-4"><Alert variant="success" title="Berhasil" message={flash.success} /></div>
+            )}
+            {flash?.warning && (
+                <div className="mb-4"><Alert variant="warning" title="Perhatian" message={flash.warning} /></div>
+            )}
+            {flash?.error && (
+                <div className="mb-4"><Alert variant="error" title="Gagal" message={flash.error} /></div>
+            )}
+
+            <div className="mb-4 rounded-xl border border-brand-200 bg-brand-50 p-4 text-sm text-brand-700 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300">
+                Alur 2 langkah: <strong>1. Input Header</strong> (line &amp; frame number) →{' '}
+                <strong>2. Import Barang</strong> (part number &amp; qty untuk frame yang sudah terdaftar).{' '}
+                Frame draft saat ini: <strong>{framesTotal}</strong>.
+            </div>
             <ComponentCard title="Daftar Shopping">
                 <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
                     <div className="flex flex-wrap items-end gap-3">
@@ -222,16 +294,26 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
                         </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
+                        {canCreate && (
+                            <Link href={route('shoppings.headers.create')}>
+                                <Button variant="outline">1. Input Header</Button>
+                            </Link>
+                        )}
+                        {canCreate && (
+                            <Button onClick={() => setItemImportOpen(true)}>2. Import Barang</Button>
+                        )}
                         {canShip && (
                             <Button variant="outline" onClick={() => setBulkShipOpen(true)}>
                                 🚚 Kirim Massal
                             </Button>
                         )}
                         {canCreate && (
-                            <Link href={route('shoppings.create')}><Button>Tambah Shopping</Button></Link>
+                            <Link href={route('shoppings.create')}><Button variant="outline">Tambah Shopping</Button></Link>
                         )}
                         {canCreate && (
-                            <Button variant="outline" onClick={() => setImportModalOpen(true)}>Import</Button>
+                            <Button variant="outline" title="Alur lama: satu file berisi frame + barang + qty" onClick={() => setImportModalOpen(true)}>
+                                Import Gabungan
+                            </Button>
                         )}
                     </div>
                 </div>
@@ -363,6 +445,56 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
                 )}
             </ComponentCard>
 
+            {/* Import BARANG (Langkah 2) — frame harus sudah diinput header-nya. */}
+            {canCreate && (
+                <ImportModal
+                    isOpen={itemImportOpen}
+                    onClose={closeItemImport}
+                    onComplete={refreshAfterItemImport}
+                    importUrl={route('shoppings.import-items')}
+                    previewUrl={route('shoppings.import-items.preview')}
+                    templateUrl={route('shoppings.import-items-template')}
+                    title="Barang Shopping"
+                    extraParams={() => ({
+                        auto_create_frame: itemAutoCreate ? '1' : '0',
+                        ...(itemLocationId ? { shopping_location_id: itemLocationId } : {}),
+                    })}
+                    extraNode={(
+                        <div className="space-y-3 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                            <div>
+                                <Label>Line / Lokasi Tujuan (opsional)</Label>
+                                <SearchableSelect
+                                    options={[
+                                        { value: '', label: '— Tidak diisi —' },
+                                        ...shoppingLocations.map((l: any) => ({ value: String(l.id), label: l.name })),
+                                    ]}
+                                    value={itemLocationId}
+                                    onChange={(v) => setItemLocationId(String(v || ''))}
+                                    placeholder="Dipakai hanya untuk frame baru..."
+                                />
+                                <p className="mt-1 text-xs text-gray-400">
+                                    Diisi otomatis hanya kalau frame baru dibuat di bawah ini.
+                                </p>
+                            </div>
+                            <Checkbox
+                                checked={itemAutoCreate}
+                                onChange={setItemAutoCreate}
+                                label="Buat frame otomatis kalau belum terdaftar (abaikan alur header dulu)"
+                            />
+                        </div>
+                    )}
+                    fields={[
+                        { key: 'frame_number', label: 'Frame Number', required: true },
+                        { key: 'part_number', label: 'Part Number', required: true },
+                        { key: 'quantity', label: 'Quantity', required: true },
+                        { key: 'confirmed', label: 'Confirmed', required: false },
+                        { key: 'cripple', label: 'Cripple', required: false },
+                        { key: 'modify_date', label: 'Modify Date', required: false },
+                    ]}
+                />
+            )}
+
+            {/* Import GABUNGAN (alur lama) — sengaja dipertahankan. */}
             {canCreate && (
                 <ImportModal
                     isOpen={importModalOpen}
@@ -371,7 +503,7 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
                     importUrl={route('shoppings.import')}
                     previewUrl={route('shoppings.import.preview')}
                     templateUrl={route('shoppings.import-template')}
-                    title="Shopping"
+                    title="Shopping (Gabungan)"
                     fields={[
                         { key: 'frame_number', label: 'Frame Number', required: true },
                         { key: 'part_number', label: 'Part Number', required: true },
@@ -433,17 +565,21 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
                                 </p>
                             )}
 
-                            {/* Hasil pencarian frame (klik untuk pilih) */}
-                            {frameSearch.trim() !== '' && (
-                                <div className="mb-3 border border-gray-200 dark:border-gray-700 rounded-lg max-h-40 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800">
-                                    {filteredDrafts.length === 0 ? (
-                                        <p className="px-3 py-2 text-xs text-gray-400">Tidak ada frame ditemukan</p>
-                                    ) : (
-                                        filteredDrafts.slice(0, 20).map((d) => (
+                            {/* Hasil pencarian frame (klik untuk pilih) — dari server, berlimit */}
+                            <div className="mb-3 border border-gray-200 dark:border-gray-700 rounded-lg max-h-40 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800">
+                                {framesLoading ? (
+                                    <p className="px-3 py-2 text-xs text-gray-400">Memuat frame...</p>
+                                ) : frames.length === 0 ? (
+                                    <p className="px-3 py-2 text-xs text-gray-400">
+                                        {frameSearch.trim() !== '' ? 'Tidak ada frame ditemukan' : 'Belum ada frame draft'}
+                                    </p>
+                                ) : (
+                                    <>
+                                        {frames.map((d) => (
                                             <button
                                                 key={d.id}
                                                 type="button"
-                                                onClick={() => addSelected(d.id)}
+                                                onClick={() => addSelected(d)}
                                                 disabled={selectedIds.includes(d.id)}
                                                 className={`w-full text-left px-3 py-2 text-sm flex justify-between gap-2 ${
                                                     selectedIds.includes(d.id)
@@ -459,21 +595,26 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
                                                     {d.is_cripple ? ' ⚠️' : ''}
                                                 </span>
                                             </button>
-                                        ))
-                                    )}
-                                </div>
-                            )}
+                                        ))}
+                                        {framesHasMore && (
+                                            <p className="px-3 py-2 text-xs text-gray-400">
+                                                Menampilkan 30 frame pertama — ketik / scan untuk mempersempit.
+                                            </p>
+                                        )}
+                                    </>
+                                )}
+                            </div>
 
                             {/* Daftar terpilih */}
                             <div className="mb-4">
-                                <Label>Terpilih ({selectedDrafts.length})</Label>
+                                <Label>Terpilih ({selected.length})</Label>
                                 <div className="border border-gray-200 dark:border-gray-700 rounded-lg divide-y divide-gray-100 dark:divide-gray-800 max-h-44 overflow-y-auto">
-                                    {selectedDrafts.length === 0 ? (
+                                    {selected.length === 0 ? (
                                         <p className="px-3 py-3 text-xs text-gray-400">
                                             Belum ada frame dipilih — cari di atas atau scan barcode frame.
                                         </p>
                                     ) : (
-                                        selectedDrafts.map((d) => (
+                                        selected.map((d) => (
                                             <div key={d.id} className="flex justify-between items-center gap-2 px-3 py-2">
                                                 <div className="min-w-0">
                                                     <div className="text-sm font-mono truncate">{d.frame_number}</div>
@@ -498,7 +639,7 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
                             <div className="flex justify-end gap-3">
                                 <Button variant="outline" onClick={() => setBulkShipOpen(false)}>Batal</Button>
                                 <Button onClick={handleBulkShip} disabled={selectedIds.length === 0 || submitting}>
-                                    {submitting ? 'Mengirim...' : `Kirim ${selectedDrafts.length} Shopping`}
+                                    {submitting ? 'Mengirim...' : `Kirim ${selected.length} Shopping`}
                                 </Button>
                             </div>
                         </div>
