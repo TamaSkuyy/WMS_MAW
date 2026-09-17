@@ -686,6 +686,22 @@ git pull
 sudo nginx -t && sudo systemctl reload nginx    # untuk nginx host
 ```
 
+**Verifikasi buffer benar-benar aktif** (bukan hanya `nginx -t` yang bilang syntax ok):
+
+```bash
+# Harus muncul 3 baris 32k. Kalau kosong → file conf di server masih versi lama
+# (belum `git pull`) atau nginx belum di-reload.
+docker compose -p wms-wma-prod -f docker-compose.prod.yml --env-file .env.prod \
+  exec nginx nginx -T | grep -E "proxy_buffer_size|proxy_buffers|proxy_busy"
+
+# Cek file di server sudah versi baru
+grep -n "proxy_buffer" docker/nginx/default.conf
+
+# Nginx host juga (kalau masih 502 setelah docker nginx beres, cek log host)
+sudo grep -n "proxy_buffer" /etc/nginx/sites-available/* 2>/dev/null
+sudo tail -20 /var/log/nginx/error.log
+```
+
 Alternatif kalau tidak mau menaikkan buffer: kurangi jumlah header dengan
 menghapus `Vite::prefetch(concurrency: 3)` di `app/Providers/AppServiceProvider.php`
 (header `Link:` turun drastis, tapi kehilangan Early Hints).
