@@ -386,6 +386,36 @@ export default function Edit({ shopping, products, racks, shoppingLocations, cor
                                 {errors.frame_number && <p className="mt-1 text-sm text-red-500">{errors.frame_number}</p>}
                             </div>
 
+                            {/* Model Kendaraan + Suffix — input (combobox) untuk menyaring
+                                daftar produk di kartu "Cari Produk" (dulu "Unit/Model" +
+                                "Suffix" di versi lama). */}
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <div>
+                                    <Label>Model Kendaraan</Label>
+                                    <SearchableSelect
+                                        options={units.map((u: string) => ({ value: u, label: u }))}
+                                        value={unitFilter}
+                                        onChange={(v) => { setUnitFilter(v as string); setSuffixFilter(''); }}
+                                        placeholder="Semua model kendaraan"
+                                    />
+                                </div>
+                                <div>
+                                    <Label>Suffix</Label>
+                                    <SearchableSelect
+                                        options={unitSuffixes.map((s: string) => ({ value: s, label: s || 'Standar' }))}
+                                        value={suffixFilter}
+                                        onChange={(v) => setSuffixFilter(v as string)}
+                                        placeholder={unitFilter ? 'Semua suffix' : 'Pilih model dulu'}
+                                    />
+                                </div>
+                            </div>
+
+                            {(unitFilter || suffixFilter) && (
+                                <p className="text-xs font-medium text-brand-600">
+                                    🚗 Daftar produk difilter untuk {unitFilter || 'semua model'}{suffixFilter ? ` ${suffixFilter}` : ''}
+                                </p>
+                            )}
+
                             {/* Apakah barang ini cripple? — default no */}
                             <div className="rounded-lg border border-[#E9ECEF] dark:border-gray-700 p-3">
                                 <Checkbox
@@ -547,23 +577,6 @@ export default function Edit({ shopping, products, racks, shoppingLocations, cor
                                     <SearchableSelect
                                         options={suppliers.map((s: any) => ({ value: s.id, label: s.name }))}
                                         value={filterSupplierId} onChange={(v) => setFilterSupplierId(v as string)} placeholder="Semua supplier" />
-                                </div>
-                                <div className="w-full sm:w-52">
-                                    <Label>Tipe Mobil</Label>
-                                    <SearchableSelect
-                                        options={units.map((u: string) => ({ value: u, label: u }))}
-                                        value={unitFilter}
-                                        onChange={(v) => { setUnitFilter(v as string); setSuffixFilter(''); }}
-                                        placeholder="Semua tipe mobil" />
-                                </div>
-                                <div className="w-full sm:w-40">
-                                    <Label>Suffix</Label>
-                                    <SearchableSelect
-                                        options={unitSuffixes.map((s: string) => ({ value: s, label: s || 'Standar' }))}
-                                        value={suffixFilter}
-                                        onChange={(v) => setSuffixFilter(v as string)}
-                                        placeholder={unitFilter ? 'Semua suffix' : 'Pilih tipe dulu'}
-                                    />
                                 </div>
                                 {(searchQuery || filterSupplierId || unitFilter || suffixFilter) && (
                                     <button type="button" onClick={() => { setSearchQuery(''); setFilterSupplierId(''); setUnitFilter(''); setSuffixFilter(''); }} className="mb-1 text-sm text-red-500 hover:text-red-700">✕ Reset</button>

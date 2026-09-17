@@ -269,6 +269,38 @@ class ReportControllerTest extends TestCase
         $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     }
 
+    /** Model & Suffix tampil di export sebagai turunan dari produk item. */
+    public function test_shopping_report_export_includes_vehicle_model_and_suffix(): void
+    {
+        $vehicleModel = \App\Models\VehicleModel::factory()->create([
+            'brand' => 'Toyota',
+            'name' => 'Fortuner',
+            'suffix' => 'VRZ',
+        ]);
+        $product = Product::factory()->create(['vehicle_model_id' => $vehicleModel->id]);
+        $rack = Rack::factory()->create();
+        $shopping = Shopping::factory()->create(['status' => 'shipped']);
+        ShoppingItem::factory()->create([
+            'shopping_id' => $shopping->id,
+            'product_id' => $product->id,
+            'rack_id' => $rack->id,
+            'quantity' => 3,
+        ]);
+
+        $response = $this->actingAs($this->user)->get(route('reports.shopping.export', ['format' => 'csv']));
+
+        $response->assertSuccessful();
+
+        ob_start();
+        $response->sendContent();
+        $csv = (string) ob_get_clean();
+
+        $this->assertStringContainsString('Model Kendaraan', $csv);
+        $this->assertStringContainsString('Suffix', $csv);
+        $this->assertStringContainsString('Toyota Fortuner', $csv);
+        $this->assertStringContainsString('VRZ', $csv);
+    }
+
     public function test_shopping_report_export_pdf_returns_success(): void
     {
         $product = Product::factory()->create();

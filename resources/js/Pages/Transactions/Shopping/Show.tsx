@@ -86,6 +86,7 @@ export default function Show({ shopping, corrections = [], canCorrect = false }:
                                         <th className="px-4 py-2.5 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Part #</th>
                                         <th className="px-4 py-2.5 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Produk</th>
                                         <th className="px-4 py-2.5 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Model</th>
+                                        <th className="px-4 py-2.5 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Suffix</th>
                                         <th className="px-4 py-2.5 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Rak</th>
                                         <th className="px-4 py-2.5 text-center text-[11px] font-medium text-gray-500 uppercase tracking-wider">Qty</th>
                                     </tr>
@@ -95,7 +96,13 @@ export default function Show({ shopping, corrections = [], canCorrect = false }:
                                         <tr key={item.id}>
                                             <td className="px-4 py-2.5 text-xs font-mono">{item.product?.part_number}</td>
                                             <td className="px-4 py-2.5 text-sm">{item.product?.name}</td>
-                                            <td className="px-4 py-2.5 text-sm text-gray-500">{item.product?.vehicle_model?.name || '-'}</td>
+                                            {/* Model & Suffix diturunkan dari produk item (tidak disimpan di header shopping) */}
+                                            <td className="px-4 py-2.5 text-sm text-gray-500">
+                                                {item.product?.vehicle_model
+                                                    ? `${item.product.vehicle_model.brand} ${item.product.vehicle_model.name}`
+                                                    : '-'}
+                                            </td>
+                                            <td className="px-4 py-2.5 text-sm text-gray-500">{item.product?.vehicle_model?.suffix || '-'}</td>
                                             <td className="px-4 py-2.5 text-sm font-mono">{item.rack?.code}</td>
                                             <td className="px-4 py-2.5 text-sm font-medium text-center tabular-nums">{item.quantity}</td>
                                         </tr>

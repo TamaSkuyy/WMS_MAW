@@ -12,7 +12,7 @@ class ShoppingReportExporter extends BaseExporter
 
     public function headings(): array
     {
-        return ['Tanggal Kirim', 'Partner', 'Frame #', 'Part Number', 'Nama Produk', 'Rak', 'Qty', 'Status', 'Dikirim Oleh', 'Waktu Kirim'];
+        return ['Tanggal Kirim', 'Partner', 'Frame #', 'Part Number', 'Nama Produk', 'Model Kendaraan', 'Suffix', 'Rak', 'Qty', 'Status', 'Dikirim Oleh', 'Waktu Kirim'];
     }
 
     public function exportQuery(): Builder
@@ -20,7 +20,8 @@ class ShoppingReportExporter extends BaseExporter
         $filters = $this->filters;
 
         return ShoppingItem::query()
-            ->with(['shopping.shoppingLocation', 'shopping.shippedBy', 'product', 'rack'])
+            // vehicleModel dipakai untuk kolom Model & Suffix (turunan dari produk).
+            ->with(['shopping.shoppingLocation', 'shopping.shippedBy', 'product.vehicleModel', 'rack'])
             ->whereHas('shopping', function ($q) use ($filters) {
                 if (! empty($filters['date_from'])) {
                     $q->whereDate('shopping_date', '>=', $filters['date_from']);
@@ -46,6 +47,11 @@ class ShoppingReportExporter extends BaseExporter
             $model->shopping->frame_number ?? '-',
             $model->product->part_number,
             $model->product->name,
+            // Model & Suffix diturunkan dari produk item (bukan kolom di shoppings).
+            $model->product->vehicleModel
+                ? trim($model->product->vehicleModel->brand . ' ' . $model->product->vehicleModel->name)
+                : '-',
+            $model->product->vehicleModel?->suffix ?: '-',
             $model->rack?->code ?? '-',
             $model->quantity,
             $model->shopping->status,

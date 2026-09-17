@@ -110,6 +110,8 @@ export default function Shopping({ items, summary, filters }: any) {
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Partner</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Frame #</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Produk</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Model</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Suffix</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rak</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
@@ -126,6 +128,13 @@ export default function Shopping({ items, summary, filters }: any) {
                                         <td className="px-4 py-3 text-sm whitespace-nowrap">{item.shopping?.shopping_location?.name || '-'}</td>
                                         <td className="px-4 py-3 text-sm whitespace-nowrap font-mono">{item.shopping?.frame_number || '—'}</td>
                                         <td className="px-4 py-3 text-sm whitespace-nowrap">{item.product?.part_number} — {item.product?.name}</td>
+                                        {/* Model & Suffix dari produk item (turunan, bukan data header) */}
+                                        <td className="px-4 py-3 text-sm whitespace-nowrap">
+                                            {item.product?.vehicle_model
+                                                ? `${item.product.vehicle_model.brand} ${item.product.vehicle_model.name}`
+                                                : '—'}
+                                        </td>
+                                        <td className="px-4 py-3 text-sm whitespace-nowrap">{item.product?.vehicle_model?.suffix || '—'}</td>
                                         <td className="px-4 py-3 text-sm whitespace-nowrap">{item.rack?.code}</td>
                                         <td className="px-4 py-3 text-sm whitespace-nowrap">{item.quantity}</td>
                                         <td className="px-4 py-3 whitespace-nowrap">

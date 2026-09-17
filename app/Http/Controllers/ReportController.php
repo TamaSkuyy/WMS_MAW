@@ -139,7 +139,8 @@ class ReportController extends Controller
     private function shoppingQuery(array $filters): Builder
     {
         return $this->shoppingFilteredQuery($filters)
-            ->with(['shopping.shoppingLocation', 'shopping.shippedBy', 'product', 'rack'])
+            // vehicleModel → kolom Model & Suffix di tabel laporan (turunan dari produk).
+            ->with(['shopping.shoppingLocation', 'shopping.shippedBy', 'product.vehicleModel', 'rack'])
             ->latest('id');
     }
 
