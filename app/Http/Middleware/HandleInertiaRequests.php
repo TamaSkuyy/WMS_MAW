@@ -67,6 +67,9 @@ class HandleInertiaRequests extends Middleware
                 ]) : null,
             ],
             'menus' => $menus,
+            // Flag fitur on/off dari halaman Pengaturan (config/features.php).
+            // Halaman frontend membacanya via usePage().props.features.<key>.
+            'features' => fn () => \App\Support\Features::all(),
             // Pesan flash dipakai banyak halaman (mis. Shopping/Show, Cycles/Show)
             // tapi sebelumnya tidak pernah dibagikan → alert sukses/gagal tidak
             // muncul. Dibagikan di sini sebagai closure (lazy).

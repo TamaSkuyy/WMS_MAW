@@ -19,6 +19,8 @@ interface TableItem {
     product_id: number;
     part_number: string;
     name: string;
+    model: string;
+    suffix: string;
     stock: number;
     rack_id: string;
     rack_label: string;
@@ -46,7 +48,11 @@ function toLocalDateTimeInput(date: Date): string {
 }
 
 export default function Edit({ shopping, products, racks, shoppingLocations, correction = false }: any) {
-    const { errors = {}, flash = {} } = usePage().props as any;
+    const { errors = {}, flash = {}, features = {} } = usePage().props as any;
+
+    // Fitur versi lama (on/off dari halaman Pengaturan): kolom Model Kendaraan
+    // & Suffix di daftar produk, kartu mobile, dan daftar Barang Dipilih.
+    const showVehicleColumns = !!features.shopping_vehicle_model_column;
     const [reason, setReason] = useState('');
     const [preview, setPreview] = useState<{ lines: any[]; errors: string[]; ok: boolean } | null>(null);
     const [previewing, setPreviewing] = useState(false);
@@ -134,12 +140,17 @@ export default function Edit({ shopping, products, racks, shoppingLocations, cor
         const useMap: Record<number, { qty: number; rack_id: string }> = isFirstPopulate.current ? savedItemsMap : {};
         if (isFirstPopulate.current) isFirstPopulate.current = false;
         products.forEach((p: any) => {
+            // Model Kendaraan + suffix untuk kolom opsional (flag Pengaturan).
+            const modelLabel = p.vehicle_model ? `${p.vehicle_model.brand} ${p.vehicle_model.name}` : '';
+            const suffixLabel = p.vehicle_model?.suffix || '';
+
             (p.stocks || []).forEach((s: any) => {
                 const rid = s.rack_id ? String(s.rack_id) : '';
                 const prefill = useMap[p.id];
                 const preQty = prefill && String(prefill.rack_id) === rid ? prefill.qty : 0;
                 rows.push({
                     product_id: p.id, part_number: p.part_number, name: p.name,
+                    model: modelLabel, suffix: suffixLabel,
                     stock: s.quantity, rack_id: rid,
                     rack_label: rid ? (rackMap.get(rid)?.code ?? rid) : '⚠ Relay',
                     rack_zone: rid ? (rackMap.get(rid)?.zone ?? '-') : '—',
@@ -151,6 +162,7 @@ export default function Edit({ shopping, products, racks, shoppingLocations, cor
             if ((p.stocks || []).length === 0) {
                 rows.push({
                     product_id: p.id, part_number: p.part_number, name: p.name,
+                    model: modelLabel, suffix: suffixLabel,
                     stock: 0, rack_id: '', rack_label: '—', rack_zone: '—',
                     is_relay: false, quantity: 0, initial_qty: 0,
                 });
@@ -429,6 +441,12 @@ export default function Edit({ shopping, products, racks, shoppingLocations, cor
                                     <thead className="bg-gray-50 sticky top-0">
                                         <tr>
                                             <th className="px-4 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Produk</th>
+                                            {showVehicleColumns && (
+                                                <>
+                                                    <th className="px-4 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Model</th>
+                                                    <th className="px-4 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Suffix</th>
+                                                </>
+                                            )}
                                             <th className="px-4 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Rak</th>
                                             <th className="px-4 py-2 text-center text-[11px] font-medium text-gray-500 uppercase tracking-wider w-48">Qty</th>
                                             <th className="px-4 py-2 w-8"></th>
@@ -442,6 +460,11 @@ export default function Edit({ shopping, products, racks, shoppingLocations, cor
                                                 <td className="px-4 py-2.5">
                                                     <div className="font-mono text-xs text-gray-500 dark:text-gray-400">{item.part_number}</div>
                                                     <div className="text-sm text-gray-800 dark:text-gray-200">{item.name}</div>
+                                                    {showVehicleColumns && (item.model || item.suffix) && (
+                                                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                            🚗 {item.model || '-'}{item.suffix ? ` ${item.suffix}` : ''}
+                                                        </div>
+                                                    )}
                                                     {isOver && <span className="text-[11px] text-red-600 font-medium">⚠ Stok hanya {item.stock}</span>}
                                                 </td>
                                                 <td className="px-4 py-2.5 text-sm">
@@ -477,6 +500,11 @@ export default function Edit({ shopping, products, racks, shoppingLocations, cor
                                                 <div>
                                                     <div className="font-mono text-xs text-gray-500 dark:text-gray-400">{item.part_number}</div>
                                                     <div className="text-sm font-medium text-gray-800 dark:text-gray-200">{item.name}</div>
+                                                    {showVehicleColumns && (item.model || item.suffix) && (
+                                                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                            🚗 {item.model || '-'}{item.suffix ? ` ${item.suffix}` : ''}
+                                                        </div>
+                                                    )}
                                                     {isOver && <span className="text-[11px] text-red-600 font-medium">⚠ Stok hanya {item.stock}</span>}
                                                 </div>
                                                 <button
@@ -560,6 +588,12 @@ export default function Edit({ shopping, products, racks, shoppingLocations, cor
                                         <tr>
                                             <th className="px-4 py-2.5 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Part #</th>
                                             <th className="px-4 py-2.5 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Produk</th>
+                                            {showVehicleColumns && (
+                                                <>
+                                                    <th className="px-4 py-2.5 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Model</th>
+                                                    <th className="px-4 py-2.5 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Suffix</th>
+                                                </>
+                                            )}
                                             <th className="px-4 py-2.5 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider">Rak</th>
                                             <th className="px-4 py-2.5 text-center text-[11px] font-medium text-gray-500 uppercase tracking-wider">Stok</th>
                                             <th className="px-4 py-2.5 text-center text-[11px] font-medium text-gray-500 uppercase tracking-wider w-48">Qty</th>
@@ -570,6 +604,12 @@ export default function Edit({ shopping, products, racks, shoppingLocations, cor
                                             <tr key={`${item.product_id}-${item.rack_id}`} className={item.quantity > 0 ? 'bg-blue-50' : ''}>
                                                 <td className="px-4 py-2.5 text-xs font-mono">{item.part_number}</td>
                                                 <td className="px-4 py-2.5 text-sm">{item.name}</td>
+                                                {showVehicleColumns && (
+                                                    <>
+                                                        <td className="px-4 py-2.5 text-sm text-gray-600 dark:text-gray-300">{item.model || '-'}</td>
+                                                        <td className="px-4 py-2.5 text-sm text-gray-600 dark:text-gray-300">{item.suffix || '-'}</td>
+                                                    </>
+                                                )}
                                                 <td className="px-4 py-2.5 text-sm">
                                                     {item.is_relay ? <span className="text-amber-600">⚠ Relay</span> : item.rack_label}
                                                 </td>
@@ -595,6 +635,11 @@ export default function Edit({ shopping, products, racks, shoppingLocations, cor
                                             <div>
                                                 <div className="font-mono text-xs text-gray-500 dark:text-gray-400">{item.part_number}</div>
                                                 <div className="text-sm font-medium text-gray-800 dark:text-gray-200">{item.name}</div>
+                                                {showVehicleColumns && (item.model || item.suffix) && (
+                                                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                        🚗 {item.model || '-'}{item.suffix ? ` ${item.suffix}` : ''}
+                                                    </div>
+                                                )}
                                             </div>
                                             <span className="h-fit whitespace-nowrap px-2 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
                                                 Stok: {item.stock}

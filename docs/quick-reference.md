@@ -231,6 +231,21 @@ lewat halaman **Pemutihan Data** (superadmin):
 
 ---
 
+## ⚙️ PENGATURAN (KHUSUS SUPERADMIN)
+
+Menu: **Setup > Pengaturan** (`/settings`). Berisi switch **on/off** fitur aplikasi —
+berlaku untuk semua user.
+
+| Fitur | Fungsi | Default |
+| --- | --- | --- |
+| **Kolom Model Kendaraan & Suffix — form Shopping** | Menampilkan kolom **Model** dan **Suffix** di daftar produk, kartu HP, dan daftar **Barang Dipilih** saat Tambah/Edit Shopping (fitur versi lama). Filter "Tipe Mobil" + "Suffix" tetap ada walau switch ini mati. | ON |
+
+Cara pakai: geser switch → **Simpan Pengaturan**. Perubahan langsung terlihat
+setelah halaman di-refresh. Kalau bingung kenapa kolom hilang/muncul, cek halaman
+ini dulu.
+
+---
+
 ## 📱 AKSES CEPAT
 
 | Halaman | URL / Path |

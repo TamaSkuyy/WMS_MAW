@@ -269,6 +269,18 @@ class MenuSeeder extends Seeder
             'permission_name' => 'view roles',
         ]);
 
+        // Pengaturan aplikasi (switch on/off fitur) — superadmin.
+        // Jaga di sini juga supaya tidak hilang kalau seeder dijalankan ulang.
+        Menu::create([
+            'name' => 'Pengaturan',
+            'icon' => 'SettingsIcon',
+            'path' => '/settings',
+            'parent_id' => $setupMenu->id,
+            'sort_order' => 4,
+            'permission_name' => 'manage settings',
+            'group' => 'others',
+        ]);
+
         Menu::create([
             'name' => 'Permissions',
             'icon' => 'KeyIcon',

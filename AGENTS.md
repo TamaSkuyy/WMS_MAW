@@ -72,6 +72,13 @@ otomatis oleh harness, jadi jaga tetap ringkas. Detail panjang taruh di `docs/`.
     (`ExportManager::MAX_ROWS_IN_MEMORY` → `ExportException` + flash error);
     daftar panjang pakai pagination/`limit`. Test penjaga:
     `tests/Feature/MemoryBudgetTest.php`.
+14. **Toggle fitur (on/off)**: definisi di `config/features.php`, nilai efektif
+    di tabel `settings` (`feature.<key>`) lewat `App\Support\Features`, diatur
+    superadmin di `/settings` (menu Setup > Pengaturan, permission
+    `manage settings`). Flag dibagikan ke frontend sebagai shared prop
+    `features.<key>` — halaman membacanya via `usePage().props.features`.
+    Toggle pertama: `shopping_vehicle_model_column` (kolom Model & Suffix di form
+    Shopping Create/Edit, default ON).
 
 ## Struktur
 

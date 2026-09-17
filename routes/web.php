@@ -19,6 +19,7 @@ use App\Http\Controllers\RackController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ShiftController;
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\ShoppingController;
 use App\Http\Controllers\ShoppingLocationController;
 use App\Http\Controllers\StockController;
@@ -513,6 +514,12 @@ Route::middleware('auth')->group(function () {
 
     // ── System (superadmin only) ────────────────────────────
     Route::middleware(RoleMiddleware::using('superadmin'))->group(function () {
+
+        // Pengaturan fitur (switch on/off) — superadmin + permission 'manage settings'
+        Route::middleware(PermissionMiddleware::using('manage settings'))->group(function () {
+            Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
+            Route::post('settings', [SettingController::class, 'update'])->name('settings.update');
+        });
 
         // Menus
         Route::middleware(PermissionMiddleware::using('view menus'))->group(function () {
