@@ -339,18 +339,18 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
                 <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
                     <div className="flex flex-wrap items-end gap-3">
                         <div className="w-full sm:min-w-[200px]">
-                            <Label>Cari Lokasi (bisa scan barcode)</Label>
+                            <Label>Cari Frame / Lokasi (bisa scan barcode)</Label>
                             <div className="flex gap-2">
                                 <div className="flex-1 min-w-0">
                                     <Input
                                         type="text"
                                         defaultValue={filters?.search || ''}
-                                        placeholder="Nama lokasi tujuan..."
+                                        placeholder="Frame number atau nama lokasi..."
                                         onChange={(e) => router.get(route('shoppings.index'), { ...filters, search: e.target.value }, { preserveState: true, replace: true })}
                                     />
                                 </div>
                                 <ScanButton
-                                    title="Scan barcode lokasi"
+                                    title="Scan barcode frame / lokasi"
                                     onScan={(code) => {
                                         const found = (shoppingLocations || []).find((l: any) =>
                                             String(l.barcode || '').toUpperCase() === code.toUpperCase() ||
@@ -436,6 +436,7 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
                                         </label>
                                     </th>
                                 )}
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Frame Number</th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lokasi Tujuan</th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal Kirim</th>
                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dikirim Oleh</th>
@@ -460,6 +461,9 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
                                             </label>
                                         </td>
                                     )}
+                                    <td className="px-4 py-3 whitespace-nowrap text-sm font-mono">
+                                        {s.frame_number || <span className="text-gray-400">—</span>}
+                                    </td>
                                     <td className="px-4 py-3 whitespace-nowrap text-sm">{s.shopping_location?.name || '-'}</td>
                                     <td className="px-4 py-3 whitespace-nowrap text-sm">
                                         {s.shopping_date ? new Date(s.shopping_date).toLocaleString('id-ID', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '-'}

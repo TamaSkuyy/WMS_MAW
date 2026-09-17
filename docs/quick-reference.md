@@ -105,6 +105,13 @@ Kalau hanya sebagian frame yang mau dikirim: buka "🚚 Kirim Massal" → tab
 lihat pratinjau stoknya, lalu kirim. Berguna untuk mengirim ulang frame yang
 tadi dilewati setelah stoknya datang.
 
+### Daftar Shopping
+Tabel `Transactions > Shopping` menampilkan kolom **Frame Number** (paling kiri
+setelah centang), jadi frame mana yang sudah/belum dikirim langsung kelihatan.
+Kotak cari di atas tabel menerima **frame number** maupun **nama lokasi tujuan**
+dan bisa dipakai scan barcode — praktis untuk mengecek "frame ini sudah dikirim
+atau belum?".
+
 ---
 
 ## 🖥️ BACA DELIVERY MONITOR

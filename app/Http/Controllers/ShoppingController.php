@@ -35,7 +35,14 @@ class ShoppingController extends Controller
         $shoppings = Shopping::with(['shoppingLocation', 'shippedBy:id,name'])
             ->withCount('items')
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
-            ->when($request->search, fn ($q, $s) => $q->whereHas('shoppingLocation', fn ($ql) => $ql->where('name', 'like', "%{$s}%")))
+            // Pencarian bebas: frame number (dari alur 2 langkah / hasil import)
+            // atau nama lokasi tujuan.
+            ->when($request->search, function ($q, $s) {
+                $q->where(function ($w) use ($s) {
+                    $w->where('frame_number', 'like', "%{$s}%")
+                        ->orWhereHas('shoppingLocation', fn ($ql) => $ql->where('name', 'like', "%{$s}%"));
+                });
+            })
             ->latest()
             ->paginate($this->perPage(10))
             ->withQueryString();
