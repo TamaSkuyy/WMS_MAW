@@ -65,6 +65,13 @@ otomatis oleh harness, jadi jaga tetap ringkas. Detail panjang taruh di `docs/`.
     di-resolve saat boot, jadi `BACKUP_DB_PATH` (default `/backups`) dipakai
     dev/test; `backup:run` berjalan di container **scheduler** yang ikut mount
     `./backups/db`.
+13. **Jangan muat koleksi tak terbatas di request** (penyebab OOM
+    `Allowed memory size ... exhausted` di `BelongsTo.php`): summary/agregat
+    laporan dihitung di SQL (`ReportController::*FilteredQuery()`); export CSV
+    di-stream per halaman (`BaseExporter`), xlsx/pdf dibatasi
+    (`ExportManager::MAX_ROWS_IN_MEMORY` → `ExportException` + flash error);
+    daftar panjang pakai pagination/`limit`. Test penjaga:
+    `tests/Feature/MemoryBudgetTest.php`.
 
 ## Struktur
 

@@ -11,6 +11,9 @@ use Illuminate\Support\Carbon;
 
 class ShoppingImporter extends BaseImporter implements Importable
 {
+    /** Batas entri cache lookup frame (lihat lookupFrame()). */
+    private const FRAME_CACHE_LIMIT = 5000;
+
     private ?string $currentFrameNumber = null;
     private ?Shopping $currentShopping = null;
     private ?int $shoppingLocationId = null;
@@ -61,16 +64,31 @@ class ShoppingImporter extends BaseImporter implements Importable
     /**
      * Cari shopping berdasarkan frame number — di-cache selama job berjalan.
      * Data import TAM sering mengulang frame yang sama di banyak baris.
+     *
+     * Cache dibatasi FRAME_CACHE_LIMIT: file dengan puluhan ribu frame unik tidak
+     * boleh menahan satu model Shopping per frame sampai job selesai (memori job
+     * ikut habis). Setelah penuh, lookup jatuh ke query DB lagi — hasilnya sama.
      */
     protected function lookupFrame(string $frame): ?Shopping
     {
         if (! array_key_exists($frame, $this->frameCache)) {
-            $this->frameCache[$frame] = Shopping::where('frame_number', $frame)
+            $shopping = Shopping::where('frame_number', $frame)
                 ->orderByDesc('id')
                 ->first();
+
+            $this->cacheFrame($frame, $shopping);
+
+            return $shopping;
         }
 
         return $this->frameCache[$frame];
+    }
+
+    private function cacheFrame(string $frame, ?Shopping $shopping): void
+    {
+        if (count($this->frameCache) < self::FRAME_CACHE_LIMIT) {
+            $this->frameCache[$frame] = $shopping;
+        }
     }
 
     public function modelType(): string
@@ -261,7 +279,7 @@ class ShoppingImporter extends BaseImporter implements Importable
 
             // Simpan ke cache supaya baris berikutnya memakai shopping yang sama
             // (kalau tidak, frame baru akan dibuat berkali-kali).
-            $this->frameCache[$frame] = $this->currentShopping;
+            $this->cacheFrame($frame, $this->currentShopping);
             $this->currentFrameNumber = $frame;
         }
 

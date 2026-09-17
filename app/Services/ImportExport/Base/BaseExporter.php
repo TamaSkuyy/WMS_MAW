@@ -13,6 +13,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 abstract class BaseExporter implements Exportable
 {
+    /** Baris per halaman saat streaming CSV. */
+    private const EXPORT_CHUNK = 500;
+
     abstract public function headings(): array;
 
     abstract public function exportQuery(): \Illuminate\Database\Eloquent\Builder;
@@ -46,14 +49,25 @@ abstract class BaseExporter implements Exportable
 
     private function downloadCsv(ExportConfig $config): StreamedResponse
     {
-        $rows = $this->buildRows();
-
-        $response = new StreamedResponse(function () use ($config, $rows) {
+        // Stream per halaman (500 baris). Sebelumnya seluruh hasil di-`get()`
+        // dulu — model + array sekaligus — sehingga export riwayat besar
+        // menghabiskan memory_limit. CSV tidak butuh grid di memori, jadi
+        // format ini aman untuk data besar.
+        $response = new StreamedResponse(function () use ($config) {
             $handle = fopen('php://output', 'w');
             fputcsv($handle, $config->headings);
-            foreach ($rows as $row) {
-                fputcsv($handle, $row);
-            }
+
+            $page = 1;
+            do {
+                $models = $this->exportQuery()->forPage($page, self::EXPORT_CHUNK)->get();
+
+                foreach ($models as $model) {
+                    fputcsv($handle, $this->mapRow($model));
+                }
+
+                $page++;
+            } while ($models->count() === self::EXPORT_CHUNK);
+
             fclose($handle);
         });
 

@@ -12,7 +12,10 @@ class NotificationController extends Controller
      */
     public function markAllAsRead()
     {
-        Auth::user()->unreadNotifications->markAsRead();
+        // UPDATE langsung (satu query) — sebelumnya `unreadNotifications`
+        // (property) memuat SEMUA notifikasi belum dibaca ke memori.
+        Auth::user()->unreadNotifications()->update(['read_at' => now()]);
+
         return redirect()->back();
     }
 

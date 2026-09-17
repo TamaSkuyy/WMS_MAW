@@ -24,6 +24,9 @@ services:
       # Backup DB (spatie/laravel-backup) → folder host TERPISAH dari storage-vol,
       # supaya backup tetap aman kalau volume utama bermasalah & mudah diakses dari VPS.
       - ./backups/db:/backups:rw
+      # Batas PHP (memory_limit dll) — di-mount supaya bisa diubah tanpa rebuild:
+      # edit docker/php/zz-wms.ini lalu `docker compose ... up -d`.
+      - ./docker/php/zz-wms.ini:/usr/local/etc/php/conf.d/zz-wms.ini:ro
     depends_on:
       - redis
       - mysql
@@ -69,6 +72,8 @@ services:
       - .env.prod
     volumes:
       - storage-vol:/var/www/html/storage
+      # Import besar berjalan di sini — ikut memakai batas PHP dari zz-wms.ini.
+      - ./docker/php/zz-wms.ini:/usr/local/etc/php/conf.d/zz-wms.ini:ro
     depends_on:
       - redis
       - mysql
@@ -93,6 +98,7 @@ services:
       # backup ditulis ke filesystem container scheduler (hilang saat container
       # dibuat ulang) dan check Backups selalu "No backups found".
       - ./backups/db:/backups:rw
+      - ./docker/php/zz-wms.ini:/usr/local/etc/php/conf.d/zz-wms.ini:ro
     depends_on:
       - redis
       - mysql
@@ -112,6 +118,7 @@ services:
       - .env.prod
     volumes:
       - storage-vol:/var/www/html/storage
+      - ./docker/php/zz-wms.ini:/usr/local/etc/php/conf.d/zz-wms.ini:ro
     depends_on:
       - redis
     healthcheck:

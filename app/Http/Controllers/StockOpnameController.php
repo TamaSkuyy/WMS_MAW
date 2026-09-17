@@ -311,9 +311,11 @@ class StockOpnameController extends Controller
 
         $stockRows = collect();
         if ($products->isNotEmpty()) {
+            // Hanya kolom yang dipakai (+ eager `rack` TIDAK dipakai sama sekali di
+            // sini — relasi itu dulu memaksa Eloquent meng-eager-load belongsTo
+            // untuk SELURUH baris stok produk terkait, sumber OOM di file besar).
             $stockRows = Stock::whereIn('product_id', $products->pluck('id'))
-                ->with('rack:id,code')
-                ->get();
+                ->get(['id', 'product_id', 'rack_id', 'quantity']);
         }
         $stocksByKey = $stockRows->keyBy(fn ($s) => $s->product_id . '|' . ($s->rack_id ?? 'null'));
 

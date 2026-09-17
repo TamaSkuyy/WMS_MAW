@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Concerns;
 
 use App\Services\ImportExport\Base\BaseExporter;
+use App\Services\ImportExport\Exceptions\ExportException;
 use App\Services\ImportExport\Base\BaseImporter;
 use App\Services\ImportExport\DTOs\ExportConfig;
 use App\Services\ImportExport\Enums\ExportFormat;
@@ -69,7 +70,13 @@ trait HasImportExport
             exportableClass: $exporter::class,
         );
 
-        return app(ExportManager::class)->download($exporter, $config);
+        try {
+            return app(ExportManager::class)->download($exporter, $config);
+        } catch (ExportException $e) {
+            // Export besar (xlsx/pdf melebihi batas baris) → pesan jelas,
+            // bukan halaman 500.
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     public function importTemplate(Request $request)

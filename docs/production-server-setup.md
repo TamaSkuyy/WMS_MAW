@@ -427,9 +427,10 @@ Penyebab yang sudah diperbaiki di kode (rilis 2026-09-16):
    import ribuan frame, payload puluhan MB → worker Octane kehabisan memori →
    502 tepat saat halaman di-refresh. Sekarang daftar draft dicari lewat endpoint
    `shoppings/draft-frames` (server-side, berlimit 30 + pencarian/scan).
-2. **`memory_limit` PHP default image = 128M.** Sekarang
-   `/usr/local/etc/php/conf.d/zz-wms.ini` di image menetapkan 512M,
-   upload 12M / post 13M, `max_input_vars=5000`, `max_execution_time=300`.
+2. **`memory_limit` PHP default image = 128M.** Sekarang batas PHP ada di
+   `docker/php/zz-wms.ini` (512M, upload 12M / post 13M, `max_input_vars=5000`,
+   `max_execution_time=300`). File itu di-COPY ke image **dan** di-bind-mount ke
+   semua service PHP, jadi bisa diubah tanpa rebuild (lihat §9.4).
 3. **`client_max_body_size` nginx** sebelumnya default **1 MB** → file import
    >1 MB ditolak sebelum sampai Laravel. Sekarang 12M di
    `docker/nginx/default.conf`. **Host nginx (SSL) juga harus** punya
@@ -525,6 +526,68 @@ docker compose -p wms-wma-prod -f docker-compose.prod.yml --env-file .env.prod \
 > (default produksi `/backups`) supaya check tetap bisa jalan tanpa mount.
 > Notifikasi health otomatis dimatikan selama `HEALTH_TO_ADDRESS` kosong —
 > isi alamat email dulu kalau ingin notifikasi check gagal.
+
+### 9.4 `Allowed memory size of 134217728 bytes exhausted` (memory_limit)
+
+Contoh log (path `/var/www/html/vendor/...` = di dalam container):
+
+```
+Symfony\Component\ErrorHandler\Error\FatalError
+Allowed memory size of 134217728 bytes exhausted (tried to allocate 2621440 bytes)
+in .../vendor/laravel/framework/src/Illuminate/Database/Eloquent/Relations/BelongsTo.php:136
+```
+
+Arti angka itu: **134217728 = 128 MB** → limit default image PHP, artinya image
+belum memakai `docker/php/zz-wms.ini` (belum di-rebuild) atau file itu belum
+ter-mount. Kalau muncul di `BelongsTo::getEagerModelKeys()`, penyebabnya hampir
+selalu **satu request memuat koleksi model yang tidak dibatasi** lalu meng-eager-load
+relasi belongsTo untuk semuanya (mis. daftar ribuan draft + `shoppingLocation`).
+
+**Naikkan limit memang perlu, tapi bukan solusinya.** Batas 512M hanya jaring
+pengaman; query yang memuat data tak terbatas tetap harus dibatasi
+(paginate / `limit()` / agregasi SQL), kalau tidak masalahnya pindah ke 512M.
+
+Titik yang sudah dibatasi di kode (rilis 2026-09-17) — semuanya dulu memuat
+seluruh riwayat ke memori:
+
+| Lokasi | Sebelum | Sekarang |
+| --- | --- | --- |
+| `ReportController` summary receiving/shopping | `->get()` seluruh `cycle_items`/`shopping_items` + 6-7 relasi eager-load hanya untuk 3 angka | agregasi SQL (`count`/`sum`/`distinct`) |
+| `ReportController` + `BaseExporter` export | semua baris → model → array → PhpSpreadsheet | CSV di-stream per 500 baris; xlsx dibatasi 20.000 baris, pdf 3.000 (pesan jelas, bukan 502) |
+| `CycleController::show()` `lastUsedRacks` | semua `cycle_items` historis untuk produk di cycle | satu query `ROW_NUMBER()` per produk |
+| `ShoppingController::index` | eager-load semua `items` padahal cuma `items_count` | `withCount('items')` saja |
+| `StockOpnameController::resolveRows()` | `with('rack')` (tak dipakai) atas semua baris stok | kolom seperlunya, tanpa eager load |
+| `NotificationController::markAllAsRead()` | hidrasi semua notifikasi belum dibaca | satu `UPDATE` |
+| `ShoppingImporter` frame cache | satu model per frame unik tanpa batas | dibatasi 5.000 entri |
+
+Menaikkan limit **tanpa rebuild** (file di-mount dari repo):
+
+```bash
+nano docker/php/zz-wms.ini          # ubah memory_limit, mis. 768M
+docker compose -p wms-wma-prod -f docker-compose.prod.yml --env-file .env.prod up -d
+# verifikasi limit yang benar-benar aktif (jalankan di app/queue/scheduler):
+docker compose -p wms-wma-prod -f docker-compose.prod.yml --env-file .env.prod \
+  exec app php -r 'echo ini_get("memory_limit"), PHP_EOL;'
+```
+
+Kalau image lama belum punya file itu, sekaligus rebuild:
+`./deploy-production.sh --rebuild --with-assets`.
+
+Cari request pelakunya (kalau error berulang) — FatalError OOM tidak menyertakan
+request-nya, jadi pakai kombinasi log nginx (jam + URL) dan catat:
+
+```bash
+# URL yang diakses tepat sebelum error (jam sama), dari nginx host/docker
+docker compose -p wms-wma-prod -f docker-compose.prod.yml logs nginx --since 30m | tail -40
+sudo tail -100 /var/log/nginx/access.log
+
+# Ringkasan error terakhir beserta file:line
+docker compose -p wms-wma-prod -f docker-compose.prod.yml logs app --since 30m \
+  | grep -iE "memory size|Fatal" | tail -20
+```
+
+Kalau RAM VPS terbatas, tambah swap (§1.4) dulu sebelum menaikkan limit — limit
+besar tanpa RAM/swap cukup hanya memindahkan OOM dari PHP ke kernel.
 
 ---
 

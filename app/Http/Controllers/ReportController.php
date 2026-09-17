@@ -9,6 +9,7 @@ use App\Services\ImportExport\DTOs\ExportConfig;
 use App\Services\ImportExport\Enums\ExportFormat;
 use App\Services\ImportExport\Exports\ReceivingReportExporter;
 use App\Services\ImportExport\Exports\ShoppingReportExporter;
+use App\Services\ImportExport\Exceptions\ExportException;
 use App\Services\ImportExport\Managers\ExportManager;
 use Illuminate\Database\Eloquent\Builder;
 use App\Http\Controllers\Concerns\HasPagination;
@@ -48,13 +49,32 @@ class ReportController extends Controller
             exportableClass: ReceivingReportExporter::class,
         );
 
-        return app(ExportManager::class)->download($exporter, $config);
+        try {
+            return app(ExportManager::class)->download($exporter, $config);
+        } catch (ExportException $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     private function receivingQuery(array $filters): Builder
     {
-        return CycleItem::query()
+        return $this->receivingFilteredQuery($filters)
             ->with(['cycle.supplier', 'cycle.creator', 'cycle.carrier', 'product', 'rack', 'latestReceiveLog.user'])
+            ->latest('id');
+    }
+
+    /**
+     * Query dasar (tanpa eager load / order) untuk LIST & agregat.
+     *
+     * Dipisah supaya summary tidak perlu memuat model: dulu `receivingSummary()`
+     * memakai query ber-`with()` lalu `->get()` atas SELURUH riwayat cycle_items
+     * hanya untuk menghitung 3 angka — penyebab
+     * "Allowed memory size of 134217728 bytes exhausted" di BelongsTo saat
+     * membuka /reports/receiving tanpa filter tanggal.
+     */
+    private function receivingFilteredQuery(array $filters): Builder
+    {
+        return CycleItem::query()
             ->whereHas('cycle', function ($q) use ($filters) {
                 if (! empty($filters['date_from'])) {
                     $q->whereDate('received_at', '>=', $filters['date_from']);
@@ -68,18 +88,16 @@ class ReportController extends Controller
                 if (! empty($filters['status'])) {
                     $q->where('status', $filters['status']);
                 }
-            })
-            ->latest('id');
+            });
     }
 
     private function receivingSummary(array $filters): array
     {
-        $items = $this->receivingQuery($filters)->get();
-
+        // Agregasi di database — jangan pernah ->get() seluruh riwayat di sini.
         return [
-            'total_transactions' => $items->pluck('cycle_id')->unique()->count(),
-            'total_quantity' => (int) $items->sum('received_quantity'),
-            'unique_products' => $items->pluck('product_id')->unique()->count(),
+            'total_transactions' => (int) $this->receivingFilteredQuery($filters)->distinct()->count('cycle_id'),
+            'total_quantity' => (int) $this->receivingFilteredQuery($filters)->sum('received_quantity'),
+            'unique_products' => (int) $this->receivingFilteredQuery($filters)->distinct()->count('product_id'),
         ];
     }
 
@@ -111,13 +129,24 @@ class ReportController extends Controller
             exportableClass: ShoppingReportExporter::class,
         );
 
-        return app(ExportManager::class)->download($exporter, $config);
+        try {
+            return app(ExportManager::class)->download($exporter, $config);
+        } catch (ExportException $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     private function shoppingQuery(array $filters): Builder
     {
-        return ShoppingItem::query()
+        return $this->shoppingFilteredQuery($filters)
             ->with(['shopping.shoppingLocation', 'shopping.shippedBy', 'product', 'rack'])
+            ->latest('id');
+    }
+
+    /** Lihat catatan pada receivingFilteredQuery() — alasan yang sama. */
+    private function shoppingFilteredQuery(array $filters): Builder
+    {
+        return ShoppingItem::query()
             ->whereHas('shopping', function ($q) use ($filters) {
                 if (! empty($filters['date_from'])) {
                     $q->whereDate('shopping_date', '>=', $filters['date_from']);
@@ -131,18 +160,15 @@ class ReportController extends Controller
                 if (! empty($filters['status'])) {
                     $q->where('status', $filters['status']);
                 }
-            })
-            ->latest('id');
+            });
     }
 
     private function shoppingSummary(array $filters): array
     {
-        $items = $this->shoppingQuery($filters)->get();
-
         return [
-            'total_transactions' => $items->pluck('shopping_id')->unique()->count(),
-            'total_quantity' => (int) $items->sum('quantity'),
-            'unique_products' => $items->pluck('product_id')->unique()->count(),
+            'total_transactions' => (int) $this->shoppingFilteredQuery($filters)->distinct()->count('shopping_id'),
+            'total_quantity' => (int) $this->shoppingFilteredQuery($filters)->sum('quantity'),
+            'unique_products' => (int) $this->shoppingFilteredQuery($filters)->distinct()->count('product_id'),
         ];
     }
 }

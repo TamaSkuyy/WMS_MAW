@@ -261,13 +261,23 @@ class CycleController extends Controller
         $cycle->load(['supplier', 'creator', 'carrier', 'items.product.vehicleModel', 'items.product.category', 'items.product.defaultRack', 'items.receiveLogs.user']);
 
         $productIds = $cycle->items->pluck('product_id')->toArray();
-        $lastUsedRacks = CycleItem::whereIn('product_id', $productIds)
-            ->whereNotNull('rack_id')
-            ->where('cycle_id', '!=', $cycle->id)
-            ->orderByDesc('updated_at')
-            ->get()
-            ->unique('product_id')
-            ->pluck('rack_id', 'product_id');
+        // Rak terakhir yang dipakai per produk — SATU query berjendela, hasilnya
+        // dibatasi jumlah produk di cycle ini. Sebelumnya memuat SEMUA cycle_items
+        // historis untuk produk-produk tersebut lalu `unique()` di PHP (bisa
+        // menghabiskan memori di cycle besar).
+        $lastUsedRacks = empty($productIds)
+            ? collect()
+            : DB::query()
+                ->fromSub(function ($q) use ($productIds, $cycle) {
+                    $q->from('cycle_items')
+                        ->whereIn('product_id', $productIds)
+                        ->whereNotNull('rack_id')
+                        ->where('cycle_id', '!=', $cycle->id)
+                        ->selectRaw('product_id, rack_id, ROW_NUMBER() OVER (PARTITION BY product_id ORDER BY updated_at DESC, id DESC) as rn');
+                }, 'latest_rack')
+                ->where('rn', 1)
+                ->get()
+                ->pluck('rack_id', 'product_id');
 
         return Inertia::render('Transactions/Cycles/Show', [
             'cycle' => $cycle,

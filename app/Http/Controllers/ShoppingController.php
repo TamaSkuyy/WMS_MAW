@@ -28,7 +28,9 @@ class ShoppingController extends Controller
 
     public function index(Request $request)
     {
-        $shoppings = Shopping::with(['shoppingLocation', 'shippedBy:id,name', 'items'])
+        // Hanya `items_count` yang dipakai tabel — jangan eager-load semua item
+        // (frame dengan ratusan/ribuan item bikin payload & memori membengkak).
+        $shoppings = Shopping::with(['shoppingLocation', 'shippedBy:id,name'])
             ->withCount('items')
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->search, fn ($q, $s) => $q->whereHas('shoppingLocation', fn ($ql) => $ql->where('name', 'like', "%{$s}%")))

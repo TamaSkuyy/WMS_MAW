@@ -1,6 +1,6 @@
 import React from 'react';
 import AppLayout from '../../Tailadmin/layout/AppLayout';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import PageBreadcrumb from '../../Tailadmin/components/common/PageBreadCrumb';
 import ComponentCard from '../../Tailadmin/components/common/ComponentCard';
 import Button from '../../Tailadmin/components/ui/button/Button';
@@ -10,13 +10,16 @@ import EmptyState from '../../Tailadmin/components/common/EmptyState';
 import MetricCard from '../Dashboard/MetricCard';
 import { ListIcon, ArrowUpIcon, BoxCubeIcon } from '../../Tailadmin/icons';
 import Pagination from '../../Tailadmin/components/common/Pagination';
+import Alert from '../../Tailadmin/components/ui/alert/Alert';
 
 export default function Shopping({ items, summary, filters }: any) {
+    const { flash = {} } = usePage().props as any;
+
     const updateFilter = (key: string, value: string) => {
         router.get(route('reports.shopping'), { ...filters, [key]: value }, { preserveState: true, replace: true });
     };
 
-    const exportUrl = (format: 'xlsx' | 'pdf') => {
+    const exportUrl = (format: 'xlsx' | 'csv' | 'pdf') => {
         const params = new URLSearchParams({ ...filters, format }).toString();
         return `${route('reports.shopping.export')}?${params}`;
     };
@@ -31,6 +34,12 @@ export default function Shopping({ items, summary, filters }: any) {
         <>
             <Head title="Shopping Report" />
             <PageBreadcrumb pageTitle="Shopping Report" />
+
+            {/* Export xlsx/pdf dibatasi jumlah baris (dimuat penuh di memori);
+                CSV di-stream per halaman sehingga aman untuk data besar. */}
+            {flash?.error && (
+                <div className="mb-4"><Alert variant="error" title="Export gagal" message={flash.error} /></div>
+            )}
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-6">
                 <MetricCard
@@ -85,6 +94,7 @@ export default function Shopping({ items, summary, filters }: any) {
                     </div>
                     <div className="flex gap-2">
                         <a href={exportUrl('xlsx')}><Button variant="outline" size="sm">Export Excel</Button></a>
+                        <a href={exportUrl('csv')}><Button variant="outline" size="sm">Export CSV</Button></a>
                         <a href={exportUrl('pdf')}><Button variant="outline" size="sm">Export PDF</Button></a>
                     </div>
                 </div>
