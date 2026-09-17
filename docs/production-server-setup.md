@@ -713,6 +713,30 @@ menghapus `Vite::prefetch(concurrency: 3)` di `app/Providers/AppServiceProvider.
 > `proxy_busy_buffers_size`. Selama `nginx -t` gagal, nginx **tidak** di-reload —
 > situs tetap jalan dengan konfigurasi lama, jadi tidak ada downtime.
 
+> ### ⚠️ Jebakan: bind-mount FILE tunggal "mengunci inode"
+>
+> Gejala: `docker/nginx/default.conf` di host sudah benar (ada `proxy_buffer_size`),
+> `nginx -s reload` sukses, tapi `nginx -T` **tetap tidak menampilkan** direktifnya —
+> dan file di dalam container isinya versi lama (cek
+> `exec nginx grep -c proxy_buffer_size /etc/nginx/conf.d/default.conf` → `0`).
+>
+> Penyebab: compose dulu me-mount **file tunggal**
+> (`./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf`). Bind-mount file
+> mengikat **inode** saat container dibuat; `git pull` menulis file baru lalu
+> `rename` → inode baru, sehingga container **tetap melihat file lama** sampai
+> container di-recreate. `reload` tidak akan pernah menolong.
+>
+> Perbaikan:
+> 1. Sekali sekarang: `docker compose -p wms-wma-prod -f docker-compose.prod.yml
+>    --env-file .env.prod up -d --force-recreate nginx`
+> 2. Permanen (sudah ada di repo): compose me-mount **direktori**
+>    (`./docker/nginx:/etc/nginx/conf.d:ro`) → perubahan isi file langsung terlihat,
+>    cukup `nginx -s reload`.
+>
+> Catatan: hal yang sama berlaku untuk mount file lain (mis.
+> `docker/php/zz-wms.ini`). Kalau nilai `memory_limit` di container tidak sesuai
+> isi file, jalankan `up -d --force-recreate app queue scheduler reverb`.
+
 ---
 
 ## 10. Quick Reference Card

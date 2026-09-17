@@ -48,7 +48,12 @@ services:
     ports:
       - "8081:80"
     volumes:
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      # PENTING: mount DIREKTORI, bukan file tunggal.
+      # Bind-mount file tunggal "mengunci inode": kalau `git pull` mengganti file
+      # (git menulis file baru lalu rename → inode baru), container TETAP melihat
+      # isi lama sampai container di-recreate — reload nginx tidak menolong.
+      # Dengan mount direktori, perubahan isi file langsung terlihat (cukup reload).
+      - ./docker/nginx:/etc/nginx/conf.d:ro
       - storage-vol:/var/www/html/storage
       - ./public:/var/www/html/public
     depends_on:

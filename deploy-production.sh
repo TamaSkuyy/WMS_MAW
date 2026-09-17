@@ -92,14 +92,25 @@ reload_nginx() {
         return 1
     fi
 
-    local buffers
-    buffers=$(dc exec -T nginx nginx -T 2>/dev/null | grep -E "proxy_buffer_size|proxy_buffers|proxy_busy_buffers_size" || true)
-    if [ -z "${buffers}" ]; then
-        warn "Buffer header nginx BELUM aktif — halaman dengan header besar bisa 502."
-        warn "Pastikan docker/nginx/default.conf terbaru (proxy_buffer_size 32k) sudah ter-pull."
+    local in_file in_run
+    # 1) Apa isi file yang BENAR-BENAR ada di dalam container?
+    in_file=$(dc exec -T nginx grep -cE "proxy_buffer_size" /etc/nginx/conf.d/default.conf 2>/dev/null || true)
+    # 2) Apa yang dipakai nginx saat ini? (2>&1: dump -T kadang lewat stderr)
+    in_run=$(dc exec -T nginx nginx -T 2>&1 | grep -E "proxy_buffer_size|proxy_buffers|proxy_busy_buffers_size" || true)
+
+    if [ -z "${in_run}" ]; then
+        warn "Buffer header nginx BELUM aktif di konfigurasi yang BERJALAN."
+        if [ "${in_file:-0}" != "0" ]; then
+            warn "Tapi file DI DALAM container sudah punya direktifnya → mount/container basi."
+            warn "Recreate container nginx (bind-mount ikut ter-refresh):"
+        else
+            warn "File di dalam container JUGA belum punya direktif → docker/nginx/default.conf belum ter-pull/ter-mount."
+            warn "Setelah dipastikan file-nya benar, recreate container nginx:"
+        fi
+        warn "  ${COMPOSE_CMD} -p ${PROJECT_NAME} -f ${COMPOSE_FILE} up -d --force-recreate nginx"
     else
         log "Buffer header nginx aktif:"
-        echo "${buffers}" | sed 's/^/    /'
+        echo "${in_run}" | sed 's/^/    /'
     fi
 
     return 0
