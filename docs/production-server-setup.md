@@ -676,6 +676,13 @@ Alternatif kalau tidak mau menaikkan buffer: kurangi jumlah header dengan
 menghapus `Vite::prefetch(concurrency: 3)` di `app/Providers/AppServiceProvider.php`
 (header `Link:` turun drastis, tapi kehilangan Early Hints).
 
+> **Kalau `nginx -t` menolak dengan `"large_client_header_buffers" directive is
+> not allowed here`**: direktif itu berada di dalam blok `location { }`. Pindahkan
+> ke level `server { }` (atau ke `http { }` di `/etc/nginx/nginx.conf`). Yang boleh
+> di dalam `location` hanya `proxy_buffer_size`, `proxy_buffers`, dan
+> `proxy_busy_buffers_size`. Selama `nginx -t` gagal, nginx **tidak** di-reload —
+> situs tetap jalan dengan konfigurasi lama, jadi tidak ada downtime.
+
 ---
 
 ## 10. Quick Reference Card
@@ -756,8 +763,10 @@ server {
     listen 80;
     server_name wms.example.com;
 
-    # Header request/cookie besar (boleh besar karena XSRF + sesi).
-    # Hanya boleh di level http/server, BUKAN di dalam location.
+    # ── Header REQUEST (cookie bisa besar karena XSRF + sesi) ──────────
+    # ⚠️ Dua direktif ini HANYA boleh di konteks `http` atau `server`.
+    #    Kalau ditaruh di dalam `location { }` → nginx gagal start:
+    #    "directive is not allowed here".
     large_client_header_buffers 8 32k;
     client_header_buffer_size 8k;
 
@@ -774,9 +783,10 @@ server {
         proxy_read_timeout 300s;
         client_max_body_size 20M;
 
-        # Buffer HEADER respons — WAJIB. Laravel mengirim header `Link:` Early
-        # Hints untuk semua aset build (±7,5 KB dengan 124 aset); default 4-8 KB
-        # membuat nginx membalas 502 "upstream sent too big header" (§9.6).
+        # ── Buffer HEADER RESPONS — WAJIB (boleh di dalam location) ─────
+        # Laravel mengirim header `Link:` Early Hints untuk semua aset build
+        # (±7,5 KB dengan 124 aset); default 4-8 KB → nginx balas 502
+        # "upstream sent too big header" (lihat §9.6).
         proxy_buffer_size 32k;
         proxy_buffers 8 32k;
         proxy_busy_buffers_size 64k;
@@ -794,6 +804,26 @@ server {
     }
 }
 ```
+
+> **Alternatif lebih aman** (kalau tidak mau menyentuh file site): taruh dua direktif
+> header request di **`http { }`** pada `/etc/nginx/nginx.conf` saja — berlaku untuk
+> semua site, dan hanya `proxy_buffer_size`/`proxy_buffers`/`proxy_busy_buffers_size`
+> yang ditambahkan di `location /`:
+>
+> ```nginx
+> # /etc/nginx/nginx.conf
+> http {
+>     ...
+>     large_client_header_buffers 8 32k;
+>     client_header_buffer_size 8k;
+>     ...
+> }
+> ```
+>
+> Cek posisi direktif yang sudah ada (kalau `nginx -t` menolak):
+> ```bash
+> sudo nl -ba /etc/nginx/sites-available/<nama-site> | sed -n '1,45p'
+> ```
 
 Enable site:
 
