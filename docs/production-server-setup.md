@@ -622,6 +622,60 @@ Cara membaca hasilnya:
 | restart count container naik terus | Container crash-loop | Lihat bagian 6/7 output (error asli) — jangan hanya restart berulang |
 | Tidak ada temuan | 502 hanya transient (deploy/restart) | Ulangi akses; kalau berulang kirim output diagnosa |
 
+### 9.6 502 pada halaman tertentu — `upstream sent too big header`
+
+Gejala di log nginx (docker **atau** host):
+
+```
+[error] upstream sent too big header while reading response header from upstream,
+client: ..., request: "GET /shoppings/create HTTP/1.1",
+upstream: "http://172.18.0.5:8080/shoppings/create"
+→ 502
+```
+
+**Bukan Redis / OOM / migrasi** (cek §9.5 dulu untuk memastikan). Ini murni
+**buffer header nginx kekecilan**.
+
+Penyebab: Laravel (lewat `Vite::prefetch()` + middleware
+`AddLinkHeadersForPreloadedAssets`) mengirim header **`Link:` Early Hints** untuk
+**semua** aset build. Dengan 124 aset, ukurannya ±**7,5 KB** — ditambah cookie
+sesi/XSRF. Default nginx cuma `proxy_buffer_size 4k` (atau 8k) → nginx menolak
+respons → 502 pada halaman yang headernya paling besar (mis. `/shoppings/create`).
+
+Cek cepat besarnya header di server:
+
+```bash
+# Ukuran header Link dari app (langsung ke Octane, tanpa nginx)
+curl -sS -D - -o /dev/null -H 'Cookie: laravel_session=x' http://127.0.0.1:8081/shoppings/create \
+  | awk 'BEGIN{RS="\r\n"} {print length($0)"\t"substr($0,1,60)}' | sort -rn | head -5
+```
+
+Perbaikan (sudah dipasang di repo untuk docker nginx — `docker/nginx/default.conf`):
+
+```nginx
+proxy_buffer_size 32k;
+proxy_buffers 8 32k;
+proxy_busy_buffers_size 64k;
+large_client_header_buffers 8 32k;
+client_header_buffer_size 8k;
+```
+
+> PENTING: respons melewati **dua** nginx (docker nginx → nginx host/SSL). Kalau
+> hanya salah satu dinaikkan, error yang sama muncul dari lapisan berikutnya.
+> Tambahkan blok yang sama ke `location /` di nginx **host** (config contoh di §4.5).
+
+Setelah itu:
+
+```bash
+git pull
+./deploy-production.sh --update --with-assets   # nginx conf di-mount, container nginx dibuat ulang
+sudo nginx -t && sudo systemctl reload nginx    # untuk nginx host
+```
+
+Alternatif kalau tidak mau menaikkan buffer: kurangi jumlah header dengan
+menghapus `Vite::prefetch(concurrency: 3)` di `app/Providers/AppServiceProvider.php`
+(header `Link:` turun drastis, tapi kehilangan Early Hints).
+
 ---
 
 ## 10. Quick Reference Card
@@ -702,6 +756,11 @@ server {
     listen 80;
     server_name wms.example.com;
 
+    # Header request/cookie besar (boleh besar karena XSRF + sesi).
+    # Hanya boleh di level http/server, BUKAN di dalam location.
+    large_client_header_buffers 8 32k;
+    client_header_buffer_size 8k;
+
     # ── Proxy to Docker nginx (port 8081) ───────────────────
     location / {
         proxy_pass http://127.0.0.1:8081;
@@ -714,6 +773,13 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_read_timeout 300s;
         client_max_body_size 20M;
+
+        # Buffer HEADER respons — WAJIB. Laravel mengirim header `Link:` Early
+        # Hints untuk semua aset build (±7,5 KB dengan 124 aset); default 4-8 KB
+        # membuat nginx membalas 502 "upstream sent too big header" (§9.6).
+        proxy_buffer_size 32k;
+        proxy_buffers 8 32k;
+        proxy_busy_buffers_size 64k;
     }
 
     # WebSocket (Reverb)

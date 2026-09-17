@@ -354,11 +354,11 @@ quick_update() {
     trap 'warn "Cleanup trap: memastikan maintenance mode OFF..."; dc exec -T app php artisan up 2>/dev/null || true' EXIT
 
     # 1. Aktifkan maintenance mode
-    log "1/7 Maintenance mode ON..."
+    log "1/8 Maintenance mode ON..."
     dc exec -T app php artisan down --retry=5 --render="errors::503" 2>/dev/null || true
 
     # 2. Salin file kode (tanpa vendor, node_modules, dll)
-    log "2/7 Salin kode PHP terbaru ke container app..."
+    log "2/8 Salin kode PHP terbaru ke container app..."
     ${RUNTIME} cp app/. "${APP_CONTAINER}:/var/www/html/app/"
     ${RUNTIME} cp config/. "${APP_CONTAINER}:/var/www/html/config/"
     ${RUNTIME} cp database/. "${APP_CONTAINER}:/var/www/html/database/"
@@ -382,7 +382,7 @@ quick_update() {
 
     # 3. Build & salin frontend assets (opsional)
     if [ "${BUILD_ASSETS}" = true ]; then
-        log "3/7 Build frontend assets (Vite)..."
+        log "3/8 Build frontend assets (Vite)..."
         # Clear Vite cache + old build via Docker (file biasanya punya root)
         # Ini lebih reliable daripada sudo chown yg butuh password
         docker run --rm \
@@ -412,12 +412,12 @@ quick_update() {
             warn "  Nginx container tidak ditemukan, assets hanya tersalin ke app."
         fi
     else
-        log "3/7 Skip build assets (gunakan --with-assets untuk rebuild Vite)"
+        log "3/8 Skip build assets (gunakan --with-assets untuk rebuild Vite)"
     fi
 
     # 4. Propagasi ke container lain (queue, scheduler, nginx)
     if [ -n "$QUEUE_CONTAINER" ]; then
-        log "4/7 Propagasi ke container queue & scheduler..."
+        log "4/8 Propagasi ke container queue & scheduler..."
         for cnt in $QUEUE_CONTAINER $SCHED_CONTAINER; do
             [ -z "$cnt" ] && continue
             ${RUNTIME} cp app/. "${cnt}:/var/www/html/app/"
@@ -436,7 +436,7 @@ quick_update() {
             ${RUNTIME} cp lang/. "${cnt}:/var/www/html/lang/" 2>/dev/null || true
         done
     else
-        log "4/7 Skip (queue/scheduler tidak berjalan)"
+        log "4/8 Skip (queue/scheduler tidak berjalan)"
     fi
 
     # Propagasi ke nginx container (untuk static files & view updates)
@@ -453,7 +453,7 @@ quick_update() {
     fi
 
     # 5. Migrasi database
-    log "5/7 Migrasi database..."
+    log "5/8 Migrasi database..."
     # Verifikasi dulu: kalau copy kode parsial, migrate/cache akan gagal dan app
     # bangun dengan config rusak → 502. Lebih baik berhenti sekarang dengan pesan jelas.
     log "  → Verifikasi file kode inti di container app..."
@@ -474,7 +474,7 @@ quick_update() {
     dc exec -T app php artisan migrate --force
 
     # 6. Clear & rebuild semua cache
-    log "6/7 Clear & rebuild cache (config, route, view, event)..."
+    log "6/8 Clear & rebuild cache (config, route, view, event)..."
     clear_laravel_caches
     dc exec -T app php artisan config:cache
     dc exec -T app php artisan route:cache
@@ -488,12 +488,19 @@ quick_update() {
     # 7. Reload Octane workers — restart container agar code baru PASTI ter-load
     # (octane:reload via admin endpoint tidak selalu mempan; worker bisa
     #  tetap memegang code/config lama di memory walau file sudah dicopy)
-    log "7/7 Restart app container (reload Octane workers)..."
+    log "7/8 Restart app container (reload Octane workers)..."
     if dc restart app 2>/dev/null; then
         log "  Workers di-reload via container restart ✓"
     else
         warn "  Restart app gagal — restart manual: ${RUNTIME} restart ${APP_CONTAINER}"
     fi
+
+    # 8. Reload nginx: conf di-bind-mount dari repo, jadi perubahan
+    # docker/nginx/default.conf (mis. buffer header) baru aktif setelah reload.
+    log "8/8 Reload nginx (ambil docker/nginx/default.conf terbaru)..."
+    dc exec -T nginx nginx -s reload 2>/dev/null \
+        && log "  nginx reload OK ✓" \
+        || warn "  nginx reload gagal — jalankan: dc exec nginx nginx -s reload"
 
     # Maintenance mode OFF — juga ditangani oleh trap EXIT di atas
     trap - EXIT
@@ -768,7 +775,20 @@ if [ "${ACTION}" = "diagnose" ]; then
     echo
 
     echo "── 7) Log nginx docker (cari 502/upstream) ──"
-    dc logs nginx --since 60m 2>&1 | grep -iE "502|upstream|error" | tail -20 || true
+    NGINX_502=$(dc logs nginx --since 60m 2>&1 | grep -iE "502|upstream|error" | tail -20 || true)
+    if [ -n "${NGINX_502}" ]; then
+        echo "${NGINX_502}"
+        if echo "${NGINX_502}" | grep -qi "too big header"; then
+            echo
+            warn "TERDETEKSI: 'upstream sent too big header' → buffer header nginx kekecilan."
+            warn "Laravel mengirim header Link: Early Hints untuk semua aset build (±7,5 KB)."
+            warn "Fix: naikkan di docker/nginx/default.conf DAN nginx host (lihat docs §9.6):"
+            warn "  proxy_buffer_size 32k; proxy_buffers 8 32k; proxy_busy_buffers_size 64k;"
+            warn "  large_client_header_buffers 8 32k; client_header_buffer_size 8k;"
+        fi
+    else
+        success "Tidak ada error 502/upstream di log nginx (60 menit terakhir) ✓"
+    fi
     echo "  Kalau pakai nginx host (SSL), cek juga: sudo tail -50 /var/log/nginx/error.log"
     echo
 
