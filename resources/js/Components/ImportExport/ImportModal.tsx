@@ -105,11 +105,29 @@ export default function ImportModal({ isOpen, onClose, onComplete, importUrl, pr
       setHeaders(data.headers);
       setTotalRows(data.total_rows);
 
+      // Cocokkan otomatis kolom file → field sistem, dengan 3 tingkat:
+      //  1. sama persis dengan key field (`part_number` ↔ "Part Number"),
+      //  2. sama persis dengan label field (`unit` ↔ "Satuan"),
+      //  3. salah satu diawali yang lain (`model_kendaraan` ↔ "Model").
+      // Tanpa tingkat 2 & 3, template Produk (header Indonesia: Merek/Satuan/
+      // Aktif/Rak) hampir semua harus dipetakan manual.
+      const norm = (value: unknown) => String(value ?? '').toLowerCase().replace(/[^a-z]/g, '');
+      const headers: string[] = (data.headers || []).filter((h: unknown) => typeof h === 'string') as string[];
+
       const autoMapping: Record<string, string> = {};
       for (const field of fields) {
-        const match = data.headers.find(
-          (h: string) => typeof h === 'string' && h.toLowerCase().replace(/[^a-z]/g, '') === field.key.toLowerCase()
-        );
+        const key = norm(field.key);
+        const label = norm(field.label);
+
+        const match =
+          headers.find((h) => norm(h) === key) ??
+          headers.find((h) => norm(h) === label) ??
+          headers.find((h) => {
+            const header = norm(h);
+            if (header === '') return false;
+            return key.startsWith(header) || header.startsWith(key) || label.startsWith(header) || header.startsWith(label);
+          });
+
         if (match) autoMapping[field.key] = match;
       }
       setColumnMapping(autoMapping);

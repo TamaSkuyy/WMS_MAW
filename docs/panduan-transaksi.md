@@ -2,6 +2,10 @@
 
 ## Mitra Adhi Wasana
 
+> 📥 **Butuh panduan import/upload file?** Semua alur import (Data Order TAM, Barang
+> Shopping, Produk & master data, Stock Opname) dijelaskan khusus di
+> **`docs/manual-import.md`** — format kolom, arti pesan error, dan checklist.
+
 ---
 
 ## Daftar Isi
@@ -13,6 +17,7 @@
    - [A0. Alur Import 2 Langkah (header dulu, barang kemudian)](#a0-alur-import-2-langkah-header-dulu-barang-kemudian)
    - [A. Membuat Shopping Baru](#a-membuat-shopping-baru)
    - [B. Proses Pengiriman (Ship)](#b-proses-pengiriman-ship)
+   - [B2. Kirim Massal — tugas Leader](#b2-kirim-massal--tugas-leader-setelah-import-sekali-klik)
 3. [Melihat & Mencari Stok](#3-melihat--mencari-stok)
 4. [Memantau Pengiriman (Delivery Monitor)](#4-memantau-pengiriman-delivery-monitor)
 5. [Tips & Troubleshooting](#5-tips--troubleshooting)

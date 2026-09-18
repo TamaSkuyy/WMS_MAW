@@ -4,6 +4,26 @@
 
 > Cetak 1 halaman A4, laminating, tempel di meja gudang.  
 > 📞 Butuh bantuan? Hubungi: **____________________**
+>
+> 📥 **Khusus urusan import/upload file** (Data Order TAM, Barang Shopping, Produk,
+> Stock Opname, dll): lihat **`docs/manual-import.md`** — lengkap dengan format kolom,
+> arti pesan error, dan checklist sebelum/sesudah import.
+
+---
+
+## 📥 IMPORT FILE (RINGKAS)
+
+| Mau apa? | Menu > Tombol | File berisi |
+| --- | --- | --- |
+| Rencana kiriman supplier (TAM) → cycle | Transactions > Cycles > **Import Data Order** | file lebar TAM (sheet `EMAIL`, blok `CYCLE 1..N`) |
+| Barang untuk frame shopping | Transactions > Shopping > **2. Import Barang** | Frame Number + Part Number + Quantity |
+| Frame + barang sekaligus (alur lama) | Transactions > Shopping > **Import Gabungan** | Frame + Part + Qty |
+| Produk / Rak / Supplier / dll | Master Data > **Import** | pakai template yang diunduh |
+| Hasil hitung Stock Opname | Transactions > Stock Opname > **Upload** | template aplikasi (kolom **RAK wajib diisi**) |
+
+Semua file: **xlsx / xls / csv, maks 10 MB, header di baris pertama**. Prosesnya
+antrian — tunggu sampai muncul ringkasan **Berhasil / Dilewati / Error**.
+📖 Detail: `docs/manual-import.md`.
 
 ---
 

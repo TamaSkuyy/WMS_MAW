@@ -197,6 +197,10 @@ Test DB: MySQL `127.0.0.1:3308` / `wms_maw_testing` (lihat `phpunit.xml`).
 
 ## Dokumen terpilih
 
+- `docs/manual-import.md` — **manual book semua fitur import** (Data Order TAM,
+  Barang Shopping alur 2 langkah, Produk & master data, Cycle, Stock Opname):
+  format kolom per modul, arti angka hasil import, pesan error + solusi, checklist.
+  Kalau mengubah importer/template/opsi import, **update dokumen ini sekalian**.
 - `docs/delivery-monitor.md` — konsep slot C1-C6 vs nomor cycle.
 - `docs/panduan-transaksi.md` — alur Quick Receive, Cycle, Data Order import.
 - `docs/superpowers/specs/` — spec desain per fitur (arsip keputusan).

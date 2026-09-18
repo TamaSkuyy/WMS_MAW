@@ -56,6 +56,7 @@ export default function Index({ vehicleModels, filters }: any) {
                     title="Model Kendaraan"
                     fields={[
                         { key: 'name', label: 'Nama', required: true },
+                        { key: 'brand', label: 'Merek', required: false },
                         { key: 'suffix', label: 'Suffix', required: false },
                     ]}
                 />
