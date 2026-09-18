@@ -39,6 +39,7 @@ class WmsRoleSeeder extends Seeder
 
             // Import / Export
             'import cycles', 'export cycles',
+            'import shoppings', // Import Barang & Import Gabungan — HANYA leader ke atas
 
             // Reports
             'view receiving report', 'export receiving report',
@@ -86,6 +87,7 @@ class WmsRoleSeeder extends Seeder
 
             // Import / Export
             'import cycles', 'export cycles',
+            'import shoppings', // Import Barang & Import Gabungan — HANYA leader ke atas
 
             // Reports
             'view receiving report', 'export receiving report',

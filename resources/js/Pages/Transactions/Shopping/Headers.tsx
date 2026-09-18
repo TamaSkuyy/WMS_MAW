@@ -45,6 +45,9 @@ function toLocalDateTimeInput(date: Date): string {
 
 export default function Headers({ shoppingLocations = [], draftFrameCount = 0 }: any) {
     const { flash = {}, errors = {} } = usePage().props as any;
+    // Import Barang (langkah 2) — HANYA Leader ke atas (`import shoppings`).
+    const permissions = (usePage().props.auth as any)?.user?.permissions || [];
+    const canImport = permissions.includes('import shoppings');
 
     const [shoppingDate, setShoppingDate] = useState(() => toLocalDateTimeInput(new Date()));
     // Default 1 baris saja (permintaan operator): tambah baris hanya kalau perlu,
@@ -328,13 +331,15 @@ export default function Headers({ shoppingLocations = [], draftFrameCount = 0 }:
             </ComponentCard>
 
             <div className="mt-6 flex flex-wrap gap-2">
-                <Link href={route('shoppings.index', { import: 'items' })}>
-                    <Button>Lanjut: Import Barang (Langkah 2) →</Button>
-                </Link>
+                {canImport && (
+                    <Link href={route('shoppings.index', { import: 'items' })}>
+                        <Button>Lanjut: Import Barang (Langkah 2) →</Button>
+                    </Link>
+                )}
                 <Link href={route('shoppings.index')}>
                     <Button variant="outline">Kembali ke Daftar Shopping</Button>
                 </Link>
-                {SHOW_HEADER_IMPORT && (
+                {SHOW_HEADER_IMPORT && canImport && (
                     <Button variant="outline" onClick={() => setHeaderImportOpen(true)}>Import File Header</Button>
                 )}
             </div>
@@ -342,7 +347,7 @@ export default function Headers({ shoppingLocations = [], draftFrameCount = 0 }:
             {/* Import FILE HEADER (Line + Frame Number) — disiapkan untuk dipakai
                 kalau pusat/TAM memutuskan kirim file, bukan input manual.
                 Aktifkan dengan SHOW_HEADER_IMPORT = true di atas. */}
-            {SHOW_HEADER_IMPORT && (
+            {SHOW_HEADER_IMPORT && canImport && (
                 <ImportModal
                     isOpen={headerImportOpen}
                     onClose={() => setHeaderImportOpen(false)}

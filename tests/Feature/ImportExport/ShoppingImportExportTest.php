@@ -24,6 +24,8 @@ class ShoppingImportExportTest extends TestCase
         $this->user = User::factory()->create();
         $this->user->givePermissionTo(Permission::findOrCreate('create shoppings'));
         $this->user->givePermissionTo(Permission::findOrCreate('edit shoppings'));
+        // Import Shopping — permission terpisah, HANYA Leader ke atas.
+        $this->user->givePermissionTo(Permission::findOrCreate('import shoppings'));
         $this->location = ShoppingLocation::create(['name' => 'Line A']);
     }
 
@@ -188,9 +190,10 @@ class ShoppingImportExportTest extends TestCase
         ]);
         $shopping->items()->create(['product_id' => $part->id, 'quantity' => 1]);
 
-        // User HANYA punya izin create (tanpa edit)
+        // User boleh import, tapi HANYA punya izin create (tanpa edit)
         $createOnly = User::factory()->create();
         $createOnly->givePermissionTo(Permission::findOrCreate('create shoppings'));
+        $createOnly->givePermissionTo(Permission::findOrCreate('import shoppings'));
         $this->actingAs($createOnly);
 
         $file = UploadedFile::fake()->createWithContent(
@@ -352,5 +355,47 @@ class ShoppingImportExportTest extends TestCase
         $this->assertNotNull($newShopping, 'Shopping baru untuk frame yang sudah dikirim harus dibuat.');
         $this->assertSame($oldLocation->id, $newShopping->shopping_location_id);
         $this->assertSame(2, Shopping::where('frame_number', 'MHKAA1BY4TJ021240')->count());
+    }
+
+    // ── Batas akses import: HANYA Leader ke atas (`import shoppings`) ───
+    // Operator punya `create shoppings`, tapi TIDAK boleh mengakses fitur import.
+
+    public function test_operator_without_import_permission_is_forbidden_from_import_routes(): void
+    {
+        $operator = User::factory()->create();
+        $operator->givePermissionTo(Permission::findOrCreate('create shoppings'));
+        $operator->givePermissionTo(Permission::findOrCreate('edit shoppings'));
+
+        $this->actingAs($operator)
+            ->get(route('shoppings.import-template', ['format' => 'csv']))
+            ->assertForbidden();
+
+        $this->actingAs($operator)
+            ->post(route('shoppings.import.preview'), [
+                'file' => $this->sampleCsv(),
+                'shopping_location_id' => $this->location->id,
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($operator)
+            ->post(route('shoppings.import'), [
+                'file' => $this->sampleCsv(),
+                'column_mapping' => $this->mapping(),
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($operator)
+            ->post(route('shoppings.import-items'), [
+                'file' => $this->sampleCsv(),
+                'column_mapping' => $this->mapping(),
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_import_items_template_allowed_with_import_permission(): void
+    {
+        $this->actingAs($this->user)
+            ->get(route('shoppings.import-items-template', ['format' => 'csv']))
+            ->assertOk();
     }
 }

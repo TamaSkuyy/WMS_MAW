@@ -204,7 +204,8 @@ dikirim bisa dicek lebih dulu sebelum barangnya diisi.
 Hasil: frame tersimpan sebagai **Draft tanpa barang**. Frame yang nomornya sudah
 ada akan dilewati dan dilaporkan (tidak dobel).
 
-**Langkah 2 — Import Barang (part number + qty)**
+**Langkah 2 — Import Barang (part number + qty)** — 🔒 Leader ke atas
+(permission `import shoppings`; tombol tidak muncul untuk operator)
 
 ```
 1. Klik tombol "2. Import Barang" (atau "Lanjut: Import Barang" dari langkah 1)

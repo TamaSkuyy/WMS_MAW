@@ -91,8 +91,9 @@ LANGKAH 1 — Input HEADER (line + frame number)
      • Tekan Enter di baris terakhir untuk menambah baris
 3. [Simpan Header] → tersimpan sebagai DRAFT (belum ada barang)
 
-LANGKAH 2 — Import BARANG (part + qty)
+LANGKAH 2 — Import BARANG (part + qty)   [Leader ke atas]
 1. Tombol "2. Import Barang" (atau tombol "Lanjut: Import Barang")
+   🔒 Tombol ini hanya muncul dengan permission `import shoppings` (Leader/Superadmin)
 2. Pilih file Excel/CSV: kolom Frame Number | Part Number | Quantity
 3. [Start Import] → tunggu sampai "Import selesai"
 
@@ -115,6 +116,7 @@ LANGKAH 3 — KIRIM SEMUA (tugas Leader, sekali klik)
 ### Alur lama (satu file gabungan)
 ```
 1. Tombol "Import Gabungan" → file berisi Frame Number + Part + Qty sekaligus
+   🔒 Hanya muncul dengan permission `import shoppings` (Leader/Superadmin)
 2. Atau input manual: "Tambah Shopping"
 3. Simpan → "Draft"
 4. Klik [Ship] → input qty dikirim → [Konfirmasi]

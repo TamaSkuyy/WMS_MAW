@@ -14,9 +14,9 @@
 | # | Modul | Menu & Tombol | File | Hasil | Izin yang dibutuhkan |
 |---|-------|---------------|------|-------|----------------------|
 | 1 | **Data Order supplier (TAM)** | Transactions > Cycles > **Import Data Order** | Excel/CSV lebar (sheet `EMAIL`, blok `CYCLE 1..N`) | Cycle **draft** per supplier × gelombang | `create cycles` |
-| 2 | **Barang Shopping (alur 2 langkah)** | Transactions > Shopping > **2. Import Barang** | Frame Number + Part Number + Quantity | Barang masuk ke frame **draft** yang sudah ada | `create shoppings` |
-| 3 | **Header Shopping (file)** | *Tombol disembunyikan* (`shoppings/import-headers`) | Line + Frame Number | Frame **draft** (line & frame number) | `create shoppings` |
-| 4 | **Shopping gabungan (alur lama)** | Transactions > Shopping > **Import Gabungan** | Frame + Part + Qty dalam satu file | Frame draft **beserta** barangnya | `create shoppings` |
+| 2 | **Barang Shopping (alur 2 langkah)** | Transactions > Shopping > **2. Import Barang** | Frame Number + Part Number + Quantity | Barang masuk ke frame **draft** yang sudah ada | `import shoppings` 🔒 |
+| 3 | **Header Shopping (file)** | *Tombol disembunyikan* (`shoppings/import-headers`) | Line + Frame Number | Frame **draft** (line & frame number) | `import shoppings` 🔒 |
+| 4 | **Shopping gabungan (alur lama)** | Transactions > Shopping > **Import Gabungan** | Frame + Part + Qty dalam satu file | Frame draft **beserta** barangnya | `import shoppings` 🔒 |
 | 5 | **Cycle (generic)** | Transactions > Cycles > Import | Cycle Number, Supplier, Tanggal, Part, Qty | Cycle draft | `import cycles` |
 | 6 | **Produk** | Master Data > Products > Import | PartNumber, Nama, Merek, Model, Supplier, Kategori, Satuan, … | Produk baru | `create products` |
 | 7 | **Model Kendaraan, Kategori, Rak, Supplier** | Master Data > masing-masing > Import | lihat §5.2 | Master data baru | `create …` |
@@ -26,6 +26,12 @@
 **Download template** selalu tersedia di dalam modal import (tautan **CSV** / **XLSX**) —
 pakai template itu supaya nama kolomnya cocok. Untuk Stock Opname, template diunduh
 dari halaman *Stock Opname* karena **sudah terisi stok sistem saat ini**.
+
+> 🔒 **Khusus fitur import Shopping (baris 2–4):** tombol **2. Import Barang** dan
+> **Import Gabungan** hanya muncul untuk **Leader ke atas** (permission
+> `import shoppings`). Operator tetap bisa *1. Input Header* manual dan menambah
+> shopping, tetapi tidak bisa memakai fitur import. Kalau tombolnya tidak muncul,
+> minta Leader/Superadmin yang mengunggah file.
 
 ---
 
@@ -173,8 +179,8 @@ LANGKAH 1 (operator) — Input HEADER
     • tombol "+ 1 Baris" / "+ 5 Baris" untuk input manual banyak
   → tersimpan sebagai DRAFT (belum ada barang)
 
-LANGKAH 2 (operator) — Import BARANG   ← file dari pusat/TAM
-  Transactions > Shopping > "2. Import Barang"
+LANGKAH 2 (Leader ke atas) — Import BARANG   ← file dari pusat/TAM
+  Transactions > Shopping > "2. Import Barang" (butuh permission `import shoppings`)
   File: Frame Number | Part Number | Quantity (+ Confirmed / Cripple / Modify Date)
   → bila frame belum ada: baris ERROR ("Frame ... belum terdaftar di WMS")
      kecuali opsi "Buat frame otomatis" dicentang
@@ -229,6 +235,7 @@ Bedanya: file ini **membuat frame baru sendiri** (tidak perlu input header).
 Berguna kalau pusat mengirim file lengkap dan header belum ada.
 
 Aturan yang tetap berlaku:
+- Tombol **Import Gabungan** hanya muncul untuk **Leader ke atas** (permission `import shoppings`).
 - Frame yang sudah ada dan masih **draft** → barangnya **digabung** (part yang sama dilewati).
 - Frame yang sudah **shipped/cripple** → dianggap pesanan baru, dibuatkan shopping baru.
 - Menggabung ke draft butuh izin **`edit shoppings`**; kalau tidak punya, baris error

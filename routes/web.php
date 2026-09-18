@@ -422,14 +422,21 @@ Route::middleware('auth')->group(function () {
     Route::middleware(PermissionMiddleware::using('create shoppings'))->group(function () {
         Route::get('shoppings/create', [ShoppingController::class, 'create'])->name('shoppings.create');
         Route::post('shoppings', [ShoppingController::class, 'store'])->name('shoppings.store');
-        Route::post('shoppings/import/preview', [ShoppingController::class, 'importPreview'])->name('shoppings.import.preview');
-        Route::post('shoppings/import', [ShoppingController::class, 'import'])->name('shoppings.import');
-        Route::get('shoppings/import-template', [ShoppingController::class, 'importTemplate'])->name('shoppings.import-template');
 
         // ── Alur 2 langkah: header dulu, barang kemudian ────────────────
         // Langkah 1: input line + frame number (manual, tanpa file).
         Route::get('shoppings/headers/create', [ShoppingController::class, 'headerCreate'])->name('shoppings.headers.create');
         Route::post('shoppings/headers', [ShoppingController::class, 'headerStore'])->name('shoppings.headers.store');
+    });
+
+    // Import Shopping (static paths — wajib sebelum shoppings/{shopping}).
+    // ⚠️ Permission terpisah `import shoppings`: HANYA Leader ke atas.
+    //    Operator tetap boleh input header manual di atas, tapi tidak boleh import.
+    Route::middleware(PermissionMiddleware::using('import shoppings'))->group(function () {
+        // Import Gabungan (alur lama) — frame + barang + qty dalam satu file.
+        Route::post('shoppings/import/preview', [ShoppingController::class, 'importPreview'])->name('shoppings.import.preview');
+        Route::post('shoppings/import', [ShoppingController::class, 'import'])->name('shoppings.import');
+        Route::get('shoppings/import-template', [ShoppingController::class, 'importTemplate'])->name('shoppings.import-template');
 
         // Langkah 2: import barang (Part No + Qty) untuk frame yang sudah ada.
         Route::post('shoppings/import-items/preview', [ShoppingController::class, 'itemImportPreview'])->name('shoppings.import-items.preview');

@@ -43,7 +43,9 @@ otomatis oleh harness, jadi jaga tetap ringkas. Detail panjang taruh di `docs/`.
    superadmin & semua status; stok dikoreksi lewat trait `AdjustsStock` (dijepit 0,
    `stock_shortage` dilaporkan).
 8. **Shopping punya 3 alur — jangan hapus salah satu** (pusat/TAM bisa mengubah
-   urutan kerja kapan saja):
+   urutan kerja kapan saja). **Semua route import Shopping** (`shoppings/import*`)
+   butuh permission **`import shoppings`** — HANYA Leader ke atas; operator tetap
+   boleh `create shoppings` (input header manual) tapi tidak boleh import:
    - **2 langkah**: (1) input header `shoppings/headers/create` (line + frame
      number, banyak baris sekaligus, `headerStore`), (2) import barang
      `shoppings/import-items` → `ShoppingItemImporter` (`requireExistingFrame`,

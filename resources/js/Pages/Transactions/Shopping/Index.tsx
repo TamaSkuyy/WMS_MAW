@@ -31,11 +31,13 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
     const canEdit = permissions.includes('edit shoppings');
     const canDelete = permissions.includes('delete shoppings');
     const canShip = permissions.includes('ship shoppings');
+    // Import Barang & Import Gabungan — HANYA Leader ke atas (`import shoppings`).
+    const canImport = permissions.includes('import shoppings');
     const { flash = {} } = usePage().props as any;
 
     const [importModalOpen, setImportModalOpen] = useState(false);
     // Import BARANG (langkah 2): frame harus sudah terdaftar di WMS.
-    const [itemImportOpen, setItemImportOpen] = useState(!!openItemImport);
+    const [itemImportOpen, setItemImportOpen] = useState(!!openItemImport && canImport);
     const [itemAutoCreate, setItemAutoCreate] = useState(false);
     const [itemLocationId, setItemLocationId] = useState('');
 
@@ -382,7 +384,7 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
                                 <Button variant="outline">1. Input Header</Button>
                             </Link>
                         )}
-                        {canCreate && (
+                        {canImport && (
                             <Button onClick={() => setItemImportOpen(true)}>2. Import Barang</Button>
                         )}
                         {canShip && (
@@ -393,7 +395,7 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
                         {canCreate && (
                             <Link href={route('shoppings.create')}><Button variant="outline">Tambah Shopping</Button></Link>
                         )}
-                        {canCreate && (
+                        {canImport && (
                             <Button variant="outline" title="Alur lama: satu file berisi frame + barang + qty" onClick={() => setImportModalOpen(true)}>
                                 Import Gabungan
                             </Button>
@@ -533,7 +535,7 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
             </ComponentCard>
 
             {/* Import BARANG (Langkah 2) — frame harus sudah diinput header-nya. */}
-            {canCreate && (
+            {canImport && (
                 <ImportModal
                     isOpen={itemImportOpen}
                     onClose={closeItemImport}
@@ -582,7 +584,7 @@ export default function Index({ shoppings, filters, shoppingLocations = [], draf
             )}
 
             {/* Import GABUNGAN (alur lama) — sengaja dipertahankan. */}
-            {canCreate && (
+            {canImport && (
                 <ImportModal
                     isOpen={importModalOpen}
                     onClose={() => setImportModalOpen(false)}
