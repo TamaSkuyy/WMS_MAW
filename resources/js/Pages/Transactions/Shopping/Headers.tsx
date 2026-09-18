@@ -10,6 +10,7 @@ import SearchableSelect from '../../../Tailadmin/components/form/select/Searchab
 import Checkbox from '../../../Tailadmin/components/form/input/Checkbox';
 import Alert from '../../../Tailadmin/components/ui/alert/Alert';
 import ImportModal from '../../../Components/ImportExport/ImportModal';
+import ScanButton from '../../../Components/ScanButton';
 
 /**
  * Alur 2 LANGKAH (permintaan pusat/TAM):
@@ -46,9 +47,12 @@ export default function Headers({ shoppingLocations = [], draftFrameCount = 0 }:
     const { flash = {}, errors = {} } = usePage().props as any;
 
     const [shoppingDate, setShoppingDate] = useState(() => toLocalDateTimeInput(new Date()));
-    const [rows, setRows] = useState<HeaderRow[]>(() => [newRow(), newRow(), newRow()]);
+    // Default 1 baris saja (permintaan operator): tambah baris hanya kalau perlu,
+    // atau scan frame berurutan — baris baru dibuat otomatis setelah tiap scan.
+    const [rows, setRows] = useState<HeaderRow[]>(() => [newRow()]);
     const [submitting, setSubmitting] = useState(false);
     const [headerImportOpen, setHeaderImportOpen] = useState(false);
+    const [scanMsg, setScanMsg] = useState<{ type: 'ok' | 'error'; text: string } | null>(null);
     const rowsRef = useRef<HTMLDivElement>(null);
 
     const locationOptions = useMemo(
@@ -76,6 +80,47 @@ export default function Headers({ shoppingLocations = [], draftFrameCount = 0 }:
 
     const removeRow = (key: string) =>
         setRows((prev) => (prev.length <= 1 ? [newRow()] : prev.filter((r) => r.key !== key)));
+
+    /** Fokuskan input frame number pada index baris tertentu. */
+    const focusFrameInput = (index: number) => {
+        const inputs = rowsRef.current?.querySelectorAll<HTMLInputElement>('input[id^="frame-"]');
+        inputs?.[index]?.focus();
+    };
+
+    /**
+     * Hasil scan barcode frame pada satu baris:
+     * isi baris itu, lalu otomatis siapkan baris berikutnya supaya operator bisa
+     * scan terus tanpa klik. Frame yang sudah ada di baris lain ditolak (dobel).
+     */
+    const handleScan = (rowKey: string, rawCode: string) => {
+        const code = (rawCode || '').trim();
+        if (code === '') return;
+
+        const normalized = code.toLowerCase();
+        const duplicate = rows.find((r) => r.key !== rowKey && r.frame_number.trim().toLowerCase() === normalized);
+
+        if (duplicate) {
+            const line = rows.findIndex((r) => r.key === duplicate.key) + 1;
+            setScanMsg({ type: 'error', text: `Frame ${code} sudah ada di baris ${line} — tidak perlu discan ulang.` });
+            return;
+        }
+
+        const index = rows.findIndex((r) => r.key === rowKey);
+        const isLast = index === rows.length - 1;
+
+        setRows((prev) => {
+            const next = prev.map((r) => (r.key === rowKey ? { ...r, frame_number: code } : r));
+            if (isLast) next.push(newRow());
+
+            return next;
+        });
+        setScanMsg({
+            type: 'ok',
+            text: `✓ ${code} masuk baris ${index + 1}${isLast ? ' — baris baru disiapkan, langsung scan lagi' : ''}`,
+        });
+
+        setTimeout(() => focusFrameInput(index + 1), 0);
+    };
 
     /** Tempel (paste) banyak frame sekaligus: satu frame per baris. */
     const handlePaste = (key: string, e: React.ClipboardEvent<HTMLDivElement>) => {
@@ -126,8 +171,9 @@ export default function Headers({ shoppingLocations = [], draftFrameCount = 0 }:
             {
                 preserveScroll: true,
                 onSuccess: () => {
-                    // Sisakan 3 baris kosong untuk input berikutnya.
-                    setRows([newRow(), newRow(), newRow()]);
+                    // Kembali ke 1 baris kosong (default isian).
+                    setRows([newRow()]);
+                    setScanMsg(null);
                 },
                 onFinish: () => setSubmitting(false),
             }
@@ -193,9 +239,18 @@ export default function Headers({ shoppingLocations = [], draftFrameCount = 0 }:
                                     className="border-b border-gray-100 dark:border-gray-800"
                                     onPaste={(e) => handlePaste(row.key, e)}
                                     onKeyDown={(e) => {
-                                        if (e.key === 'Enter' && index === rows.length - 1) {
-                                            e.preventDefault();
+                                        if (e.key !== 'Enter') return;
+
+                                        // Enter di kolom frame = pindah ke baris berikutnya
+                                        // (scanner barcode USB mengirim Enter setelah scan),
+                                        // dan baris baru dibuat kalau sudah di baris terakhir.
+                                        e.preventDefault();
+                                        setScanMsg(null);
+
+                                        if (index === rows.length - 1) {
                                             addRows(1);
+                                        } else {
+                                            focusFrameInput(index + 1);
                                         }
                                     }}
                                 >
@@ -209,14 +264,22 @@ export default function Headers({ shoppingLocations = [], draftFrameCount = 0 }:
                                         />
                                     </td>
                                     <td className="py-2 pr-3">
-                                        <Input
-                                            type="text"
-                                            id={`frame-${row.key}`}
-                                            value={row.frame_number}
-                                            placeholder="Scan / ketik frame number"
-                                            onChange={(e) => updateRow(row.key, { frame_number: e.target.value })}
-                                            className="font-mono"
-                                        />
+                                        <div className="flex items-center gap-2">
+                                            <div className="min-w-0 flex-1">
+                                                <Input
+                                                    type="text"
+                                                    id={`frame-${row.key}`}
+                                                    value={row.frame_number}
+                                                    placeholder="Scan / ketik frame number"
+                                                    onChange={(e) => updateRow(row.key, { frame_number: e.target.value })}
+                                                    className="font-mono"
+                                                />
+                                            </div>
+                                            <ScanButton
+                                                title="Scan barcode frame number"
+                                                onScan={(code) => handleScan(row.key, code)}
+                                            />
+                                        </div>
                                     </td>
                                     <td className="py-2 pr-3">
                                         <Checkbox
@@ -241,9 +304,17 @@ export default function Headers({ shoppingLocations = [], draftFrameCount = 0 }:
                 </div>
 
                 <p className="mt-2 text-xs text-gray-400">
-                    Tips: tempel (Ctrl+V) banyak frame sekaligus — satu frame per baris akan mengisi baris di bawahnya.
-                    Tekan Enter di baris terakhir untuk menambah baris baru.
+                    Tips: klik <strong>📷</strong> di kolom Frame Number untuk scan barcode — setelah satu scan,
+                    baris baru otomatis disiapkan supaya bisa scan terus tanpa klik. Bisa juga tempel (Ctrl+V)
+                    banyak frame sekaligus (satu frame per baris) atau ketik manual; tekan Enter di baris
+                    terakhir untuk menambah baris.
                 </p>
+
+                {scanMsg && (
+                    <p className={`mt-2 text-sm ${scanMsg.type === 'ok' ? 'text-green-600' : 'text-red-500'}`}>
+                        {scanMsg.text}
+                    </p>
+                )}
 
                 <div className="mt-5 flex flex-wrap items-center gap-2">
                     <Button type="button" variant="outline" onClick={() => addRows(1)}>+ 1 Baris</Button>

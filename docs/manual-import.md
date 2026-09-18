@@ -166,7 +166,11 @@ Alur resmi dari TAM/pusat: **header dulu, barang kemudian**.
 ```
 LANGKAH 1 (operator) — Input HEADER
   Transactions > Shopping > "1. Input Header"
-  Isi Line/Lokasi + Frame Number (bisa banyak baris: "+ 5 Baris" atau tempel dari Excel)
+  Isi Line/Lokasi + Frame Number. Default 1 baris:
+    • klik 📷 di kolom Frame Number untuk SCAN barcode — tiap scan otomatis
+      menyiapkan baris baru, jadi bisa scan berurutan tanpa klik
+    • atau tempel (Ctrl+V) banyak frame sekaligus (satu frame per baris)
+    • tombol "+ 1 Baris" / "+ 5 Baris" untuk input manual banyak
   → tersimpan sebagai DRAFT (belum ada barang)
 
 LANGKAH 2 (operator) — Import BARANG   ← file dari pusat/TAM
