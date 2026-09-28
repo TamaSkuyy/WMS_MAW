@@ -205,4 +205,6 @@ Test DB: MySQL `127.0.0.1:3308` / `wms_maw_testing` (lihat `phpunit.xml`).
   Kalau mengubah importer/template/opsi import, **update dokumen ini sekalian**.
 - `docs/delivery-monitor.md` — konsep slot C1-C6 vs nomor cycle.
 - `docs/panduan-transaksi.md` — alur Quick Receive, Cycle, Data Order import.
+- `docs/request-log.md` — log permintaan/perubahan user (Major/Minor/Enhancement/
+  Internal). **Tambahkan baris di sini tiap ada permintaan baru** dari user/UAT.
 - `docs/superpowers/specs/` — spec desain per fitur (arsip keputusan).

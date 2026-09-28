@@ -175,8 +175,12 @@ LANGKAH 1 (operator) — Input HEADER
   Isi Line/Lokasi + Frame Number. Default 1 baris:
     • klik 📷 di kolom Frame Number untuk SCAN barcode — tiap scan otomatis
       menyiapkan baris baru, jadi bisa scan berurutan tanpa klik
-    • atau tempel (Ctrl+V) banyak frame sekaligus (satu frame per baris)
+    • atau tempel banyak frame sekaligus (satu frame per baris):
+        – desktop: salin dari Excel lalu Ctrl+V di kolom Frame Number
+        – HP: tombol "📋 Tempel dari Clipboard"
     • tombol "+ 1 Baris" / "+ 5 Baris" untuk input manual banyak
+    • HP: tiap frame tampil sebagai KARTU (tanpa scroll ke samping), tombol
+      simpan ada di bar bawah yang selalu terlihat (sticky)
   → tersimpan sebagai DRAFT (belum ada barang)
 
 LANGKAH 2 (Leader ke atas) — Import BARANG   ← file dari pusat/TAM

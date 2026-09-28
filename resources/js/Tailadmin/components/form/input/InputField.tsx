@@ -17,6 +17,14 @@ interface InputProps {
   error?: boolean;
   hint?: string;
   selectOnFocus?: boolean;
+  // Atribut native untuk pengalaman mobile (keyboard & autofill) — opsional.
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  autoComplete?: string;
+  autoCapitalize?: string;
+  autoCorrect?: string;
+  spellCheck?: boolean;
+  enterKeyHint?: React.HTMLAttributes<HTMLInputElement>["enterKeyHint"];
+  onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
 }
 
 const Input: FC<InputProps> = ({
@@ -35,6 +43,13 @@ const Input: FC<InputProps> = ({
   error = false,
   hint,
   selectOnFocus = false,
+  inputMode,
+  autoComplete,
+  autoCapitalize,
+  autoCorrect,
+  spellCheck,
+  enterKeyHint,
+  onKeyDown,
 }) => {
   let inputClasses = `w-full border border-[#DEE2E6] rounded-lg px-3.5 py-2.5 text-sm text-[#1A1D23] placeholder-[#ADB5BD] bg-white focus:border-[#3B5BDB] focus:ring-2 focus:ring-[#3B5BDB]/20 transition-all duration-150 ${className}`;
 
@@ -62,6 +77,13 @@ const Input: FC<InputProps> = ({
         max={max}
         step={step}
         disabled={disabled}
+        inputMode={inputMode}
+        autoComplete={autoComplete}
+        autoCapitalize={autoCapitalize}
+        autoCorrect={autoCorrect}
+        spellCheck={spellCheck}
+        enterKeyHint={enterKeyHint}
+        onKeyDown={onKeyDown}
         className={inputClasses}
       />
 

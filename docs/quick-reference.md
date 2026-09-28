@@ -86,9 +86,12 @@ LANGKAH 1 — Input HEADER (line + frame number)
 2. Isi Line/Lokasi Tujuan + Frame Number. Default hanya 1 baris:
      • Klik 📷 di kolom Frame Number untuk SCAN barcode — setelah tiap scan,
        baris baru otomatis disiapkan, jadi bisa scan terus tanpa klik
-     • Atau tempel (Ctrl+V) banyak frame sekaligus (satu frame per baris)
+     • Atau tempel banyak frame sekaligus (satu frame per baris):
+       desktop Ctrl+V di kolom Frame Number, atau tombol "📋 Tempel dari Clipboard"
      • Tombol "+ 1 Baris" / "+ 5 Baris" kalau mau input manual banyak
      • Tekan Enter di baris terakhir untuk menambah baris
+     • Di HP tampil sebagai kartu per frame; tombol [+ Baris] dan [Simpan Header]
+       ada di bar bawah yang selalu terlihat (sticky)
 3. [Simpan Header] → tersimpan sebagai DRAFT (belum ada barang)
 
 LANGKAH 2 — Import BARANG (part + qty)   [Leader ke atas]
