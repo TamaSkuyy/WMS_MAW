@@ -34,6 +34,13 @@
 # Auth & Credentials
 /auth.json
 
+# Dokumen legal & data pembayaran — JANGAN di-commit.
+# docs/kontrak/balasan-email-invoice-kontrak.md memuat nama bank, nomor rekening
+# dan atas nama; docs/bast/ + docs/kontrak/ juga memuat kontrak klien yang sudah
+# ditandatangani. Repo ini publik, jadi folder-folder ini harus tetap lokal.
+docs/kontrak/
+docs/bast/
+
 # ==============================================================================
 # Database
 # ==============================================================================
