@@ -30,7 +30,7 @@ Mengacu ke definisi severity di `docs/uat.md` §6.3, disesuaikan untuk **permint
 | Kategori | Jumlah |
 |----------|--------|
 | 🟠 Major | 42 |
-| 🟡 Minor | 34 |
+| 🟡 Minor | 35 |
 | ⚪ Enhancement | 0 (belum tercatat) |
 | ⚙️ Internal | 19 |
 
@@ -123,6 +123,7 @@ Mengacu ke definisi severity di `docs/uat.md` §6.3, disesuaikan untuk **permint
 | 32 | 2026-09-18 | Perbaikan input frame number (scan barcode & manajemen baris) | UI | commit `6c8394c` |
 | 33 | 2026-09-18 | Permission `import shoppings` — Import Barang & Import Gabungan hanya Leader ke atas | Hak akses | commit `5470191` |
 | 34 | 2026-09-18 | Overhaul UI/UX **Input Header Shopping** mobile-friendly (kartu per frame di HP, footer aksi sticky, tombol tempel clipboard, target sentuh 44px) | UI / Shopping | `specs/2026-09-18-shopping-header-mobile-uiux-design.md` |
+| 35 | 2026-10-02 | Dashboard **Kapasitas Rak**: grouping per huruf kode rak (chip A/B/C…), pencarian kode/zona, filter status (Penuh / Hampir penuh / Ada isi / Kosong), expand-collapse per grup (default terlipat), rak berisi diberi warna (permintaan Mas Willy F. Sulistyo) | Dashboard / UI | `resources/js/Pages/Dashboard/RackCapacity.tsx` |
 
 > Catatan: item no. 1 (redesign UI), no. 33 (hak akses), dan no. 34 (overhaul mobile
 > Input Header) adalah yang paling mungkin dipindah kategori. Redesign/overhaul =

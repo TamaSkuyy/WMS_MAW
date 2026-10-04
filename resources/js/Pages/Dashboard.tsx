@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
 import AppLayout from '../Tailadmin/layout/AppLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { Package, Layers, AlertTriangle, TrendingUp, ArrowDownToLine, CheckCircle, Inbox, ShoppingCart, Clock, Warehouse } from 'lucide-react';
+import { Package, Layers, AlertTriangle, TrendingUp, ArrowDownToLine, CheckCircle, Inbox, ShoppingCart, Clock } from 'lucide-react';
 import MetricCard from './Dashboard/MetricCard';
 import OperatorPerformance from './Dashboard/OperatorPerformance';
+import RackCapacity from './Dashboard/RackCapacity';
 
 export default function Dashboard({ metrics, lowStockItems, overStockItems, pendingCycles, todayShoppings, recentCycles, avgDurationToday, rackAlerts, rackFullCount, rackNearFullCount, operatorPerformance }: any) {
 
@@ -269,101 +270,13 @@ export default function Dashboard({ metrics, lowStockItems, overStockItems, pend
                     </div>
                 </div>
 
-                {/* Rack Capacity */}
+                {/* Rack Capacity — dikelompokkan per huruf kode rak, bisa dicari & di-collapse */}
                 <div className="col-span-12">
-                    <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 shadow-sm">
-                        <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
-                            <h3 className="text-sm font-semibold text-gray-800 dark:text-white/90 flex items-center gap-2">
-                                <Warehouse className="w-4 h-4 text-brand-500" />
-                                Kapasitas Rak
-                            </h3>
-                            <div className="flex items-center gap-3 text-xs">
-                                {rackFullCount > 0 && (
-                                    <span className="text-red-600 font-medium">⚠ {rackFullCount} penuh</span>
-                                )}
-                                {rackNearFullCount > 0 && (
-                                    <span className="text-orange-500 font-medium">{rackNearFullCount} hampir penuh</span>
-                                )}
-                                <Link href={route('racks.index')} className="text-brand-500 hover:text-brand-600 font-medium">
-                                    Semua Rak →
-                                </Link>
-                            </div>
-                        </div>
-                        {rackAlerts?.length > 0 ? (
-                            <div className="p-4">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                                    {rackAlerts.map((rack: any, i: number) => {
-                                        const hasCap = rack.capacity !== null;
-                                        const isOver = hasCap && rack.pct >= 100;
-                                        const isNear = hasCap && rack.pct >= 80 && rack.pct < 100;
-                                        const isSafe = hasCap && rack.pct < 80;
-                                        const sisa = hasCap ? rack.capacity - rack.usage : null;
-                                        const color = isOver
-                                            ? { bg: 'bg-red-50 dark:bg-red-500/10', border: 'border-red-200 dark:border-red-800', badge: 'bg-red-100 text-red-700', bar: 'bg-red-500', text: 'text-red-600' }
-                                            : isNear
-                                            ? { bg: 'bg-orange-50 dark:bg-orange-500/10', border: 'border-orange-200 dark:border-orange-800', badge: 'bg-orange-100 text-orange-700', bar: 'bg-orange-400', text: 'text-orange-600' }
-                                            : isSafe
-                                            ? { bg: 'bg-green-50 dark:bg-green-500/10', border: 'border-green-200 dark:border-green-800', badge: 'bg-green-100 text-green-700', bar: 'bg-green-500', text: 'text-green-600' }
-                                            : { bg: 'bg-gray-50 dark:bg-gray-800', border: 'border-gray-200 dark:border-gray-700', badge: 'bg-gray-100 text-gray-600', bar: 'bg-gray-300', text: 'text-gray-500' };
-                                        return (
-                                        <Link
-                                            key={i}
-                                            href={route('racks.show', rack.id)}
-                                            className={`block p-4 rounded-lg hover:shadow-md transition-all ${color.bg} border ${color.border}`}
-                                        >
-                                            <div className="flex items-center justify-between mb-2">
-                                                <div>
-                                                    <p className="text-sm font-semibold text-gray-800 dark:text-white/90 font-mono">
-                                                        {rack.code}
-                                                    </p>
-                                                    <p className="text-[11px] text-gray-500">{rack.zone}</p>
-                                                </div>
-                                                {hasCap ? (
-                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${color.badge}`}>
-                                                        {rack.pct}%
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs text-gray-400 bg-gray-100 dark:bg-gray-700">
-                                                        ∞
-                                                    </span>
-                                                )}
-                                            </div>
-                                            {hasCap ? (
-                                                <>
-                                                    <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2.5 overflow-hidden mb-1">
-                                                        <div
-                                                            className={`h-full rounded-full transition-all ${color.bar}`}
-                                                            style={{ width: `${Math.min(100, rack.pct)}%` }}
-                                                        />
-                                                    </div>
-                                                    <div className="flex justify-between text-[11px]">
-                                                        <span className="text-gray-500 tabular-nums">
-                                                            {rack.usage.toLocaleString()} / {rack.capacity.toLocaleString()} unit
-                                                        </span>
-                                                        {!isOver && sisa !== null && (
-                                                            <span className={`font-medium tabular-nums ${color.text}`}>
-                                                                Sisa {sisa.toLocaleString()}
-                                                            </span>
-                                                        )}
-                                                        {isOver && (
-                                                            <span className="text-red-600 font-medium">⚠ Over!</span>
-                                                        )}
-                                                    </div>
-                                                </>
-                                            ) : (
-                                                <p className="text-[11px] text-gray-400">
-                                                    {rack.usage.toLocaleString()} unit — <span className="italic">tanpa batas</span>
-                                                </p>
-                                            )}
-                                        </Link>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        ) : (
-                            <EmptyState icon={Inbox} text="Belum ada data rak" />
-                        )}
-                    </div>
+                    <RackCapacity
+                        rackAlerts={rackAlerts}
+                        rackFullCount={rackFullCount}
+                        rackNearFullCount={rackNearFullCount}
+                    />
                 </div>
 
                 {/* Operator Performance */}
