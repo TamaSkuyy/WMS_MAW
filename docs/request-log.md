@@ -32,7 +32,7 @@ Mengacu ke definisi severity di `docs/uat.md` §6.3, disesuaikan untuk **permint
 | 🟠 Major | 42 |
 | 🟡 Minor | 35 |
 | ⚪ Enhancement | 0 (belum tercatat) |
-| ⚙️ Internal | 19 |
+| ⚙️ Internal | 20 |
 
 ---
 
@@ -172,6 +172,7 @@ Dicatat supaya riwayat lengkap, tapi **tidak** dihitung sebagai request user.
 | 2026-09-17 | Backup health check + config | `03b5b42` |
 | 2026-09-17 | Deploy lock + nginx buffer/large header | `27d472c`, `2e1137a`, `8e3b2b5`, `f59b1e7`, `ede33f2` |
 | 2026-09-18 | Manual book import + update dokumentasi | `add5d4e` |
+| 2026-10-22 | Patch PHP2Shell (CVE-2026-109618/109619): base image FrankenPHP 1.13.2 / PHP 8.4.27 + gate verifikasi PHP di deploy script | `Dockerfile`, `deploy-production.sh`, `docs/security/php2shell-cve-2026-109618.md` |
 
 ---
 

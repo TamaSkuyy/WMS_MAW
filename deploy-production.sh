@@ -21,6 +21,9 @@ NC='\033[0m'
 PROJECT_NAME="wms-wma-prod"
 COMPOSE_FILE="docker-compose.prod.yml"
 ENV_FILE=".env.prod"
+# Nama image app — HARUS sama dengan `image:` di docker-compose.prod.yml
+# (app/queue/scheduler/reverb memakai image yang sama).
+APP_IMAGE="wms-wma-app:prod"
 
 log()     { echo -e "${GREEN}[DEPLOY]${NC} $*"; }
 warn()    { echo -e "${YELLOW}[WARN]${NC} $*"; }
@@ -276,6 +279,85 @@ clear_laravel_caches() {
     log "Clear cache aplikasi (optimize + Redis cache store)..."
     dc exec -T app php artisan optimize:clear
     dc exec -T app php artisan cache:clear
+}
+
+# ── Gerbang keamanan: patch PHP2Shell di image ───────────────────────────────
+# CVE-2026-109618 & CVE-2026-109619 ("PHP2Shell", CVSS 9.2, RCE tanpa
+# autentikasi) diperbaiki di PHP 8.2.35 / 8.3.36 / 8.4.27 / 8.5.12.
+#
+# Kenapa perlu dicek: image yang di-build dari base tag STALE tetap "berhasil
+# di-build" tapi membawa PHP rentan. Contoh nyata: `dunglas/frankenphp:1.12-php8.4`
+# berhenti di PHP 8.4.25 (tidak di-rebuild upstream saat rilis darurat), jadi
+# `pull` + rebuild pun tidak mempatch apa pun. Gate ini dipanggil SETELAH build
+# dan SEBELUM container lama disentuh — kalau gagal, deploy dibatalkan tanpa
+# membuat situs down (stack lama tetap jalan apa adanya).
+MIN_PHP_BY_BRANCH="8.2:8.2.35 8.3:8.3.36 8.4:8.4.27 8.5:8.5.12"
+
+php_version_lt() {  # return 0 kalau versi $1 lebih kecil dari $2
+    # Dibandingkan per komponen numerik (bukan `sort -V`): aman terhadap
+    # `set -o pipefail` (SIGPIPE) dan tidak butuh proses tambahan.
+    local IFS=.
+    local -a va=($1) vb=($2)
+    local i x y
+    for i in 0 1 2; do
+        x=${va[i]:-0}; y=${vb[i]:-0}
+        x=${x//[!0-9]/}; y=${y//[!0-9]/}
+        x=${x:-0}; y=${y:-0}
+        [ "$x" -lt "$y" ] && return 0
+        [ "$x" -gt "$y" ] && return 1
+    done
+    return 1
+}
+
+# Minimum patch PHP2Shell PER CABANG. Patch beda per branch (8.5.11 masih rentan
+# walau angkanya > 8.4.27), jadi tidak boleh pakai satu ambang global.
+php2shell_min() {
+    local br=$1 pair
+    for pair in $MIN_PHP_BY_BRANCH; do
+        if [ "${pair%%:*}" = "$br" ]; then echo "${pair##*:}"; return 0; fi
+    done
+    return 1
+}
+
+php2shell_patched() {  # return 0 kalau versi $1 sudah dipatch PHP2Shell
+    local ver=$1 major minor min
+    IFS=. read -r major minor _ <<< "$ver"
+    major=${major//[!0-9]/}; minor=${minor//[!0-9]/}
+    major=${major:-0}; minor=${minor:-0}
+    if min=$(php2shell_min "${major}.${minor}"); then
+        php_version_lt "$ver" "$min" && return 1   # lebih tua dari patch → rentan
+        return 0
+    fi
+    # Cabang yang tidak terdaftar: 8.6+ rilis setelah patch; 8.0/8.1 EOL.
+    [ "$major" -gt 8 ] && return 0
+    [ "$major" -eq 8 ] && [ "$minor" -ge 6 ] && return 0
+    return 1
+}
+
+verify_php_patch() {
+    local ver
+    ver=$(${RUNTIME} run --rm --entrypoint php "${APP_IMAGE}" \
+            -r 'echo PHP_VERSION;' 2>/dev/null | tr -d '\r\n ' | head -1 || true)
+    if [ -z "$ver" ]; then
+        warn "Tidak bisa membaca versi PHP dari image — verifikasi PHP2Shell dilewati."
+        warn "  Cek manual: ${RUNTIME} run --rm --entrypoint php ${APP_IMAGE} -v"
+        return 0
+    fi
+    log "Versi PHP di image baru: ${ver}"
+    if ! php2shell_patched "$ver"; then
+        local major minor min
+        IFS=. read -r major minor _ <<< "$ver"
+        min=$(php2shell_min "${major}.${minor}" || echo "8.2.35/8.3.36/8.4.27/8.5.12")
+        err "IMAGE MASIH RENTAN PHP2Shell — PHP ${ver} < patch cabang ${major}.${minor} (${min})."
+        err "Deploy DIBATALKAN sebelum container lama disentuh (situs tetap jalan)."
+        err "Perbaiki: pastikan Dockerfile memakai base image yang sudah dipatch, mis."
+        err "  FROM dunglas/frankenphp:1.13.2-php8.4.27   (PHP 8.4.27)"
+        err "lalu build ulang tanpa cache:"
+        err "  ${COMPOSE_CMD} -p ${PROJECT_NAME} -f ${COMPOSE_FILE} build --pull --no-cache"
+        return 1
+    fi
+    success "PHP ${ver} sudah dipatch (PHP2Shell CVE-2026-109618/109619) ✓"
+    return 0
 }
 
 # ── Cek & pastikan queue worker benar-benar berjalan ─────────────────────────
@@ -587,10 +669,17 @@ smart_rebuild() {
     check_queue_config || exit 1
     check_log_config
 
-    # Build image DENGAN cache (jauh lebih cepat dari --no-cache)
-    log "Build image (dengan layer cache)..."
+    # Build image DENGAN cache (jauh lebih cepat dari --no-cache).
+    # --pull WAJIB: base image (`FROM ...`) diambil ulang dari registry. Tanpa
+    # ini, tag base yang sudah ada di cache lokal dipakai terus sehingga patch
+    # keamanan PHP (mis. PHP2Shell) tidak pernah masuk walau rebuild "berhasil".
+    log "Build image (dengan layer cache, base image di-pull)..."
     log "  Layer cache dipakai → hanya stage yang berubah yang direbuild"
-    dc build
+    dc build --pull
+
+    # Gerbang keamanan: batalkan SEBELUM container lama disentuh kalau image
+    # baru masih membawa PHP rentan (lihat verify_php_patch).
+    verify_php_patch || exit 1
 
     # Maintenance mode SEBELUM restart apa pun
     # Trap: apa pun yang terjadi (gagal/Ctrl+C), maintenance mode dimatikan lagi
@@ -889,11 +978,14 @@ check_log_config
 if [ "${FORCE_BUILD}" = true ]; then
     warn "Force rebuild semua images (--no-cache)..."
     warn "Ini butuh ~10 menit. Gunakan --rebuild untuk rebuild lebih cepat dengan cache."
-    dc build --no-cache
+    dc build --pull --no-cache
 else
-    log "Building images (dengan layer cache)..."
-    dc build
+    log "Building images (dengan layer cache, base image di-pull)..."
+    dc build --pull
 fi
+
+# Gerbang keamanan PHP2Shell: dibatalkan sebelum `dc up -d` menyentuh stack lama.
+verify_php_patch || exit 1
 
 # ── Start services ───────────────────────────────────────────────────────────
 log "Menjalankan production stack..."

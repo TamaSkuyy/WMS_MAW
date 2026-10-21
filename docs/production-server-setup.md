@@ -134,7 +134,11 @@ npm -v    # 10.x
 
 ### 3.4 FrankenPHP + Laravel Octane
 
-Tidak perlu install terpisah — project sudah pakai image `dunglas/frankenphp:1.4-php8.4`.
+Tidak perlu install terpisah — project sudah pakai image
+`dunglas/frankenphp:1.13.2-php8.4.27` (PHP 8.4.27, sudah dipatch PHP2Shell
+CVE-2026-109618 / CVE-2026-109619). Jangan turunkan ke tag `1.12-php8.4`:
+tag itu tidak di-rebuild upstream dan berhenti di PHP 8.4.25 (rentan).
+Detail & prosedur update: `docs/security/php2shell-cve-2026-109618.md`.
 
 ---
 

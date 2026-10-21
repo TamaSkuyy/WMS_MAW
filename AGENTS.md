@@ -81,6 +81,12 @@ otomatis oleh harness, jadi jaga tetap ringkas. Detail panjang taruh di `docs/`.
     dan kegagalan notifikasi tidak boleh menggagalkan import.
 11. Batas runtime PHP/nginx di `Dockerfile` (`zz-wms.ini`) & `docker/nginx/default.conf`
     (`client_max_body_size 12M`) — perubahan infra butuh `--rebuild`.
+    **Base image di-pin penuh**: `frankenphp:1.13.2-php8.4.27` (PHP 8.4.27 = patch
+    PHP2Shell CVE-2026-109618/109619). **Jangan turunkan ke `1.12-php8.4`** — tag
+    itu tidak di-rebuild upstream (berhenti di PHP 8.4.25, tetap rentan walau
+    di-pull). Deploy punya gate `verify_php_patch()` yang membatalkan build kalau
+    PHP di image masih di bawah ambang patch cabangnya. Detail:
+    `docs/security/php2shell-cve-2026-109618.md`.
 12. **Health check** (`AppServiceProvider::backupsCheck()`): `BackupsCheck` wajib
     `onDisk('backup-db')` + `locatedAt(config('backup.backup.name'))` — tanpa itu
     `File::glob('')` → `The file "" does not exist` tiap 10 menit. Disk backup
@@ -207,4 +213,7 @@ Test DB: MySQL `127.0.0.1:3308` / `wms_maw_testing` (lihat `phpunit.xml`).
 - `docs/panduan-transaksi.md` — alur Quick Receive, Cycle, Data Order import.
 - `docs/request-log.md` — log permintaan/perubahan user (Major/Minor/Enhancement/
   Internal). **Tambahkan baris di sini tiap ada permintaan baru** dari user/UAT.
+- `docs/security/php2shell-cve-2026-109618.md` — runbook patch PHP2Shell: versi
+  rentan/aman per cabang PHP, cara deploy, verifikasi, dan efek samping naik
+  FrankenPHP 1.13. Baca ini sebelum menyentuh base image atau menurunkan versi PHP.
 - `docs/superpowers/specs/` — spec desain per fitur (arsip keputusan).

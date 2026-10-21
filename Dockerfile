@@ -1,4 +1,17 @@
-FROM dunglas/frankenphp:1.12-php8.4
+# ── Base image: WAJIB FrankenPHP >= 1.13.2 ───────────────────────────────────
+# PHP2Shell (CVE-2026-109618 & CVE-2026-109619, CVSS 9.2, RCE tanpa autentikasi)
+# diperbaiki di PHP 8.2.35 / 8.3.36 / 8.4.27 / 8.5.12 (rilis darurat 21-22 Okt
+# 2026). FrankenPHP 1.13.2 membangun ulang image-nya dengan PHP versi tsb.
+#
+# JANGAN kembali ke tag `1.12-php8.4`: tag itu TIDAK di-rebuild upstream
+# (terakhir 2026-09-25, masih PHP 8.4.25 = RENTAN), jadi `docker pull` /
+# rebuild dengan tag itu tetap menghasilkan image yang belum dipatch.
+# Docker Hub `1.13-php8.4` saat ini ber-digest sama dengan `1.13.2-php8.4.27`.
+#
+# Pin versi lengkap (bukan `1.13-php8.4`) supaya PHP di dalam image bisa
+# diaudit. Patch PHP berikutnya = ubah baris ini dengan sengaja, lalu:
+#   ./deploy-production.sh --build
+FROM dunglas/frankenphp:1.13.2-php8.4.27
 
 # Install additional PHP extensions
 RUN install-php-extensions \
